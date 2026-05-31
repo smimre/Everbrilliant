@@ -10,7 +10,7 @@ import {
   TrendingUp, Gavel, Link2, Settings, LogOut,
   BookOpen, Receipt, Package, Users, Landmark, BarChart3,
   Mail, CheckSquare, Calendar, Archive, GitBranch, ChevronDown,
-  LucideIcon,
+  Plus, Shield, LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -81,11 +81,22 @@ const MANUFACTURING_NAV: NavItem[] = [
   { label: 'Reports', labelFa: 'گزارشات', icon: BarChart3, href: '/manufacturing/reports' },
 ];
 
+const LOGISTICS_NAV: NavItem[] = [
+  { label: 'Dashboard',    labelFa: 'داشبورد',         icon: LayoutDashboard, href: '/logistics' },
+  { label: 'Shipments',    labelFa: 'محموله‌ها',        icon: Package,         href: '/logistics' },
+  { label: 'New Shipment', labelFa: 'محموله جدید',     icon: Plus,            href: '/logistics' },
+  { label: 'Customs',      labelFa: 'گمرک',             icon: Landmark,        href: '/logistics' },
+  { label: 'Insurance',    labelFa: 'بیمه',             icon: Shield,          href: '/logistics' },
+  { label: 'Quotes',       labelFa: 'استعلام حمل',     icon: Receipt,         href: '/logistics' },
+  { label: 'Finance',      labelFa: 'مالی لجستیک',     icon: BarChart3,       href: '/logistics' },
+];
+
 const MODULE_NAV: Record<string, NavItem[]> = {
-  trading:    TRADING_NAV,
-  finance:    FINANCE_NAV,
-  automation: AUTOMATION_NAV,
+  trading:       TRADING_NAV,
+  finance:       FINANCE_NAV,
+  automation:    AUTOMATION_NAV,
   manufacturing: MANUFACTURING_NAV,
+  logistics:     LOGISTICS_NAV,
 };
 
 // ── NavItem Component ─────────────────────────────────────────

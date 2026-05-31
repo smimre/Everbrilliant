@@ -1,7 +1,7 @@
 export type Language = 'fa' | 'en' | 'ar' | 'hi';
 export type Direction = 'rtl' | 'ltr';
 export type Theme = 'dark' | 'light';
-export type Module = 'trading' | 'finance' | 'automation' | 'crm';
+export type Module = 'trading' | 'finance' | 'automation' | 'crm' | 'manufacturing' | 'logistics';
 export type RequestStatus = 'draft' | 'pending' | 'quoted' | 'approved' | 'rejected' | 'completed' | 'cancelled';
 export type Priority = 'low' | 'normal' | 'high' | 'urgent';
 export type InvoiceStatus = 'draft' | 'sent' | 'partial' | 'paid' | 'overdue' | 'cancelled';

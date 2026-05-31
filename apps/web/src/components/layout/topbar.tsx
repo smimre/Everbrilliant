@@ -8,15 +8,15 @@ import { LanguageSelector } from './language-selector';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Menu, Sun, Moon } from 'lucide-react';
-
-type Module = 'trading' | 'finance' | 'automation' | 'crm';
+import type { Module } from '@/types';
 
 const MODULE_ITEMS: { id: Module; label_fa: string; label_en: string; icon: string; href: string }[] = [
-  { id: 'trading',    label_fa: 'بازرگانی',   label_en: 'Trading',    icon: '🏪', href: '/trading' },
-  { id: 'finance',    label_fa: 'مالی',        label_en: 'Finance',    icon: '💰', href: '/finance' },
-  { id: 'manufacturing', label_fa: 'تولید', label_en: 'Manufacturing', icon: '🏭', href: '/manufacturing' },
-  { id: 'automation', label_fa: 'اتوماسیون',  label_en: 'Automation', icon: '⚙️', href: '/automation' },
-  { id: 'crm',        label_fa: 'مشتریان',    label_en: 'CRM',        icon: '🏢', href: '/crm' },
+  { id: 'trading',       label_fa: 'بازرگانی',   label_en: 'Trading',        icon: '🏪', href: '/trading' },
+  { id: 'finance',       label_fa: 'مالی',        label_en: 'Finance',        icon: '💰', href: '/finance' },
+  { id: 'manufacturing', label_fa: 'تولید',       label_en: 'Manufacturing',  icon: '🏭', href: '/manufacturing' },
+  { id: 'logistics',     label_fa: 'لجستیک',     label_en: 'Logistics',      icon: '🚛', href: '/logistics' },
+  { id: 'automation',    label_fa: 'اتوماسیون',  label_en: 'Automation',     icon: '⚙️', href: '/automation' },
+  { id: 'crm',           label_fa: 'مشتریان',    label_en: 'CRM',            icon: '🏢', href: '/crm' },
 ];
 
 export function Topbar() {
