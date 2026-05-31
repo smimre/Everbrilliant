@@ -1,0 +1,14 @@
+import { api } from '@/lib/api-client';
+import type { User, LoginDto, RegisterDto, AuthTokens } from '@/types';
+
+interface LoginResponse extends AuthTokens { user: User; }
+interface RegisterResponse extends AuthTokens { user: Pick<User, 'id' | 'name' | 'phone'>; }
+
+export const authService = {
+  login: (dto: LoginDto) => api.post<LoginResponse>('/auth/login', dto),
+  register: (dto: RegisterDto) => api.post<RegisterResponse>('/auth/register', dto),
+  logout: () => api.post('/auth/logout'),
+  me: () => api.get<User>('/auth/me'),
+  changePassword: (dto: { currentPassword: string; newPassword: string }) =>
+    api.patch('/auth/change-password', dto),
+};
