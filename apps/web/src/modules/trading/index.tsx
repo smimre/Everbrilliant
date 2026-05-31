@@ -19,6 +19,7 @@ import { InventoryPage } from './components/inventory';
 import { LogisticsPage } from './components/logistics';
 import { ExchangeRatesPage } from './components/exchange-rates';
 import { ApprovalWorkflowsPage } from './components/approval-workflows';
+import { PartnerProfilePage } from './components/partner-profile';
 
 type TradingView =
   | 'dashboard' | 'my-requests' | 'incoming-req' | 'my-quotes'
@@ -26,7 +27,7 @@ type TradingView =
   | 'connections' | 'crm' | 'reports' | 'sales-report'
   | 'manaqeseh' | 'my-manaqeseh' | 'quality-checks'
   | 'disputes' | 'inventory'
-  | 'logistics' | 'exchange-rates' | 'approval-workflows';
+  | 'logistics' | 'exchange-rates' | 'approval-workflows' | 'partner-profile';
 
 interface NavItem {
   id: TradingView;
@@ -62,6 +63,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'logistics',          label: 'Logistics',       labelFa: 'لجستیک و حمل',       icon: '🚛', section: 'operations' },
   { id: 'exchange-rates',     label: 'Exchange Rates',  labelFa: 'نرخ ارز',             icon: '💱', section: 'operations' },
   { id: 'approval-workflows', label: 'Approvals',       labelFa: 'گردش‌کار تأیید',     icon: '⚙️', section: 'operations' },
+  { id: 'partner-profile',    label: 'Partner Profile', labelFa: 'پروفایل شرکاء',       icon: '🤝', section: 'network' },
 ];
 
 const SECTIONS: Record<string, { label: string; labelFa: string }> = {
@@ -100,6 +102,7 @@ export function TradingModule({ initialView }: { initialView?: string } = {}) {
       case 'logistics':           return <LogisticsPage />;
       case 'exchange-rates':      return <ExchangeRatesPage />;
       case 'approval-workflows':  return <ApprovalWorkflowsPage />;
+      case 'partner-profile':     return <PartnerProfilePage />;
       default:               return <TradingDashboard onNavigate={setView} />;
     }
   };

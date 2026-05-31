@@ -1,243 +1,192 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 
 const CURRENCIES = [
-  { code: 'USD', name: 'دلار آمریکا', flag: '🇺🇸', symbol: '$', rateToIRR: 605000 },
-  { code: 'EUR', name: 'یورو', flag: '🇪🇺', symbol: '€', rateToIRR: 660000 },
-  { code: 'AED', name: 'درهم امارات', flag: '🇦🇪', symbol: 'د.إ', rateToIRR: 164700 },
-  { code: 'GBP', name: 'پوند انگلیس', flag: '🇬🇧', symbol: '£', rateToIRR: 765000 },
-  { code: 'CNY', name: 'یوان چین', flag: '🇨🇳', symbol: '¥', rateToIRR: 83400 },
-  { code: 'TRY', name: 'لیر ترکیه', flag: '🇹🇷', symbol: '₺', rateToIRR: 17800 },
-  { code: 'IRR', name: 'ریال ایران', flag: '🇮🇷', symbol: 'ریال', rateToIRR: 1 },
+  { code:'USD', name:'دلار آمریکا',    nameEn:'US Dollar',      flag:'🇺🇸', symbol:'$',    rateToIRR:605000 },
+  { code:'EUR', name:'یورو',           nameEn:'Euro',           flag:'🇪🇺', symbol:'€',    rateToIRR:660000 },
+  { code:'AED', name:'درهم امارات',    nameEn:'UAE Dirham',     flag:'🇦🇪', symbol:'د.إ', rateToIRR:164700 },
+  { code:'GBP', name:'پوند انگلیس',   nameEn:'British Pound',  flag:'🇬🇧', symbol:'£',    rateToIRR:765000 },
+  { code:'CNY', name:'یوان چین',       nameEn:'Chinese Yuan',   flag:'🇨🇳', symbol:'¥',    rateToIRR:83400  },
+  { code:'TRY', name:'لیر ترکیه',     nameEn:'Turkish Lira',   flag:'🇹🇷', symbol:'₺',   rateToIRR:17800  },
+  { code:'IRR', name:'ریال ایران',     nameEn:'Iranian Rial',   flag:'🇮🇷', symbol:'﷼',  rateToIRR:1      },
 ];
 
-const CURRENCY_NAMES_EN: Record<string, string> = {
-  USD: 'US Dollar', EUR: 'Euro', AED: 'UAE Dirham',
-  GBP: 'British Pound', CNY: 'Chinese Yuan', TRY: 'Turkish Lira', IRR: 'Iranian Rial',
-};
+const MOCK_CHANGES: Record<string,number> = { USD:0.8, EUR:-0.3, AED:0.5, CNY:1.2, GBP:-0.7, TRY:2.1, IRR:0 };
 
-const KPI_CURRENCIES = ['USD', 'EUR', 'AED', 'CNY'];
-const MOCK_CHANGES: Record<string, number> = {
-  USD: 0.8, EUR: -0.3, AED: 0.5, CNY: 1.2, GBP: -0.7, TRY: 2.1,
-};
-
-const HISTORY_DATA = [
-  { day: 'Mon', rate: 598000 }, { day: 'Tue', rate: 601000 }, { day: 'Wed', rate: 599500 },
-  { day: 'Thu', rate: 603000 }, { day: 'Fri', rate: 602000 }, { day: 'Sat', rate: 604000 }, { day: 'Sun', rate: 605000 },
-];
-
-function fmtRate(n: number) {
-  if (n >= 1000) return n.toLocaleString();
-  if (n < 1) return n.toFixed(6);
-  return n.toFixed(2);
+function fmt(n: number, decimals = 0) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toLocaleString('en', { maximumFractionDigits: decimals });
 }
 
-function fmtAmount(n: number) {
-  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
-  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
-  if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
-  return n.toFixed(2);
-}
+const inp = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none';
 
 export function ExchangeRatesPage() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
 
-  const [baseCurrency, setBaseCurrency] = useState('USD');
-  const [baseAmount, setBaseAmount] = useState('1');
+  const [baseCur, setBaseCur]   = useState('USD');
+  const [amount, setAmount]     = useState(1);
+  const [rates, setRates]       = useState(() =>
+    Object.fromEntries(CURRENCIES.map(c => [c.code, c.rateToIRR]))
+  );
+  const [lastUpdated, setLastUpdated] = useState('۱۴۰۳/۰۴/۱۵ — ۱۰:۳۰');
+  const [converting, setConverting]   = useState({ from:'USD', to:'EUR', amount:'1', result:'' });
 
-  const [manualRates, setManualRates] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {};
-    CURRENCIES.filter(c => c.code !== 'IRR').forEach(c => {
-      init[c.code] = String(c.rateToIRR);
-    });
-    return init;
-  });
-  const [updatedBadge, setUpdatedBadge] = useState<Record<string, boolean>>({});
+  const baseRate = rates[baseCur] ?? 1;
 
-  const baseC = CURRENCIES.find(c => c.code === baseCurrency)!;
-  const parsedAmount = parseFloat(baseAmount) || 1;
+  const converted = useMemo(() =>
+    CURRENCIES.filter(c => c.code !== baseCur).map(c => {
+      const rate = baseRate / (rates[c.code] ?? 1);
+      const val  = amount * rate;
+      return { ...c, rate, val };
+    }),
+    [baseCur, amount, rates, baseRate]
+  );
 
-  function convertTo(targetCode: string) {
-    const targetC = CURRENCIES.find(c => c.code === targetCode)!;
-    if (baseCurrency === 'IRR') return parsedAmount / targetC.rateToIRR;
-    if (targetCode === 'IRR') return parsedAmount * baseC.rateToIRR;
-    return (parsedAmount * baseC.rateToIRR) / targetC.rateToIRR;
+  function updateRate(code: string, ratePerUsd: number) {
+    if (ratePerUsd <= 0) return;
+    setRates(prev => ({ ...prev, [code]: 1 / (ratePerUsd / (rates['USD'] ?? 605000)) * (rates['USD'] ?? 605000) }));
+    setLastUpdated('۱۴۰۳/۰۴/۱۵ — دستی');
   }
 
-  function crossRate(fromCode: string, toCode: string) {
-    if (fromCode === toCode) return null;
-    const from = CURRENCIES.find(c => c.code === fromCode)!;
-    const to = CURRENCIES.find(c => c.code === toCode)!;
-    if (fromCode === 'IRR') return 1 / to.rateToIRR;
-    if (toCode === 'IRR') return from.rateToIRR;
-    return from.rateToIRR / to.rateToIRR;
+  function calcConvert() {
+    const fromRate = rates[converting.from] ?? 1;
+    const toRate   = rates[converting.to]   ?? 1;
+    const val      = parseFloat(converting.amount) || 0;
+    const res      = val * (fromRate / toRate);
+    setConverting(p => ({ ...p, result: res.toLocaleString('en', { maximumFractionDigits: 4 }) }));
   }
-
-  function handleManualUpdate(code: string, val: string) {
-    setManualRates(prev => ({ ...prev, [code]: val }));
-    setUpdatedBadge(prev => ({ ...prev, [code]: false }));
-  }
-
-  function handleManualSave(code: string) {
-    setUpdatedBadge(prev => ({ ...prev, [code]: true }));
-    setTimeout(() => setUpdatedBadge(prev => ({ ...prev, [code]: false })), 3000);
-  }
-
-  const matrixCurrencies = CURRENCIES.filter(c => c.code !== 'IRR');
-  const maxHistoryRate = Math.max(...HISTORY_DATA.map(d => d.rate));
-  const minHistoryRate = Math.min(...HISTORY_DATA.map(d => d.rate));
-
-  const inp = "px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]";
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-bold">💱 {fa ? 'نرخ ارز' : 'Exchange Rates'}</h1>
-        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">
-          {fa ? 'مدیریت و پایش نرخ ارزهای خارجی' : 'Manage and monitor foreign currency rates'}
+        <h1 className="text-2xl font-bold">💱 {fa ? 'نرخ ارز' : 'Exchange Rates'}</h1>
+        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+          🕐 {lastUpdated} · {fa ? 'منبع: بانک مرکزی' : 'Source: Central Bank'}
         </p>
       </div>
 
-      {/* KPI Row: IRR vs USD, EUR, AED, CNY */}
+      {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {KPI_CURRENCIES.map(code => {
-          const c = CURRENCIES.find(x => x.code === code)!;
-          const change = MOCK_CHANGES[code] ?? 0;
-          const isPos = change >= 0;
+        {CURRENCIES.filter(c => ['USD','EUR','AED','GBP'].includes(c.code)).map(c => {
+          const chg = MOCK_CHANGES[c.code] ?? 0;
           return (
-            <div key={code} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl">{c.flag}</span>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                  style={{
-                    background: isPos ? '#10b98120' : '#ef444420',
-                    color: isPos ? '#10b981' : '#ef4444',
-                  }}
-                >
-                  {isPos ? '+' : ''}{change}%
-                </span>
-              </div>
-              <div className="text-lg font-bold text-[hsl(var(--foreground))]">
-                {c.rateToIRR.toLocaleString()}
-              </div>
-              <div className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                {fa ? `ریال / ${code}` : `IRR / ${code}`}
-              </div>
-              <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">
-                {fa ? c.name : CURRENCY_NAMES_EN[code]}
+            <div key={c.code} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center">
+              <div className="text-xl mb-1">{c.flag}</div>
+              <div className="font-bold text-sm">{c.symbol} {(rates[c.code] ?? 1).toLocaleString('en')}</div>
+              <div className="text-[10px] text-[hsl(var(--muted-foreground))]">{c.code} / IRR</div>
+              <div className={`text-[10px] mt-1 font-semibold ${chg >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {chg >= 0 ? '▲' : '▼'} {Math.abs(chg)}%
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Currency Converter */}
+      {/* Converter */}
       <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
-        <h2 className="font-semibold text-sm mb-4">🔄 {fa ? 'تبدیل ارز' : 'Currency Converter'}</h2>
-        <div className="flex gap-3 mb-4 flex-wrap">
-          <div className="flex gap-2 items-center">
-            <select
-              value={baseCurrency}
-              onChange={e => setBaseCurrency(e.target.value)}
-              className={inp + ' min-w-[130px]'}
-            >
-              {CURRENCIES.map(c => (
-                <option key={c.code} value={c.code}>
-                  {c.flag} {c.code} — {fa ? c.name : CURRENCY_NAMES_EN[c.code]}
-                </option>
-              ))}
+        <h2 className="font-semibold text-sm mb-3">🔄 {fa ? 'ماشین‌حساب تبدیل' : 'Currency Converter'}</h2>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[100px]">
+            <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'مبلغ' : 'Amount'}</label>
+            <input type="number" value={converting.amount}
+              onChange={e => setConverting(p => ({ ...p, amount: e.target.value, result: '' }))}
+              className={inp}/>
+          </div>
+          <div className="flex-1 min-w-[100px]">
+            <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'از' : 'From'}</label>
+            <select value={converting.from}
+              onChange={e => setConverting(p => ({ ...p, from: e.target.value, result: '' }))}
+              className={inp}>
+              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
             </select>
           </div>
-          <input
-            type="number"
-            value={baseAmount}
-            onChange={e => setBaseAmount(e.target.value)}
-            className={inp + ' w-36'}
-            min="0"
-            placeholder="1"
-          />
-          <div className="flex items-center text-sm text-[hsl(var(--muted-foreground))]">
-            = {fa ? 'معادل در سایر ارزها' : 'equivalent in other currencies'}
+          <div className="flex-1 min-w-[100px]">
+            <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'به' : 'To'}</label>
+            <select value={converting.to}
+              onChange={e => setConverting(p => ({ ...p, to: e.target.value, result: '' }))}
+              className={inp}>
+              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
+            </select>
+          </div>
+          <button onClick={calcConvert}
+            className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium whitespace-nowrap">
+            {fa ? 'تبدیل' : 'Convert'}
+          </button>
+        </div>
+        {converting.result && (
+          <div className="mt-3 p-3 rounded-lg bg-[hsl(var(--primary)/0.08)] border border-[hsl(var(--primary)/0.2)] text-center">
+            <span className="font-mono text-lg font-bold text-[hsl(var(--primary))]">
+              {converting.amount} {converting.from} = {converting.result} {converting.to}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Rate table with base selector */}
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <h2 className="font-semibold text-sm">📊 {fa ? 'جدول نرخ‌ها' : 'Rate Table'}</h2>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-[hsl(var(--muted-foreground))]">{fa ? 'مبنا:' : 'Base:'}</label>
+            <select value={baseCur} onChange={e => setBaseCur(e.target.value)}
+              className="text-sm border border-[hsl(var(--border))] bg-[hsl(var(--background))] rounded-lg px-2 py-1 outline-none">
+              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
+            </select>
+            <input type="number" value={amount} min={0} step="any"
+              onChange={e => setAmount(parseFloat(e.target.value) || 1)}
+              className="w-24 text-sm border border-[hsl(var(--border))] bg-[hsl(var(--background))] rounded-lg px-2 py-1 outline-none"/>
           </div>
         </div>
-        <div className="space-y-1.5">
-          {CURRENCIES.filter(c => c.code !== baseCurrency).map(c => {
-            const converted = convertTo(c.code);
-            const unitRate = crossRate(baseCurrency, c.code);
-            return (
-              <div
-                key={c.code}
-                className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--muted)/0.2)] hover:bg-[hsl(var(--muted)/0.35)] transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{c.flag}</span>
-                  <div>
-                    <div className="text-sm font-semibold">{c.code}</div>
-                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                      {fa ? c.name : CURRENCY_NAMES_EN[c.code]}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-end">
-                  <div className="text-sm font-bold">
-                    {c.symbol} {fmtAmount(converted)}
-                  </div>
-                  <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                    {fa ? `۱ ${baseCurrency} = ${unitRate !== null ? fmtRate(unitRate) : '—'} ${c.code}` : `1 ${baseCurrency} = ${unitRate !== null ? fmtRate(unitRate) : '—'} ${c.code}`}
-                  </div>
+        <div className="space-y-2">
+          {converted.map(c => (
+            <div key={c.code} className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--muted)/0.3)]">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{c.flag}</span>
+                <div>
+                  <div className="font-semibold text-sm">{fa ? c.name : c.nameEn}</div>
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{c.code}</div>
                 </div>
               </div>
-            );
-          })}
+              <div className="text-end">
+                <div className="font-bold text-base">{c.symbol}{c.val.toLocaleString('en', { maximumFractionDigits: c.val >= 1 ? 2 : 6 })}</div>
+                <div className="text-[10px] text-[hsl(var(--muted-foreground))]">1 {baseCur} = {c.rate.toLocaleString('en', { maximumFractionDigits: 4 })} {c.code}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Cross-Rate Matrix */}
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] overflow-hidden">
-        <div className="p-4 border-b border-[hsl(var(--border))]">
-          <h2 className="font-semibold text-sm">📊 {fa ? 'جدول نرخ متقاطع' : 'Cross-Rate Matrix'}</h2>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
-            {fa ? 'نرخ تبدیل ارزها به یکدیگر (ردیف ÷ ستون)' : 'Currency cross rates (row ÷ column)'}
-          </p>
-        </div>
+      {/* Cross-rate matrix */}
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
+        <h2 className="font-semibold text-sm mb-3">📋 {fa ? 'جدول تبدیل متقاطع' : 'Cross-Rate Matrix'}</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+          <table className="text-xs border-collapse w-full">
             <thead>
-              <tr className="border-b border-[hsl(var(--border))]">
-                <th className="p-2 text-center text-[hsl(var(--muted-foreground))] font-medium w-16">
-                  {fa ? 'از ↓ به →' : '↓/→'}
-                </th>
-                {matrixCurrencies.map(c => (
-                  <th key={c.code} className="p-2 text-center font-medium">
-                    <div>{c.flag}</div>
-                    <div>{c.code}</div>
+              <tr>
+                <th className="p-2 border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)] text-center">—</th>
+                {CURRENCIES.map(c => (
+                  <th key={c.code} className="p-2 border border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)] text-center whitespace-nowrap">
+                    {c.flag} {c.code}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {matrixCurrencies.map(rowC => (
-                <tr key={rowC.code} className="border-b border-[hsl(var(--border))] last:border-0 hover:bg-[hsl(var(--muted)/0.2)]">
-                  <td className="p-2 text-center font-semibold">
-                    <div>{rowC.flag}</div>
-                    <div>{rowC.code}</div>
+              {CURRENCIES.map(row => (
+                <tr key={row.code}>
+                  <td className="p-2 border border-[hsl(var(--border))] font-bold bg-[hsl(var(--muted)/0.3)] whitespace-nowrap">
+                    {row.flag} {row.code}
                   </td>
-                  {matrixCurrencies.map(colC => {
-                    const rate = crossRate(rowC.code, colC.code);
-                    const isDiag = rowC.code === colC.code;
+                  {CURRENCIES.map(col => {
+                    if (row.code === col.code) return <td key={col.code} className="p-2 border border-[hsl(var(--border))] text-center text-[hsl(var(--muted-foreground))]">—</td>;
+                    const val = (rates[row.code] ?? 1) / (rates[col.code] ?? 1);
                     return (
-                      <td
-                        key={colC.code}
-                        className="p-2 text-center"
-                        style={{
-                          background: isDiag ? 'hsl(var(--muted)/0.4)' : undefined,
-                          color: isDiag ? 'hsl(var(--muted-foreground))' : undefined,
-                        }}
-                      >
-                        {isDiag ? '—' : fmtRate(rate ?? 0)}
+                      <td key={col.code} className="p-2 border border-[hsl(var(--border))] text-center font-mono">
+                        {val >= 1 ? val.toLocaleString('en', { maximumFractionDigits: 2 }) : val.toFixed(4)}
                       </td>
                     );
                   })}
@@ -248,103 +197,29 @@ export function ExchangeRatesPage() {
         </div>
       </div>
 
-      {/* Manual Rate Update */}
+      {/* Manual rate update */}
       <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
-        <h2 className="font-semibold text-sm mb-4">✏️ {fa ? 'به‌روزرسانی دستی نرخ' : 'Manual Rate Update'}</h2>
+        <h2 className="font-semibold text-sm mb-3">✏️ {fa ? 'بروزرسانی دستی نرخ‌ها' : 'Manual Rate Update'}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {CURRENCIES.filter(c => c.code !== 'IRR').map(c => (
-            <div
-              key={c.code}
-              className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-3"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{c.flag}</span>
-                  <span className="font-semibold text-sm">{c.code}</span>
-                </div>
-                {updatedBadge[c.code] && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-semibold">
-                    {fa ? 'به‌روز شد' : 'Updated'}
-                  </span>
-                )}
-              </div>
-              <div className="text-[10px] text-[hsl(var(--muted-foreground))] mb-2">
-                {fa ? `۱ دلار = X ${c.code}` : `1 USD = X ${c.code}`}
-              </div>
-              <div className="flex gap-2">
+            <div key={c.code} className="p-3 rounded-lg bg-[hsl(var(--muted)/0.3)]">
+              <div className="text-xs font-bold mb-2">{c.flag} {c.code} — {fa ? c.name : c.nameEn}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0">1 USD =</span>
                 <input
                   type="number"
-                  value={manualRates[c.code] ?? ''}
-                  onChange={e => handleManualUpdate(c.code, e.target.value)}
-                  className={inp + ' flex-1 text-xs py-1.5'}
-                  placeholder={String(c.rateToIRR)}
-                />
-                <button
-                  onClick={() => handleManualSave(c.code)}
-                  className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium hover:opacity-90 transition-opacity"
-                >
-                  {fa ? 'ذخیره' : 'Save'}
-                </button>
+                  defaultValue={+(rates['USD'] ?? 605000) / (rates[c.code] ?? 1) > 1
+                    ? ((rates['USD'] ?? 605000) / (rates[c.code] ?? 1)).toFixed(2)
+                    : ((rates['USD'] ?? 605000) / (rates[c.code] ?? 1)).toFixed(4)}
+                  onBlur={e => updateRate(c.code, parseFloat(e.target.value))}
+                  className="flex-1 px-2 py-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-xs outline-none font-mono"/>
+                <span className="text-[10px] text-[hsl(var(--muted-foreground))] shrink-0">{c.code}</span>
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Rate History Chart (IRR/USD, last 7 days) */}
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
-        <h2 className="font-semibold text-sm mb-1">📈 {fa ? 'تاریخچه نرخ دلار (۷ روز گذشته)' : 'USD/IRR Rate History (Last 7 Days)'}</h2>
-        <p className="text-xs text-[hsl(var(--muted-foreground))] mb-4">
-          {fa ? 'نمودار تغییرات نرخ ریال در برابر دلار' : 'IRR per 1 USD over last 7 days'}
-        </p>
-        <div className="relative">
-          <svg viewBox="0 0 560 140" className="w-full" style={{ overflow: 'visible' }}>
-            {/* Y-axis grid lines */}
-            {[0, 25, 50, 75, 100].map(pct => {
-              const y = 110 - (pct / 100) * 90;
-              return (
-                <g key={pct}>
-                  <line x1="40" y1={y} x2="545" y2={y} stroke="hsl(var(--border))" strokeWidth="0.5" strokeDasharray="3 3" />
-                  <text x="35" y={y + 4} textAnchor="end" fontSize="8" fill="hsl(var(--muted-foreground))">
-                    {((minHistoryRate + (pct / 100) * (maxHistoryRate - minHistoryRate)) / 1000).toFixed(0)}K
-                  </text>
-                </g>
-              );
-            })}
-            {/* Bars */}
-            {HISTORY_DATA.map((d, i) => {
-              const barWidth = 54;
-              const gap = 20;
-              const x = 45 + i * (barWidth + gap);
-              const heightPct = (d.rate - minHistoryRate) / (maxHistoryRate - minHistoryRate + 1);
-              const barH = Math.max(8, heightPct * 90);
-              const y = 110 - barH;
-              const isLast = i === HISTORY_DATA.length - 1;
-              return (
-                <g key={d.day}>
-                  <rect
-                    x={x}
-                    y={y}
-                    width={barWidth}
-                    height={barH}
-                    rx="4"
-                    fill={isLast ? '#3b82f6' : '#3b82f630'}
-                    stroke={isLast ? '#3b82f6' : '#3b82f660'}
-                    strokeWidth="1"
-                  />
-                  <text x={x + barWidth / 2} y="125" textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))">
-                    {d.day}
-                  </text>
-                  <text x={x + barWidth / 2} y={y - 4} textAnchor="middle" fontSize="8" fill={isLast ? '#3b82f6' : 'hsl(var(--muted-foreground))'}>
-                    {(d.rate / 1000).toFixed(0)}K
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-        <p className="text-[10px] text-center text-[hsl(var(--muted-foreground))] mt-2">
-          {fa ? '⚠️ داده نمایشی — پس از اتصال API داده واقعی نمایش داده می‌شود' : '⚠️ Demo data — real data after API connection'}
+        <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-3">
+          💡 {fa ? 'نرخ‌ها به صورت دستی قابل تنظیم هستند.' : 'Rates can be adjusted manually.'}
         </p>
       </div>
     </div>

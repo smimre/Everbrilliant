@@ -7,10 +7,13 @@ import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings, User, Bell, Palette, Shield, Globe, Users, Building2, Key, UserCog, Plus, Trash2, Check, X } from 'lucide-react';
+import { Settings, User, Bell, Palette, Shield, Globe, Users, Building2, Key, UserCog, Plus, Trash2, Check, X, BookOpen, Cpu } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AuditLogPage } from '@/modules/admin/audit-log';
+import { ApiKeysPage }  from '@/modules/admin/api-keys';
+import { SuperDashboard } from '@/modules/admin/super-dashboard';
 
-type SettingsTab = 'profile'|'appearance'|'notifications'|'security'|'language'|'users'|'company'|'roles'|'admin';
+type SettingsTab = 'profile'|'appearance'|'notifications'|'security'|'language'|'users'|'company'|'roles'|'admin'|'audit-log'|'api-keys'|'super-admin';
 
 const ALL_PERMS: Record<string,{label:string;group:string}> = {
   req_approve:     {label:'تایید قیمت',      group:'خریدار'},
@@ -197,6 +200,9 @@ export default function SettingsPage() {
     {id:'roles',        icon:<Key className="h-4 w-4"/>,       fa:'نقش‌ها',         en:'Roles'},
     {id:'company',      icon:<Building2 className="h-4 w-4"/>, fa:'اطلاعات شرکت',  en:'Company Info'},
     {id:'admin',        icon:<UserCog className="h-4 w-4"/>,   fa:'مدیریت سیستم',  en:'System Admin'},
+    {id:'audit-log',   icon:<BookOpen className="h-4 w-4"/>,  fa:'تاریخچه رویدادها', en:'Audit Log'},
+    {id:'api-keys',    icon:<Cpu className="h-4 w-4"/>,       fa:'API Keys',       en:'API Keys'},
+    {id:'super-admin', icon:<Shield className="h-4 w-4"/>,    fa:'سوپر ادمین',     en:'Super Admin'},
   ];
 
   const filteredUsers = users.filter(u => !userFilter || u.name.includes(userFilter) || u.phone.includes(userFilter));
@@ -416,6 +422,10 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+          {tab === 'audit-log' && <AuditLogPage />}
+          {tab === 'api-keys'  && <ApiKeysPage />}
+          {tab === 'super-admin' && <SuperDashboard />}
 
         </div>
       </div>
