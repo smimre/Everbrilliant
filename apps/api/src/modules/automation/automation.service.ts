@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -34,6 +34,7 @@ export class AutomationService {
   }
 
   async createLetter(companyId: number, userId: number, dto: any) {
+    if (!dto.type) throw new BadRequestException('type is required (INCOMING, OUTGOING, INTERNAL)');
     const count = await this.prisma.letter.count({ where: { companyId } });
     const letterNo = `${new Date().getFullYear()}/${String(count + 1).padStart(4, '0')}`;
     return this.prisma.letter.create({
@@ -71,15 +72,17 @@ export class AutomationService {
   }
 
   async createWorkflowRequest(companyId: number, userId: number, dto: any) {
+    if (!dto.type) throw new BadRequestException('type is required (LEAVE, EXPENSE, PURCHASE, ADVANCE, OVERTIME, MISSION)');
+    const { approverId, ...rest } = dto;
     return this.prisma.workflowRequest.create({
       data: {
-        ...dto, companyId, requesterId: userId,
+        ...rest, companyId, requesterId: userId,
         type: dto.type.toUpperCase() as any,
         status: 'PENDING' as any,
         ...(dto.amount && { amount: BigInt(dto.amount) }),
-        approvals: {
-          create: [{ approverId: userId + 1, step: 1, action: 'PENDING' as any }],
-        },
+        ...(approverId && {
+          approvals: { create: [{ approverId, step: 1, action: 'PENDING' as any }] },
+        }),
       },
       include: { approvals: true },
     });

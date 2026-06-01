@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -152,9 +152,12 @@ export class TradingService {
   }
 
   async createTender(companyId: number, userId: number, dto: any) {
+    const type = (dto.type || '').toUpperCase();
+    if (!['AUCTION', 'TENDER'].includes(type))
+      throw new BadRequestException('type must be AUCTION or TENDER');
     return this.prisma.tender.create({
       data: {
-        type: dto.type.toUpperCase() as any,
+        type: type as any,
         title: dto.title, companyId,
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),

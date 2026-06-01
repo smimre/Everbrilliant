@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Body, Param, Query,
-  Req, UseGuards, HttpCode, HttpStatus,
+  Req, UseGuards, HttpCode, HttpStatus, NotFoundException,
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { PlansService } from '../plans/plans.service';
@@ -23,8 +23,10 @@ export class BillingController {
 
   // ── My subscription ──────────────────────────────────────
   @Get('subscription')
-  getSubscription(@Req() req: any) {
-    return this.billing.getSubscription(req.user.companyId);
+  async getSubscription(@Req() req: any) {
+    const sub = await this.billing.getSubscription(req.user.companyId);
+    if (sub === null) throw new NotFoundException('No active subscription');
+    return sub;
   }
 
   // ── Start trial ──────────────────────────────────────────

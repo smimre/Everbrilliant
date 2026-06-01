@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Body, Req, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Req, Query, UseGuards, NotFoundException } from '@nestjs/common';
 import { WhiteLabelService } from './white-label.service';
 import { JwtAuthGuard, Public } from '../../auth/auth.guard';
 
@@ -8,8 +8,10 @@ export class WhiteLabelController {
 
   @Get('config')
   @Public()
-  getConfig(@Query('domain') domain?: string, @Req() req?: any) {
-    return this.wl.getConfig(req?.user?.companyId, domain);
+  async getConfig(@Query('domain') domain?: string, @Req() req?: any) {
+    const config = await this.wl.getConfig(req?.user?.companyId, domain);
+    if (config === null) throw new NotFoundException('No white-label config found');
+    return config;
   }
 
   @Get('css')
