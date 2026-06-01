@@ -76,6 +76,9 @@ export class AuthService {
     });
 
     const accessToken = this.jwt.sign({ sub: user.id, phone: user.phone, companyId: company.id, role: user.role.name, permissions: [] }, { expiresIn: '8h' });
+    await this.prisma.session.create({
+      data: { userId: user.id, token: accessToken, expiresAt: new Date(Date.now() + 8 * 3600 * 1000) },
+    });
     return { accessToken, user: { id: user.id, name: user.name, phone: user.phone } };
   }
 
