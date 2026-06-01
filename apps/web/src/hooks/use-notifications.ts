@@ -3,10 +3,14 @@ import { notificationService } from '@/services';
 import { useNotificationStore } from '@/store';
 import { useEffect } from 'react';
 
-const notifKeys = {
+const notifKeys: {
+  all: readonly ['notifications'];
+  list: (page: number) => readonly ['notifications', 'list', number];
+  count: readonly ['notifications', 'count'];
+} = {
   all: ['notifications'] as const,
-  list: (page: number) => [...notifKeys.all, 'list', page] as const,
-  count: [...notifKeys.all, 'count'] as const,
+  list: (page: number) => ['notifications', 'list', page] as const,
+  count: ['notifications', 'count'] as const,
 };
 
 export function useNotifications(page = 1) {

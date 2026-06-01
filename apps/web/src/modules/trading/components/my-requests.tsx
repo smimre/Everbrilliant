@@ -15,7 +15,7 @@ export function MyRequests() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
   const { data: rawRequests, isLoading } = useRequests();
-  const requests = (rawRequests as any[]) || [];
+  const requests: any[] = rawRequests?.data ?? [];
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [showNew, setShowNew] = useState(false);
@@ -187,7 +187,7 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
     [fa ? 'مبلغ' : 'Amount', r.amountIRR ? `${Number(r.amountIRR).toLocaleString('fa-IR')} IRR` : null],
     [fa ? 'تاریخ' : 'Date', r.createdAt],
     [fa ? 'وضعیت' : 'Status', r.status],
-  ].filter(([, v]) => v);
+  ].filter(([, v]) => v) as [string, any][];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">

@@ -180,7 +180,7 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
     [fa ? 'تاریخ تحویل' : 'Delivery Date', c.deliveryDate],
     [fa ? 'محل تحویل' : 'Delivery Place', c.deliveryPlace],
     [fa ? 'شرایط پرداخت' : 'Payment Terms', c.paymentTerms],
-  ].filter(([, v]) => v);
+  ].filter(([, v]) => v) as [string, any][];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">

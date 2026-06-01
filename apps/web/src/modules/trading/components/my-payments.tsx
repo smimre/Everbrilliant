@@ -21,7 +21,7 @@ export function MyPayments() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
   const { data: raw } = useRequests();
-  const allRequests = (raw as any[]) || [];
+  const allRequests: any[] = raw?.data ?? [];
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 

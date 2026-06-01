@@ -9,7 +9,7 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
   const { data: rawRequests } = useRequests();
-  const requests = (rawRequests as any[]) || [];
+  const requests: any[] = rawRequests?.data ?? [];
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<any>(null);

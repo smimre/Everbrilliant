@@ -1,11 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import type { PaginatedResponse, TradeRequest } from '@/types';
+
+type RequestQuery = { limit?: number; page?: number; status?: string };
 
 // ── Requests ──────────────────────────────────────────────────
-export function useRequests() {
+export function useRequests(query?: RequestQuery) {
   return useQuery({
-    queryKey: ['trading', 'requests'],
-    queryFn: () => api.get('/trading/requests'),
+    queryKey: ['trading', 'requests', query],
+    queryFn: () => api.get<PaginatedResponse<TradeRequest>>('/trading/requests', query as Record<string, unknown>),
     staleTime: 30_000,
   });
 }
