@@ -207,7 +207,9 @@ const TABS = [
   { id: 'new',       labelFa: 'محموله جدید', labelEn: 'New Shipment', icon: '➕' },
   { id: 'waybills',  labelFa: 'بارنامه‌ها',  labelEn: 'Waybills',     icon: '📄' },
   { id: 'customs',   labelFa: 'گمرک',         labelEn: 'Customs',      icon: '🏛️' },
-  { id: 'finance',   labelFa: 'مالی',          labelEn: 'Finance',      icon: '💰' },
+  { id: 'quotes',    labelFa: 'نرخ‌نامه حمل', labelEn: 'Rate Quotes',  icon: '💰' },
+  { id: 'insurance', labelFa: 'بیمه',          labelEn: 'Insurance',    icon: '🛡️' },
+  { id: 'finance',   labelFa: 'مالی',          labelEn: 'Finance',      icon: '📊' },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
@@ -219,6 +221,15 @@ export function LogisticsPage() {
   const [tab, setTab] = useState<TabId>('dashboard');
   const [shipments, setShipments] = useState<Shipment[]>(MOCK_SHIPMENTS);
   const [statusFilter, setStatusFilter] = useState<ShipmentStatus | 'all'>('all');
+
+  // Quotes state
+  const [quotes, setQuotes] = useState([
+    { id: 'LQ-001', from: fa ? 'تهران' : 'Tehran',       to: fa ? 'اصفهان' : 'Isfahan',   type: fa ? 'کامیون' : 'Truck',         rate: 28000000,  unit: fa ? 'هر بار' : 'per load', active: true  },
+    { id: 'LQ-002', from: fa ? 'تهران' : 'Tehran',       to: fa ? 'مشهد' : 'Mashhad',    type: fa ? 'کامیون' : 'Truck',         rate: 45000000,  unit: fa ? 'هر بار' : 'per load', active: true  },
+    { id: 'LQ-003', from: fa ? 'بندر امام' : 'Imam Port', to: fa ? 'تهران' : 'Tehran',   type: fa ? 'بین‌المللی' : 'International', rate: 185000000, unit: fa ? 'هر TEU' : 'per TEU', active: true  },
+  ]);
+  const [showNewQuote, setShowNewQuote] = useState(false);
+  const [quoteForm, setQuoteForm] = useState({ from: '', to: '', type: fa ? 'کامیون' : 'Truck', rate: '', unit: fa ? 'هر بار' : 'per load' });
 
   // Modals
   const [detailShip, setDetailShip] = useState<Shipment | null>(null);
@@ -802,6 +813,156 @@ export function LogisticsPage() {
               </table>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── QUOTES ── */}
+      {tab === 'quotes' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-sm">💰 {fa ? 'نرخ‌نامه حمل' : 'Shipping Rate Quotes'}</h2>
+            <button onClick={() => setShowNewQuote(true)} className={btnPrimary}>
+              + {fa ? 'نرخ جدید' : 'New Rate'}
+            </button>
+          </div>
+          <div className="rounded-xl border border-[hsl(var(--border))] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-[hsl(var(--muted)/0.5)]">
+                  <tr>
+                    {[fa?'مبدا':'From', fa?'مقصد':'To', fa?'نوع':'Type', fa?'نرخ':'Rate', fa?'واحد':'Unit', fa?'وضعیت':'Status', ''].map((h,i) => (
+                      <th key={i} className="text-start px-3 py-2.5 text-xs font-semibold text-[hsl(var(--muted-foreground))] whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {quotes.map(q => (
+                    <tr key={q.id} className="border-t border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)]">
+                      <td className="px-3 py-2.5 font-medium">{q.from}</td>
+                      <td className="px-3 py-2.5">{q.to}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-medium">{q.type}</span>
+                      </td>
+                      <td className="px-3 py-2.5 font-bold">{fmtCost(q.rate)}</td>
+                      <td className="px-3 py-2.5 text-xs text-[hsl(var(--muted-foreground))]">{q.unit}</td>
+                      <td className="px-3 py-2.5">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${q.active ? 'bg-green-500/10 text-green-600' : 'bg-gray-500/10 text-gray-500'}`}>
+                          {q.active ? (fa ? 'فعال' : 'Active') : (fa ? 'غیرفعال' : 'Inactive')}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <button
+                          onClick={() => setQuotes(qs => qs.map(x => x.id === q.id ? { ...x, active: !x.active } : x))}
+                          className={btnSecondary}
+                        >
+                          {q.active ? (fa ? 'غیرفعال' : 'Deactivate') : (fa ? 'فعال' : 'Activate')}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* New Quote Modal */}
+          {showNewQuote && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-sm p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold">+ {fa ? 'نرخ حمل جدید' : 'New Shipping Rate'}</h2>
+                  <button onClick={() => setShowNewQuote(false)} className="text-xl text-[hsl(var(--muted-foreground))]">✕</button>
+                </div>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'مبدا' : 'From'}</label>
+                      <input value={quoteForm.from} onChange={e => setQuoteForm(f => ({ ...f, from: e.target.value }))} className={inp} placeholder={fa ? 'تهران، بندر...' : 'City, port...'} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'مقصد' : 'To'}</label>
+                      <input value={quoteForm.to} onChange={e => setQuoteForm(f => ({ ...f, to: e.target.value }))} className={inp} placeholder={fa ? 'شهر مقصد' : 'Destination city'} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'نوع وسیله' : 'Mode'}</label>
+                      <select value={quoteForm.type} onChange={e => setQuoteForm(f => ({ ...f, type: e.target.value }))} className={inp}>
+                        {[fa?'کامیون':'Truck', fa?'ون':'Van', fa?'قطار':'Train', fa?'هواپیما':'Air', fa?'بین‌المللی':'International'].map(o => <option key={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'نرخ (ریال)' : 'Rate (IRR)'}</label>
+                      <input type="number" value={quoteForm.rate} onChange={e => setQuoteForm(f => ({ ...f, rate: e.target.value }))} className={inp} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'واحد نرخ' : 'Rate Unit'}</label>
+                    <select value={quoteForm.unit} onChange={e => setQuoteForm(f => ({ ...f, unit: e.target.value }))} className={inp}>
+                      {[fa?'هر بار':'per load', fa?'هر تن':'per ton', fa?'هر کیلومتر':'per km', fa?'هر TEU':'per TEU'].map(o => <option key={o}>{o}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-5">
+                  <button onClick={() => setShowNewQuote(false)} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
+                  <button onClick={() => {
+                    if (!quoteForm.from || !quoteForm.to || !quoteForm.rate) return;
+                    setQuotes(qs => [...qs, { id: 'LQ-' + Date.now(), from: quoteForm.from, to: quoteForm.to, type: quoteForm.type, rate: Number(quoteForm.rate), unit: quoteForm.unit, active: true }]);
+                    setQuoteForm({ from: '', to: '', type: fa ? 'کامیون' : 'Truck', rate: '', unit: fa ? 'هر بار' : 'per load' });
+                    setShowNewQuote(false);
+                  }} className={`flex-1 ${btnPrimary}`}>
+                    💾 {fa ? 'ذخیره' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── INSURANCE ── */}
+      {tab === 'insurance' && (
+        <div className="space-y-4">
+          <h2 className="font-semibold text-sm">🛡️ {fa ? 'بیمه محموله‌ها' : 'Shipment Insurance'}</h2>
+          {shipments.filter(s => s.insurance).length === 0 ? (
+            <div className="text-center py-16 text-[hsl(var(--muted-foreground))] border border-dashed border-[hsl(var(--border))] rounded-xl">
+              <div className="text-4xl mb-3">🛡️</div>
+              <p className="font-semibold">{fa ? 'محموله بیمه‌داری ندارید' : 'No insured shipments'}</p>
+              <p className="text-sm mt-1 text-[hsl(var(--muted-foreground))]">{fa ? 'برای افزودن بیمه، از صفحه محموله‌ها اقدام کنید' : 'Add insurance from the Shipments tab'}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-[hsl(var(--border))] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-[hsl(var(--muted)/0.5)]">
+                    <tr>
+                      {[fa?'محموله':'Cargo', fa?'شرکت بیمه':'Insurer', fa?'شماره بیمه‌نامه':'Policy No', fa?'مبلغ بیمه':'Coverage', fa?'وضعیت':'Status'].map((h,i) => (
+                        <th key={i} className="text-start px-3 py-2.5 text-xs font-semibold text-[hsl(var(--muted-foreground))] whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shipments.filter(s => s.insurance).map(s => {
+                      const cfg = SHIP_STATUS_CONFIG[s.status];
+                      return (
+                        <tr key={s.id} className="border-t border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.3)]">
+                          <td className="px-3 py-2.5 font-semibold">{s.cargo}</td>
+                          <td className="px-3 py-2.5">{s.insurance!.company}</td>
+                          <td className="px-3 py-2.5 font-mono text-xs text-[hsl(var(--primary))]">{s.insurance!.policyNo}</td>
+                          <td className="px-3 py-2.5 font-bold">{fmtCost(s.insurance!.amount)}</td>
+                          <td className="px-3 py-2.5">
+                            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: cfg.color + '20', color: cfg.color }}>
+                              {cfg.icon} {fa ? cfg.labelFa : cfg.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -10,7 +10,7 @@ import {
   TrendingUp, Gavel, Link2, Settings, LogOut,
   BookOpen, Receipt, Package, Users, Landmark, BarChart3,
   Mail, CheckSquare, Calendar, Archive, GitBranch, ChevronDown,
-  Plus, Shield, LucideIcon,
+  Plus, Shield, LucideIcon, CreditCard, RefreshCw,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -26,14 +26,18 @@ interface NavItem {
 
 // ── Nav definitions (NO JSX at module level) ─────────────────
 const TRADING_NAV: NavItem[] = [
-  { label: 'Dashboard',    labelFa: 'داشبورد',           icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Inbox',        labelFa: 'صندوق ورودی',       icon: Inbox,           href: '/inbox',       badge: 3 },
-  { label: 'My Requests',  labelFa: 'درخواست‌های من',    icon: ClipboardList,   href: '/requests' },
-  { label: 'Contracts',    labelFa: 'قراردادها',          icon: FileText,        href: '/contracts' },
-  { label: 'CRM',          labelFa: 'مشتریان',            icon: Building2,       href: '/crm' },
-  { label: 'Tenders',      labelFa: 'مناقصات',            icon: Gavel,           href: '/tenders' },
-  { label: 'Reports',      labelFa: 'گزارشات',            icon: TrendingUp,      href: '/reports' },
-  { label: 'Connections',  labelFa: 'اتصالات',            icon: Link2,           href: '/connections' },
+  { label: 'Dashboard',         labelFa: 'داشبورد',           icon: LayoutDashboard, href: '/dashboard' },
+  { label: 'Inbox',             labelFa: 'صندوق ورودی',       icon: Inbox,           href: '/inbox',       badge: 3 },
+  { label: 'My Requests',       labelFa: 'درخواست‌های من',    icon: ClipboardList,   href: '/requests' },
+  { label: 'My Payments',       labelFa: 'پرداخت‌های من',     icon: CreditCard,      href: '/trading/my-payments' },
+  { label: 'My Invoices',       labelFa: 'فاکتورهای من',      icon: Receipt,         href: '/trading/my-invoices' },
+  { label: 'Order Templates',   labelFa: 'الگوهای سفارش',     icon: RefreshCw,       href: '/trading/request-templates' },
+  { label: 'Contracts',         labelFa: 'قراردادها',          icon: FileText,        href: '/contracts' },
+  { label: 'CRM',               labelFa: 'مشتریان',            icon: Building2,       href: '/crm' },
+  { label: 'Tenders',           labelFa: 'مناقصات',            icon: Gavel,           href: '/tenders' },
+  { label: 'Reports',           labelFa: 'گزارشات',            icon: TrendingUp,      href: '/reports' },
+  { label: 'Connections',       labelFa: 'اتصالات',            icon: Link2,           href: '/connections' },
+  { label: 'Letterhead',        labelFa: 'سربرگ دیجیتال',     icon: FileText,        href: '/trading/letterhead' },
 ];
 
 const FINANCE_NAV: NavItem[] = [

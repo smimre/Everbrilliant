@@ -28,7 +28,7 @@ function getToken(): string | null {
 
 function clearAuth() {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('eb-auth');
+  localStorage.removeItem('everbrilliant-auth');
   window.dispatchEvent(new CustomEvent('auth:expired'));
 }
 

@@ -7,13 +7,13 @@ import { useLocaleStore } from '@/store/locale.store';
 export const dynamic = 'force-dynamic';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   const { dir, lang } = useLocaleStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated) router.replace('/dashboard');
-  }, [isAuthenticated, router]);
+    if (_hasHydrated && isAuthenticated) router.replace('/dashboard');
+  }, [_hasHydrated, isAuthenticated, router]);
 
   useEffect(() => {
     document.documentElement.dir = dir;

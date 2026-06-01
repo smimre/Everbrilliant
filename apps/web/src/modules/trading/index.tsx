@@ -20,6 +20,10 @@ import { LogisticsPage } from './components/logistics';
 import { ExchangeRatesPage } from './components/exchange-rates';
 import { ApprovalWorkflowsPage } from './components/approval-workflows';
 import { PartnerProfilePage } from './components/partner-profile';
+import { MyPayments } from './components/my-payments';
+import { MyInvoices } from './components/my-invoices';
+import { RequestTemplates } from './components/request-templates';
+import { LetterheadPage } from './components/letterhead';
 
 type TradingView =
   | 'dashboard' | 'my-requests' | 'incoming-req' | 'my-quotes'
@@ -27,7 +31,8 @@ type TradingView =
   | 'connections' | 'crm' | 'reports' | 'sales-report'
   | 'manaqeseh' | 'my-manaqeseh' | 'quality-checks'
   | 'disputes' | 'inventory'
-  | 'logistics' | 'exchange-rates' | 'approval-workflows' | 'partner-profile';
+  | 'logistics' | 'exchange-rates' | 'approval-workflows' | 'partner-profile'
+  | 'my-payments' | 'my-invoices' | 'req-templates' | 'letterhead';
 
 interface NavItem {
   id: TradingView;
@@ -44,6 +49,9 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'my-requests',   label: 'My Requests',       labelFa: 'درخواست‌های من',     icon: '📋', section: 'requests' },
   { id: 'incoming-req',  label: 'Incoming',          labelFa: 'درخواست‌های ورودی',  icon: '📥', section: 'requests' },
   { id: 'my-quotes',     label: 'My Quotes',         labelFa: 'پیشنهادهای من',      icon: '💬', section: 'requests' },
+  { id: 'my-payments',   label: 'My Payments',       labelFa: 'پرداخت‌های من',      icon: '💳', section: 'requests' },
+  { id: 'my-invoices',   label: 'My Invoices',       labelFa: 'فاکتورهای من',       icon: '🧾', section: 'requests' },
+  { id: 'req-templates', label: 'Order Templates',   labelFa: 'الگوهای سفارش',      icon: '🔁', section: 'requests' },
   // قراردادها
   { id: 'my-contracts',  label: 'Contracts',         labelFa: 'قراردادها',           icon: '📄', section: 'contracts' },
   { id: 'inventory',     label: 'Inventory',         labelFa: 'موجودی کالا',         icon: '📦', section: 'contracts' },
@@ -64,6 +72,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'exchange-rates',     label: 'Exchange Rates',  labelFa: 'نرخ ارز',             icon: '💱', section: 'operations' },
   { id: 'approval-workflows', label: 'Approvals',       labelFa: 'گردش‌کار تأیید',     icon: '⚙️', section: 'operations' },
   { id: 'partner-profile',    label: 'Partner Profile', labelFa: 'پروفایل شرکاء',       icon: '🤝', section: 'network' },
+  { id: 'letterhead',         label: 'Letterhead',      labelFa: 'سربرگ دیجیتال',      icon: '📄', section: 'operations' },
 ];
 
 const SECTIONS: Record<string, { label: string; labelFa: string }> = {
@@ -103,6 +112,10 @@ export function TradingModule({ initialView }: { initialView?: string } = {}) {
       case 'exchange-rates':      return <ExchangeRatesPage />;
       case 'approval-workflows':  return <ApprovalWorkflowsPage />;
       case 'partner-profile':     return <PartnerProfilePage />;
+      case 'my-payments':         return <MyPayments />;
+      case 'my-invoices':         return <MyInvoices />;
+      case 'req-templates':       return <RequestTemplates />;
+      case 'letterhead':          return <LetterheadPage />;
       default:               return <TradingDashboard onNavigate={setView} />;
     }
   };

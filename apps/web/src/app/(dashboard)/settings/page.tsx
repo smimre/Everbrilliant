@@ -7,13 +7,16 @@ import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings, User, Bell, Palette, Shield, Globe, Users, Building2, Key, UserCog, Plus, Trash2, Check, X, BookOpen, Cpu } from 'lucide-react';
+import { Settings, User, Bell, Palette, Shield, Globe, Users, Building2, Key, UserCog, Plus, Trash2, Check, X, BookOpen, Cpu, FileText, CreditCard } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { AuditLogPage } from '@/modules/admin/audit-log';
 import { ApiKeysPage }  from '@/modules/admin/api-keys';
 import { SuperDashboard } from '@/modules/admin/super-dashboard';
+import { LetterheadPage } from '@/modules/trading/components/letterhead';
+import { PricingPlansPage } from '@/modules/saas/billing/pricing-plans';
 
-type SettingsTab = 'profile'|'appearance'|'notifications'|'security'|'language'|'users'|'company'|'roles'|'admin'|'audit-log'|'api-keys'|'super-admin';
+type SettingsTab = 'profile'|'appearance'|'notifications'|'security'|'language'|'users'|'company'|'roles'|'admin'|'audit-log'|'api-keys'|'super-admin'|'letterhead'|'pricing';
 
 const ALL_PERMS: Record<string,{label:string;group:string}> = {
   req_approve:     {label:'تایید قیمت',      group:'خریدار'},
@@ -182,6 +185,7 @@ export default function SettingsPage() {
   const { lang, setLocale } = useLocaleStore();
   const { user } = useAuthStore();
   const { theme, setTheme } = useUIStore();
+  const router = useRouter();
   const fa = lang === 'fa';
   const [tab, setTab] = useState<SettingsTab>('profile');
   const [users, setUsers] = useState<SubUser[]>(INIT_USERS);
@@ -203,6 +207,8 @@ export default function SettingsPage() {
     {id:'audit-log',   icon:<BookOpen className="h-4 w-4"/>,  fa:'تاریخچه رویدادها', en:'Audit Log'},
     {id:'api-keys',    icon:<Cpu className="h-4 w-4"/>,       fa:'API Keys',       en:'API Keys'},
     {id:'super-admin', icon:<Shield className="h-4 w-4"/>,    fa:'سوپر ادمین',     en:'Super Admin'},
+    {id:'letterhead',  icon:<FileText className="h-4 w-4"/>,  fa:'سربرگ دیجیتال', en:'Letterhead'},
+    {id:'pricing',     icon:<CreditCard className="h-4 w-4"/>,fa:'پلن اشتراک',     en:'Subscription'},
   ];
 
   const filteredUsers = users.filter(u => !userFilter || u.name.includes(userFilter) || u.phone.includes(userFilter));
@@ -423,9 +429,11 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {tab === 'audit-log' && <AuditLogPage />}
-          {tab === 'api-keys'  && <ApiKeysPage />}
-          {tab === 'super-admin' && <SuperDashboard />}
+          {tab === 'audit-log'  && <AuditLogPage />}
+          {tab === 'api-keys'   && <ApiKeysPage />}
+          {tab === 'super-admin'&& <SuperDashboard />}
+          {tab === 'letterhead' && <LetterheadPage />}
+          {tab === 'pricing'    && <PricingPlansPage />}
 
         </div>
       </div>

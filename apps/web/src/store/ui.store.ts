@@ -17,6 +17,7 @@ interface UIState {
   toasts: Toast[];
   isCommandPaletteOpen: boolean;
   isMobile: boolean;
+  _hasHydrated: boolean;
 }
 
 interface UIActions {
@@ -31,6 +32,7 @@ interface UIActions {
   toast: (type: Toast['type'], message: string, duration?: number) => void;
   setCommandPalette: (open: boolean) => void;
   setIsMobile: (mobile: boolean) => void;
+  setHasHydrated: (v: boolean) => void;
 }
 
 type UIStore = UIState & UIActions;
@@ -44,6 +46,7 @@ export const useUIStore = create<UIStore>()(
       toasts: [],
       isCommandPaletteOpen: false,
       isMobile: false,
+      _hasHydrated: false,
 
       setSidebarOpen: (sidebarOpen) => set((s) => { s.sidebarOpen = sidebarOpen; }),
 
@@ -87,10 +90,15 @@ export const useUIStore = create<UIStore>()(
       setCommandPalette: (isCommandPaletteOpen) => set((s) => { s.isCommandPaletteOpen = isCommandPaletteOpen; }),
 
       setIsMobile: (isMobile) => set((s) => { s.isMobile = isMobile; }),
+
+      setHasHydrated: (v) => set((s) => { s._hasHydrated = v; }),
     })),
     {
       name: 'eb-ui',
       partialize: (s) => ({ theme: s.theme, sidebarOpen: s.sidebarOpen, activeModule: s.activeModule }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
