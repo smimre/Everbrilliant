@@ -27,6 +27,9 @@ import { GatewayModule }       from './gateway/gateway.module';
 // Dashboard
 import { DashboardModule }     from './modules/dashboard/dashboard.module';
 
+// Admin
+import { AdminModule }         from './modules/admin/admin.module';
+
 // SaaS
 import { SaasModule }          from './modules/saas/saas.module';
 
@@ -48,6 +51,7 @@ import { SaasModule }          from './modules/saas/saas.module';
     HealthModule,
     GatewayModule,
     DashboardModule,
+    AdminModule,
     SaasModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
