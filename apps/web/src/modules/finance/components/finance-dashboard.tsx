@@ -1,19 +1,24 @@
 'use client';
 import { useLocaleStore } from '@/store/locale.store';
 
-interface Props { onNavigate: (view: any) => void; }
+interface Props {
+  onNavigate: (view: any) => void;
+  invoiceCount?: number;
+  staffCount?: number;
+  inventoryCount?: number;
+}
 
-export function FinanceDashboard({ onNavigate }: Props) {
+export function FinanceDashboard({ onNavigate, invoiceCount = 0, staffCount = 0, inventoryCount = 0 }: Props) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
 
   const stats = [
     { icon: '💰', val: '0', label: fa ? 'کل نقدینگی' : 'Total Cash', color: '#10b981', sub: fa ? 'موجودی بانک' : 'Bank Balance' },
-    { icon: '🧾', val: '0', label: fa ? 'فاکتور صادره' : 'Issued Invoices', color: '#3b82f6', sub: fa ? 'این ماه' : 'This month' },
+    { icon: '🧾', val: String(invoiceCount), label: fa ? 'فاکتور صادره' : 'Issued Invoices', color: '#3b82f6', sub: fa ? 'این ماه' : 'This month' },
     { icon: '📥', val: '0', label: fa ? 'پرداختنی' : 'Payables', color: '#ef4444', sub: fa ? 'سررسید نزدیک' : 'Due soon' },
     { icon: '📤', val: '0', label: fa ? 'دریافتنی' : 'Receivables', color: '#f59e0b', sub: fa ? 'در انتظار' : 'Pending' },
-    { icon: '👥', val: '0', label: fa ? 'پرسنل فعال' : 'Active Staff', color: '#8b5cf6', sub: fa ? 'کارمند' : 'employees' },
-    { icon: '📦', val: '0', label: fa ? 'اقلام انبار' : 'Inventory Items', color: '#06b6d4', sub: fa ? 'قلم کالا' : 'items' },
+    { icon: '👥', val: String(staffCount), label: fa ? 'پرسنل فعال' : 'Active Staff', color: '#8b5cf6', sub: fa ? 'کارمند' : 'employees' },
+    { icon: '📦', val: String(inventoryCount), label: fa ? 'اقلام انبار' : 'Inventory Items', color: '#06b6d4', sub: fa ? 'قلم کالا' : 'items' },
   ];
 
   const quickActions = [

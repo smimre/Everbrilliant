@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useRequests, useConnections } from '@/hooks/use-trading';
 import { TradingDashboard } from './components/trading-dashboard';
 import { MyRequests } from './components/my-requests';
 import { IncomingRequests } from './components/incoming-requests';
@@ -40,6 +41,7 @@ interface NavItem {
   labelFa: string;
   icon: string;
   section?: string;
+  badge?: number;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -89,6 +91,11 @@ export function TradingModule({ initialView }: { initialView?: string } = {}) {
   const [view, setView] = useState<TradingView>((initialView as TradingView) || 'dashboard');
   const isRTL = lang === 'fa' || lang === 'ar';
 
+  const { data: reqData } = useRequests();
+  const { data: connData } = useConnections();
+  const pendingCount = ((reqData as any)?.data ?? []).filter((r: any) => r.status === 'pending').length;
+  const connCount = ((connData as any)?.data ?? []).length;
+
   const renderContent = () => {
     switch (view) {
       case 'dashboard':      return <TradingDashboard onNavigate={setView} />;
@@ -120,12 +127,16 @@ export function TradingModule({ initialView }: { initialView?: string } = {}) {
     }
   };
 
-  // Group nav items by section
+  const BADGES: Partial<Record<TradingView, number>> = {
+    'my-requests': pendingCount || undefined,
+    'connections': connCount || undefined,
+  };
+
   const grouped: Record<string, NavItem[]> = { main: [] };
   NAV_ITEMS.forEach(item => {
     const sec = item.section || 'main';
     if (!grouped[sec]) grouped[sec] = [];
-    grouped[sec].push(item);
+    grouped[sec].push({ ...item, badge: BADGES[item.id] });
   });
 
   return (
@@ -174,7 +185,12 @@ function NavBtn({ item, active, lang, onClick }: {
       }`}
     >
       <span>{item.icon}</span>
-      <span className="truncate">{lang === 'fa' ? item.labelFa : item.label}</span>
+      <span className="truncate flex-1">{lang === 'fa' ? item.labelFa : item.label}</span>
+      {item.badge ? (
+        <span className="text-[10px] font-bold bg-[hsl(var(--primary))] text-white rounded-full px-1.5 py-0.5 leading-none">
+          {item.badge}
+        </span>
+      ) : null}
     </button>
   );
 }

@@ -1,8 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useConnections } from '@/hooks/use-trading';
+import { useAuthStore } from '@/store/auth.store';
 
-const PARTNERS = [
+const CONN_COLORS = ['#3b82f6','#8b5cf6','#f59e0b','#10b981','#ef4444','#06b6d4'];
+
+const MOCK_PARTNERS = [
   { id:'acc2', name:'شرکت بازرگانی الفا', country:'Iran', type:'buyer', transactions:12, value:8500000000, status:'active', initials:'ب', color:'#3b82f6' },
   { id:'acc3', name:'مهر پارس', country:'Iran', type:'supplier', transactions:7, value:3200000000, status:'active', initials:'م', color:'#8b5cf6' },
   { id:'acc4', name:'ارمغان لجستیک', country:'Iran', type:'logistics', transactions:20, value:1500000000, status:'active', initials:'ا', color:'#f59e0b' },
@@ -13,6 +17,7 @@ function genCode(){ return 'EB-'+Math.random().toString(36).substring(2,8).toUpp
 
 export function Connections() {
   const { lang } = useLocaleStore();
+  const { user } = useAuthStore();
   const fa = lang === 'fa';
   const [tab, setTab] = useState<'my'|'invite'>('my');
   const [myCode] = useState(genCode);
@@ -20,14 +25,33 @@ export function Connections() {
   const [copied, setCopied] = useState(false);
   const [filter, setFilter] = useState('');
 
+  const { data: rawConnections } = useConnections();
+  const apiConns: any[] = (rawConnections as any)?.data ?? [];
+  const partners = apiConns.length > 0
+    ? apiConns.map((c: any, i: number) => {
+        const p = c.companyAId === user?.companyId ? c.companyB : c.companyA;
+        return {
+          id: String(p?.id ?? c.id),
+          name: p?.name ?? '',
+          country: p?.country ?? '',
+          type: 'buyer',
+          transactions: 0,
+          value: 0,
+          status: 'active',
+          initials: (p?.name ?? '?')[0],
+          color: CONN_COLORS[i % CONN_COLORS.length],
+        };
+      })
+    : MOCK_PARTNERS;
+
   const copyCode = () => { navigator.clipboard.writeText(myCode).then(()=>{ setCopied(true); setTimeout(()=>setCopied(false),2000); }); };
-  const filtered = PARTNERS.filter(p=>!filter||p.name.includes(filter)||p.country.includes(filter));
+  const filtered = partners.filter(p=>!filter||p.name.includes(filter)||p.country.includes(filter));
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">{fa?'🔗 اتصالات تجاری':'🔗 Business Connections'}</h1>
-        <span className="text-sm text-[hsl(var(--muted-foreground))]">{PARTNERS.length} {fa?'شریک':'partners'}</span>
+        <span className="text-sm text-[hsl(var(--muted-foreground))]">{partners.length} {fa?'شریک':'partners'}</span>
       </div>
       <div className="flex gap-2 bg-[hsl(var(--secondary))] rounded-xl p-1">
         {(['my','invite'] as const).map(t=>(

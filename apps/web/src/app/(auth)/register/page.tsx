@@ -112,7 +112,11 @@ export default function RegisterPage() {
     try {
       setError('');
       const result = await authService.register(data);
+      // Store the token first so the api client can use it for me()
       setAuth(result.user as any, result.accessToken);
+      // Fetch full user profile (register response only returns id/name/phone)
+      const fullUser = await authService.me();
+      setAuth(fullUser, result.accessToken);
       router.replace('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed');

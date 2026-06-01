@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useInvoices, useEmployees, useInventory } from '@/hooks/use-finance';
 import { FinanceDashboard } from './components/finance-dashboard';
 import { DualLedgerSystem } from './components/dual-ledger-system';
 import { ChartOfAccounts } from './components/coa';
@@ -74,9 +75,17 @@ export function FinanceModule({ initialView }: { initialView?: FinanceView } = {
   const [view, setView] = useState<FinanceView>(initialView || 'dashboard');
   const fa = lang === 'fa';
 
+  const { data: invoiceData } = useInvoices();
+  const { data: employeeData } = useEmployees();
+  const { data: inventoryData } = useInventory();
+
+  const invoiceCount = ((invoiceData as any)?.data ?? []).length;
+  const staffCount = ((employeeData as any)?.data ?? []).filter((e: any) => e.isActive !== false).length;
+  const inventoryCount = ((inventoryData as any)?.data ?? []).length;
+
   const renderContent = () => {
     switch (view) {
-      case 'dashboard':         return <FinanceDashboard onNavigate={setView} />;
+      case 'dashboard':         return <FinanceDashboard onNavigate={setView} invoiceCount={invoiceCount} staffCount={staffCount} inventoryCount={inventoryCount} />;
       case 'dual-books':        return <DualLedgerSystem />;
       case 'coa':               return <ChartOfAccounts />;
       case 'journal':           return <Journal />;
