@@ -1,29 +1,11 @@
 'use client';
-import { useEffect, useRef, useCallback } from 'react';
-import { useAuthStore } from '@/store/auth.store';
-import { socketManager, WS_EVENTS } from '@/lib/socket/socket-client';
+import { useCallback } from 'react';
+import { socketManager } from '@/lib/socket/socket-client';
 
+// SocketProvider in providers/index.tsx owns connect/disconnect.
+// This hook only exposes emit/on for components that need to interact
+// with the already-established socket.
 export function useSocket() {
-  const { accessToken, isAuthenticated } = useAuthStore();
-  const connectedRef = useRef(false);
-
-  useEffect(() => {
-    if (!isAuthenticated || !accessToken) {
-      socketManager.disconnect();
-      connectedRef.current = false;
-      return;
-    }
-
-    if (!connectedRef.current) {
-      socketManager.connect(accessToken);
-      connectedRef.current = true;
-    }
-
-    return () => {
-      // Don't disconnect on component unmount — keep connection alive
-    };
-  }, [isAuthenticated, accessToken]);
-
   const emit = useCallback((event: string, data?: unknown) => {
     socketManager.emit(event, data);
   }, []);

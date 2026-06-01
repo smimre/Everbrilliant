@@ -39,7 +39,8 @@ class SocketManager {
   private connectionState: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
 
   connect(token: string): Socket {
-    if (this.socket?.connected && this.token === token) {
+    // Return existing socket if same token and already connecting or connected
+    if (this.socket && this.token === token && this.connectionState !== 'disconnected') {
       return this.socket;
     }
 

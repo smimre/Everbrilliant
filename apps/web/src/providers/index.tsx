@@ -74,14 +74,17 @@ function AuthWatcher() {
 }
 
 function SocketProvider() {
-  const { accessToken, isAuthenticated } = useAuthStore();
+  const { accessToken, isAuthenticated, _hasHydrated } = useAuthStore();
   useEffect(() => {
+    // Wait for Zustand to rehydrate before making socket decisions,
+    // otherwise the brief isAuthenticated=false state triggers a disconnect.
+    if (!_hasHydrated) return;
     if (isAuthenticated && accessToken) {
       socketManager.connect(accessToken);
     } else {
       socketManager.disconnect();
     }
-  }, [isAuthenticated, accessToken]);
+  }, [isAuthenticated, accessToken, _hasHydrated]);
   return null;
 }
 
