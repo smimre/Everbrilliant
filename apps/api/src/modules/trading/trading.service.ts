@@ -172,6 +172,22 @@ export class TradingService {
       data: { tenderId, bidderId: userId, companyId, totalPrice: dto.totalPrice, currency: dto.currency || 'IRR', note: dto.note, status: 'PENDING' },
     });
   }
+
+  async getConnections(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where = { OR: [{ companyAId: companyId }, { companyBId: companyId }] };
+    const [data, total] = await Promise.all([
+      this.prisma.companyConnection.findMany({
+        where, skip, take, orderBy: { connectedAt: 'desc' },
+        include: {
+          companyA: { select: { id: true, name: true, country: true } },
+          companyB: { select: { id: true, name: true, country: true } },
+        },
+      }),
+      this.prisma.companyConnection.count({ where }),
+    ]);
+    return this.page(data, total, page, limit);
+  }
 }
 
 import { BadRequestException } from '@nestjs/common';

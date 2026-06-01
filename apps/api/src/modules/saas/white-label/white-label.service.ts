@@ -30,6 +30,7 @@ export class WhiteLabelService {
 
   // ── Get config by company or domain ──────────────────────────
   async getConfig(companyId?: number, domain?: string) {
+    if (!companyId && !domain) return null;
     const cacheKey = domain ? `wl:domain:${domain}` : `wl:company:${companyId}`;
 
     return this.cache.getOrSet(cacheKey, async () => {

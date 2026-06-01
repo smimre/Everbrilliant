@@ -23,4 +23,6 @@ export class TradingController {
   @Get('tenders')            getTenders(@Query() q: any)                                    { return this.trading.getTenders(q); }
   @Post('tenders')           createTender(@Req() r: any, @Body() dto: any)                 { return this.trading.createTender(r.user.companyId, r.user.id, dto); }
   @Post('tenders/:id/bids')  placeBid(@Req() r: any, @Param('id') id: string, @Body() d: any) { return this.trading.placeBid(r.user.companyId, r.user.id, id, d); }
+
+  @Get('connections')        getConnections(@Req() r: any, @Query() q: any)                { return this.trading.getConnections(r.user.companyId, q); }
 }

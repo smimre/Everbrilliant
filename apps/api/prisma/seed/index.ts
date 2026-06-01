@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════
 // EVERBRILLIANT — Database Seed
 // ══════════════════════════════════════════════
-import { PrismaClient, Plan, Priority, RequestStatus, InvoiceStatus } from '@prisma/client';
+import { PrismaClient, Plan, Priority, RequestStatus, InvoiceStatus, AuditAction } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -220,7 +220,7 @@ async function main() {
   for (const co of companies) {
     await prisma.company.upsert({
       where: { id: co.id },
-      update: {},
+      update: { name: co.name, legalName: co.legalName, plan: co.plan, country: co.country },
       create: co as any,
     });
   }
@@ -245,7 +245,7 @@ async function main() {
   for (const u of users) {
     await prisma.user.upsert({
       where: { id: u.id },
-      update: {},
+      update: { name: u.name, jobTitle: u.jobTitle, department: u.department },
       create: u as any,
     });
   }
@@ -380,6 +380,21 @@ async function main() {
     },
   });
   console.log('  ✅ Demo request + invoice');
+
+  // ── 9. Audit Log ──────────────────────────
+  console.log('📝 Creating audit log entries...');
+  const auditEntries = [
+    { userId: 1, companyId: 1, action: AuditAction.LOGIN,   module: 'auth',    description: 'احمد رضایی وارد سیستم شد' },
+    { userId: 1, companyId: 1, action: AuditAction.CREATE,  module: 'trading', entityType: 'TradeRequest', entityId: 'REQ-001', description: 'درخواست خرید روغن پالم ایجاد شد' },
+    { userId: 3, companyId: 1, action: AuditAction.CREATE,  module: 'finance', entityType: 'Invoice',      entityId: 'TINV-1403-00001', description: 'فاکتور فروش صادر شد' },
+    { userId: 1, companyId: 1, action: AuditAction.APPROVE, module: 'trading', entityType: 'TradeRequest', entityId: 'REQ-001', description: 'درخواست تأیید شد' },
+    { userId: 3, companyId: 1, action: AuditAction.UPDATE,  module: 'finance', entityType: 'Invoice',      entityId: 'TINV-1403-00001', description: 'پرداخت ثبت شد — تسویه کامل' },
+    { userId: 2, companyId: 1, action: AuditAction.LOGIN,   module: 'auth',    description: 'علی کریمی وارد سیستم شد' },
+  ];
+  for (const entry of auditEntries) {
+    await prisma.auditLog.create({ data: entry });
+  }
+  console.log(`  ✅ ${auditEntries.length} audit entries`);
 
   // ── Summary ───────────────────────────────
   console.log('\n══════════════════════════════════════');

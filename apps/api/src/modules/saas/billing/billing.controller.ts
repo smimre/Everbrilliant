@@ -5,7 +5,6 @@ import {
 import { BillingService } from './billing.service';
 import { PlansService } from '../plans/plans.service';
 import { JwtAuthGuard, Public } from '../../auth/auth.guard';
-import { useLocaleFromHeader } from '../../../common/decorators/locale.decorator';
 
 @Controller('saas')
 @UseGuards(JwtAuthGuard)
