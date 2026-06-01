@@ -9,7 +9,8 @@ import type { Letter, WorkflowRequest } from '@/types';
 import { Plus, Mail, CheckSquare, Calendar, Archive, GitBranch } from 'lucide-react';
 
 type AutoView = 'dashboard'|'letters'|'requests'|'meetings'|'tasks'|'archive'|'workflows';
-interface AutomationModuleProps { initialView?: AutoView; }
+type LetterFilter = 'all'|'incoming'|'outgoing';
+interface AutomationModuleProps { initialView?: AutoView; initialLetterFilter?: LetterFilter; }
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const MOCK_MEETINGS = [
@@ -93,7 +94,7 @@ const STEP_STATUS_ICONS: Record<string,string>  = { done:'✅', active:'🔵', w
 const inp = "w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]";
 
 // ─── Main Module ──────────────────────────────────────────────────────────────
-export function AutomationModule({ initialView = 'dashboard' }: AutomationModuleProps) {
+export function AutomationModule({ initialView = 'dashboard', initialLetterFilter = 'all' }: AutomationModuleProps) {
   const [view, setView] = useState<AutoView>(initialView);
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
@@ -107,7 +108,7 @@ export function AutomationModule({ initialView = 'dashboard' }: AutomationModule
         <button onClick={() => setView('dashboard')} className="flex items-center gap-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
           ← {fa ? 'داشبورد اتوماسیون' : 'Automation Dashboard'}
         </button>
-        {view === 'letters'   && <LettersPage />}
+        {view === 'letters'   && <LettersPage defaultFilter={initialLetterFilter} />}
         {view === 'requests'  && <WorkflowPage />}
         {view === 'meetings'  && <MeetingsPage />}
         {view === 'tasks'     && <TasksPage />}
@@ -214,11 +215,11 @@ export function AutomationModule({ initialView = 'dashboard' }: AutomationModule
 }
 
 // ─── Letters ──────────────────────────────────────────────────────────────────
-function LettersPage() {
+function LettersPage({ defaultFilter = 'all' }: { defaultFilter?: 'all'|'incoming'|'outgoing' }) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
   const [showNew, setShowNew] = useState(false);
-  const [filter, setFilter] = useState<'all'|'incoming'|'outgoing'>('all');
+  const [filter, setFilter] = useState<'all'|'incoming'|'outgoing'>(defaultFilter);
   const MOCK: Letter[] = [
     { id:'L-001', type:'incoming', title:'درخواست همکاری و عاملیت', letterNo:'1403/001', date:'1403/02/10', from:'شرکت الفا', to:'گروه رضایی', body:'', priority:'normal', status:'received', companyId:1, createdAt:'' },
     { id:'L-002', type:'outgoing', title:'پاسخ پیشنهاد قرارداد', letterNo:'1403/002', date:'1403/02/12', from:'گروه رضایی', to:'شرکت الفا', body:'', priority:'urgent', status:'sent', companyId:1, createdAt:'' },

@@ -29,9 +29,9 @@ const SECTIONS: Record<string, { label: string; labelFa: string }> = {
   finance:    { label: '💰 Cost & Reports', labelFa: '💰 هزینه و گزارش' },
 };
 
-export function ManufacturingModule() {
+export function ManufacturingModule({ initialView }: { initialView?: MfgView } = {}) {
   const { lang } = useLocaleStore();
-  const [view, setView] = useState<MfgView>('dashboard');
+  const [view, setView] = useState<MfgView>(initialView || 'dashboard');
   const fa = lang === 'fa';
 
   const renderContent = () => {

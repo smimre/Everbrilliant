@@ -12,20 +12,22 @@ import { cn } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
   const { dir, lang } = useLocaleStore();
   const { sidebarOpen } = useUIStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace('/login');
-  }, [isAuthenticated, router]);
+    if (_hasHydrated && !isAuthenticated) router.replace('/login');
+  }, [_hasHydrated, isAuthenticated, router]);
 
   useEffect(() => {
     document.documentElement.dir = dir;
     document.documentElement.lang = lang;
   }, [dir, lang]);
 
+  // Wait for Zustand to rehydrate from localStorage before making auth decisions
+  if (!_hasHydrated) return null;
   if (!isAuthenticated) return null;
 
   return (

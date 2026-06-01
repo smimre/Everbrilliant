@@ -2,5 +2,5 @@
 export const dynamic = 'force-dynamic';
 import { AutomationModule } from '@/modules/automation';
 export default function AutoOutboxPage() {
-  return <AutomationModule initialView="letters" />;
+  return <AutomationModule initialView="letters" initialLetterFilter="outgoing" />;
 }

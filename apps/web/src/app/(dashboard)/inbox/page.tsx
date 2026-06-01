@@ -2,5 +2,5 @@
 export const dynamic = 'force-dynamic';
 import { TradingModule } from '@/modules/trading';
 export default function InboxPage() {
-  return <TradingModule initialView="dashboard" />;
+  return <TradingModule initialView="incoming-req" />;
 }

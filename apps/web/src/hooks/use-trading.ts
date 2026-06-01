@@ -5,7 +5,7 @@ import { api } from '@/lib/api-client';
 export function useRequests() {
   return useQuery({
     queryKey: ['trading', 'requests'],
-    queryFn: () => api.get('/api/trading/requests'),
+    queryFn: () => api.get('/trading/requests'),
     staleTime: 30_000,
   });
 }
@@ -13,7 +13,7 @@ export function useRequests() {
 export function useCreateRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.post('/api/trading/requests', data),
+    mutationFn: (data: any) => api.post('/trading/requests', data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'requests'] }),
   });
 }
@@ -22,7 +22,7 @@ export function useCreateRequest() {
 export function useContracts() {
   return useQuery({
     queryKey: ['trading', 'contracts'],
-    queryFn: () => api.get('/api/trading/contracts'),
+    queryFn: () => api.get('/trading/contracts'),
     staleTime: 30_000,
   });
 }
@@ -31,7 +31,7 @@ export function useContracts() {
 export function useTenders() {
   return useQuery({
     queryKey: ['trading', 'tenders'],
-    queryFn: () => api.get('/api/trading/tenders'),
+    queryFn: () => api.get('/trading/tenders'),
     staleTime: 30_000,
   });
 }
@@ -39,7 +39,7 @@ export function useTenders() {
 export function useCreateTender() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => api.post('/api/trading/tenders', data),
+    mutationFn: (data: any) => api.post('/trading/tenders', data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'tenders'] }),
   });
 }
@@ -48,7 +48,7 @@ export function useCreateTender() {
 export function useConnections() {
   return useQuery({
     queryKey: ['trading', 'connections'],
-    queryFn: () => api.get('/api/trading/connections'),
+    queryFn: () => api.get('/trading/connections'),
     staleTime: 60_000,
   });
 }

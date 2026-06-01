@@ -69,9 +69,9 @@ const SECTIONS: Record<string, { label: string; labelFa: string }> = {
   reports:    { label: '📊 Reports',        labelFa: '📊 گزارشات' },
 };
 
-export function FinanceModule() {
+export function FinanceModule({ initialView }: { initialView?: FinanceView } = {}) {
   const { lang } = useLocaleStore();
-  const [view, setView] = useState<FinanceView>('dashboard');
+  const [view, setView] = useState<FinanceView>(initialView || 'dashboard');
   const fa = lang === 'fa';
 
   const renderContent = () => {
