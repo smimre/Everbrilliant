@@ -24,6 +24,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { HealthModule }        from './modules/health/health.module';
 import { GatewayModule }       from './gateway/gateway.module';
 
+// Dashboard
+import { DashboardModule }     from './modules/dashboard/dashboard.module';
+
 // SaaS
 import { SaasModule }          from './modules/saas/saas.module';
 
@@ -44,6 +47,7 @@ import { SaasModule }          from './modules/saas/saas.module';
     NotificationsModule,
     HealthModule,
     GatewayModule,
+    DashboardModule,
     SaasModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

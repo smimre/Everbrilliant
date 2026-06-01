@@ -6,8 +6,7 @@ import { RecentRequestsWidget } from './widgets/recent-requests';
 import { InvoiceSummaryWidget } from './widgets/invoice-summary';
 import { ActivityFeedWidget } from './widgets/activity-feed';
 import { QuickActionsWidget } from './widgets/quick-actions';
-import { useRequests } from '@/hooks/use-trading';
-import { useInvoices } from '@/hooks/use-finance';
+import { useDashboardStats } from '@/hooks/use-dashboard';
 import { ClipboardList, FileText, Receipt, AlertTriangle, TrendingUp, Users } from 'lucide-react';
 
 const T = {
@@ -33,16 +32,10 @@ export function DashboardModule() {
   const { lang } = useLocaleStore();
   const t = T[lang as keyof typeof T] || T.en;
 
-  const { data: requests, isLoading: reqLoading } = useRequests({ limit: 5 });
-  const { data: invoices, isLoading: invLoading } = useInvoices({ limit: 5 });
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? t.greeting_morning : hour < 18 ? t.greeting_afternoon : t.greeting_evening;
-
-  const pendingCount   = requests?.data?.filter(r => r.status === 'pending').length ?? 0;
-  const unpaidAmount   = invoices?.data?.filter(i => ['sent','partial','overdue'].includes(i.status))
-    .reduce((s, i) => s + (i.total - i.paid), 0) ?? 0;
-  const overdueCount   = invoices?.data?.filter(i => i.status === 'overdue').length ?? 0;
 
   return (
     <div className="space-y-6">
@@ -63,37 +56,40 @@ export function DashboardModule() {
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard
           icon={<ClipboardList className="h-5 w-5"/>}
-          label={t.pendingReqs} value={pendingCount}
-          change={reqLoading ? '...' : `${requests?.total ?? 0} total`}
-          changeType="neutral" color="#3b82f6" loading={reqLoading}
+          label={t.pendingReqs} value={stats?.pendingRequests ?? 0}
+          change={statsLoading ? '...' : `${(stats?.pendingRequests ?? 0)} pending`}
+          changeType="neutral" color="#3b82f6" loading={statsLoading}
         />
         <StatCard
           icon={<FileText className="h-5 w-5"/>}
-          label={t.activeContracts} value="5"
-          change="2 expiring soon" changeType="neutral" color="#8b5cf6"
+          label={t.activeContracts} value={stats?.activeContracts ?? 0}
+          change={statsLoading ? '...' : `${stats?.activeContracts ?? 0} active`}
+          changeType="neutral" color="#8b5cf6" loading={statsLoading}
         />
         <StatCard
           icon={<Receipt className="h-5 w-5"/>}
           label={t.unpaidInvoices}
-          value={new Intl.NumberFormat(lang === 'fa' ? 'fa-IR' : 'en-US').format(Math.round(unpaidAmount / 1_000_000)) + 'M'}
-          change={`${invoices?.data?.filter(i => i.status !== 'paid').length ?? 0} invoices`}
-          changeType="down" color="#f59e0b" loading={invLoading}
+          value={new Intl.NumberFormat(lang === 'fa' ? 'fa-IR' : 'en-US').format(Math.round((stats?.unpaidAmount ?? 0) / 1_000_000)) + 'M'}
+          change={`${stats?.unpaidInvoicesCount ?? 0} invoices`}
+          changeType="down" color="#f59e0b" loading={statsLoading}
         />
         <StatCard
           icon={<AlertTriangle className="h-5 w-5"/>}
-          label={t.overdueItems} value={overdueCount}
-          change={overdueCount > 0 ? 'Needs attention' : 'All clear'}
-          changeType={overdueCount > 0 ? 'down' : 'up'} color="#ef4444"
+          label={t.overdueItems} value={stats?.overdueCount ?? 0}
+          change={(stats?.overdueCount ?? 0) > 0 ? 'Needs attention' : 'All clear'}
+          changeType={(stats?.overdueCount ?? 0) > 0 ? 'down' : 'up'} color="#ef4444" loading={statsLoading}
         />
         <StatCard
           icon={<TrendingUp className="h-5 w-5"/>}
-          label={t.totalRevenue} value="12.4B"
-          change="+18% vs last month" changeType="up" color="#10b981" suffix="IRR"
+          label={t.totalRevenue}
+          value={new Intl.NumberFormat(lang === 'fa' ? 'fa-IR' : 'en-US').format(Math.round((stats?.totalRevenueMTD ?? 0) / 1_000_000_000) ) + 'B'}
+          change="MTD" changeType="up" color="#10b981" suffix="IRR" loading={statsLoading}
         />
         <StatCard
           icon={<Users className="h-5 w-5"/>}
-          label={t.activeConnections} value="8"
-          change="3 new this month" changeType="up" color="#06b6d4"
+          label={t.activeConnections} value={stats?.activeConnections ?? 0}
+          change={statsLoading ? '...' : `${stats?.activeConnections ?? 0} partners`}
+          changeType="up" color="#06b6d4" loading={statsLoading}
         />
       </div>
 
