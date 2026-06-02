@@ -102,7 +102,7 @@ export function FinanceModule({ initialView }: { initialView?: FinanceView } = {
       case 'balance-sheet':     return <BalanceSheet />;
       case 'income-stmt':       return <IncomeStatement />;
       case 'budget':            return <Budget />;
-      case 'reports':           return <FinanceReports />;
+      case 'reports':           return <FinanceReports onNavigate={setView} />;
       default:                  return <FinanceDashboard onNavigate={setView} />;
     }
   };

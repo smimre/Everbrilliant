@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useWorkOrders, useCreateWorkOrder } from '@/hooks/use-manufacturing';
 
 interface WorkOrder {
   id: string;
@@ -27,10 +28,21 @@ const SAMPLE_WO: WorkOrder[] = [
 export function WorkOrders() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const [orders, setOrders] = useState<WorkOrder[]>(SAMPLE_WO);
+  const { data: apiData } = useWorkOrders();
+  const apiOrders: WorkOrder[] = ((apiData as any)?.data ?? []).map((o: any) => ({
+    id: String(o.id), no: o.no ?? o.orderNumber ?? 'WO-???',
+    productName: o.productName ?? o.product ?? '', productNameFa: o.productNameFa ?? o.productName ?? '',
+    bomCode: o.bomCode ?? '', qty: o.qty ?? 0, unit: o.unit ?? 'Pcs',
+    startDate: o.startDate ?? '', dueDate: o.dueDate ?? '',
+    status: o.status ?? 'planned', priority: o.priority ?? 'normal',
+    progress: o.progress ?? 0, notes: o.notes, workcenter: o.workcenter,
+  }));
+  const [localOrders, setLocalOrders] = useState<WorkOrder[]>(SAMPLE_WO);
+  const orders = apiOrders.length > 0 ? apiOrders : localOrders;
   const [selected, setSelected] = useState<WorkOrder|null>(null);
   const [showNew, setShowNew] = useState(false);
   const [filter, setFilter] = useState('all');
+  const createWO = useCreateWorkOrder();
 
   const statusConfig: Record<string,{label:string;labelFa:string;color:string;icon:string}> = {
     planned:     {label:'Planned',    labelFa:'برنامه‌ریزی شده', color:'#64748b', icon:'📋'},
@@ -114,17 +126,17 @@ export function WorkOrders() {
                   </div>
                   <div className="flex flex-col gap-2 shrink-0">
                     {wo.status === 'planned' && (
-                      <button className="px-3 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium" onClick={e=>{e.stopPropagation();}}>
+                      <button className="px-3 py-1.5 rounded-lg bg-blue-500 text-white text-xs font-medium" onClick={e=>{e.stopPropagation();setLocalOrders(p=>p.map(x=>x.id===wo.id?{...x,status:'in-progress'}:x));}}>
                         ▶️ {fa?'شروع':'Start'}
                       </button>
                     )}
                     {wo.status === 'in-progress' && (
-                      <button className="px-3 py-1.5 rounded-lg bg-purple-500 text-white text-xs font-medium" onClick={e=>{e.stopPropagation();}}>
+                      <button className="px-3 py-1.5 rounded-lg bg-purple-500 text-white text-xs font-medium" onClick={e=>{e.stopPropagation();setLocalOrders(p=>p.map(x=>x.id===wo.id?{...x,status:'qc'}:x));}}>
                         🔍 {fa?'ارسال به QC':'Send to QC'}
                       </button>
                     )}
                     {wo.status === 'qc' && (
-                      <button className="px-3 py-1.5 rounded-lg bg-green-500 text-white text-xs font-medium" onClick={e=>{e.stopPropagation();}}>
+                      <button className="px-3 py-1.5 rounded-lg bg-green-500 text-white text-xs font-medium" onClick={e=>{e.stopPropagation();setLocalOrders(p=>p.map(x=>x.id===wo.id?{...x,status:'completed',progress:100}:x));}}>
                         ✅ {fa?'تأیید QC':'Approve QC'}
                       </button>
                     )}
@@ -186,39 +198,74 @@ export function WorkOrders() {
 
       {/* New WO Modal */}
       {showNew && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-lg p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-bold text-lg">🏭 {fa?'دستور کار جدید':'New Work Order'}</h2>
-              <button onClick={() => setShowNew(false)} className="text-xl text-[hsl(var(--muted-foreground))]">✕</button>
-            </div>
-            <div className="space-y-3">
-              <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'انتخاب BOM (محصول) *':'Select BOM (Product) *'}</label>
-                <select className={inp}><option value="">-- {fa?'انتخاب BOM':'Select BOM'} --</option></select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'مقدار *':'Quantity *'}</label><input type="number" className={inp} /></div>
-                <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'اولویت':'Priority'}</label>
-                  <select className={inp}>
-                    <option value="normal">{fa?'عادی':'Normal'}</option>
-                    <option value="high">{fa?'بالا':'High'}</option>
-                    <option value="urgent">{fa?'فوری':'Urgent'}</option>
-                    <option value="low">{fa?'پایین':'Low'}</option>
-                  </select>
-                </div>
-                <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'تاریخ شروع':'Start Date'}</label><input className={inp} placeholder="1403/06/15" /></div>
-                <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'تاریخ تحویل *':'Due Date *'}</label><input className={inp} placeholder="1403/06/30" /></div>
-              </div>
-              <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'مرکز کار / خط تولید':'Work Center / Production Line'}</label><input className={inp} placeholder={fa?'مثال: خط تولید ۱':'e.g. Line 1'} /></div>
-              <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'توضیحات':'Notes'}</label><textarea rows={2} className={inp+" resize-none"} /></div>
-            </div>
-            <div className="flex gap-3 mt-5">
-              <button onClick={() => setShowNew(false)} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa?'انصراف':'Cancel'}</button>
-              <button className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">✅ {fa?'صدور دستور کار':'Issue Work Order'}</button>
-            </div>
-          </div>
-        </div>
+        <NewWOModal fa={fa} inp={inp} onClose={() => setShowNew(false)}
+          onSubmit={dto => {
+            setLocalOrders(prev => [...prev, {
+              id: Date.now().toString(), no: 'WO-'+Date.now().toString().slice(-4),
+              productName: dto.productName, productNameFa: dto.productName,
+              bomCode: dto.bomCode, qty: dto.qty, unit: dto.unit,
+              startDate: dto.startDate, dueDate: dto.dueDate,
+              status: 'planned', priority: (dto.priority as any) || 'normal',
+              progress: 0, notes: dto.notes, workcenter: dto.workcenter,
+            }]);
+            createWO.mutate(dto);
+            setShowNew(false);
+          }}
+        />
       )}
+    </div>
+  );
+}
+
+function NewWOModal({ fa, inp, onClose, onSubmit }: { fa: boolean; inp: string; onClose: () => void; onSubmit: (dto: any) => void }) {
+  const [form, setForm] = useState({ productName:'', bomCode:'BOM-001', qty:'', unit:'Pcs', startDate:'', dueDate:'', priority:'normal', workcenter:'', notes:'' });
+  const set = (k: string, v: string) => setForm(f => ({...f, [k]: v}));
+  function submit() {
+    if (!form.productName || !form.qty || !form.dueDate) { alert(fa?'فیلدهای الزامی را پر کنید':'Fill required fields'); return; }
+    onSubmit({ ...form, qty: parseInt(form.qty) });
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-lg p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-bold text-lg">🏭 {fa?'دستور کار جدید':'New Work Order'}</h2>
+          <button onClick={onClose} className="text-xl text-[hsl(var(--muted-foreground))]">✕</button>
+        </div>
+        <div className="space-y-3">
+          <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'نام محصول *':'Product Name *'}</label>
+            <input value={form.productName} onChange={e=>set('productName',e.target.value)} className={inp} placeholder={fa?'مثال: قاب فولادی نوع الف':'e.g. Steel Frame A'}/>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'مقدار *':'Quantity *'}</label>
+              <input type="number" value={form.qty} onChange={e=>set('qty',e.target.value)} className={inp}/></div>
+            <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'واحد':'Unit'}</label>
+              <select value={form.unit} onChange={e=>set('unit',e.target.value)} className={inp}>
+                {['Pcs','Kg','m','Set','Box'].map(u=><option key={u}>{u}</option>)}
+              </select></div>
+            <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'اولویت':'Priority'}</label>
+              <select value={form.priority} onChange={e=>set('priority',e.target.value)} className={inp}>
+                <option value="normal">{fa?'عادی':'Normal'}</option>
+                <option value="high">{fa?'بالا':'High'}</option>
+                <option value="urgent">{fa?'فوری':'Urgent'}</option>
+                <option value="low">{fa?'پایین':'Low'}</option>
+              </select></div>
+            <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'BOM':'BOM'}</label>
+              <input value={form.bomCode} onChange={e=>set('bomCode',e.target.value)} className={inp} placeholder="BOM-001"/></div>
+            <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'تاریخ شروع':'Start Date'}</label>
+              <input value={form.startDate} onChange={e=>set('startDate',e.target.value)} className={inp} placeholder="1403/06/15"/></div>
+            <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'تاریخ تحویل *':'Due Date *'}</label>
+              <input value={form.dueDate} onChange={e=>set('dueDate',e.target.value)} className={inp} placeholder="1403/06/30"/></div>
+          </div>
+          <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'مرکز کار':'Work Center'}</label>
+            <input value={form.workcenter} onChange={e=>set('workcenter',e.target.value)} className={inp} placeholder={fa?'مثال: خط تولید ۱':'e.g. Line 1'}/></div>
+          <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'توضیحات':'Notes'}</label>
+            <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} rows={2} className={inp+' resize-none'}/></div>
+        </div>
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa?'انصراف':'Cancel'}</button>
+          <button onClick={submit} className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">✅ {fa?'صدور دستور کار':'Issue Work Order'}</button>
+        </div>
+      </div>
     </div>
   );
 }

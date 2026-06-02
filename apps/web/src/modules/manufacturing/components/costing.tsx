@@ -81,6 +81,35 @@ export function ProductCosting() {
             </div>
           ))}
         </div>
+        <div className="mt-3 flex gap-2">
+          <a href="/finance/journal"
+            className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors font-medium border border-blue-500/20">
+            📒 {fa ? 'مشاهده در دفتر روزنامه ↗' : 'View in Finance Journal ↗'}
+          </a>
+          <a href="/finance/coa"
+            className="text-xs px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors font-medium border border-purple-500/20">
+            📋 {fa ? 'سرفصل حساب‌ها ↗' : 'Chart of Accounts ↗'}
+          </a>
+        </div>
+      </div>
+
+      {/* Cross-module inventory sync */}
+      <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4">
+        <h3 className="font-semibold text-sm text-green-700 mb-2">🔗 {fa?'همگام‌سازی با ماژول‌های دیگر':'Cross-Module Integration'}</h3>
+        <div className="flex flex-wrap gap-2">
+          <a href="/finance/inventory"
+            className="text-xs px-3 py-1.5 rounded-lg bg-green-500/10 text-green-700 hover:bg-green-500/20 transition-colors font-medium border border-green-500/20">
+            📦 {fa ? 'انبار مواد اولیه (مالی) ↗' : 'Finance Inventory ↗'}
+          </a>
+          <a href="/manufacturing/materials"
+            className="text-xs px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 transition-colors font-medium border border-amber-500/20">
+            🏭 {fa ? 'برنامه‌ریزی مواد (MRP) ↗' : 'Materials Planning ↗'}
+          </a>
+          <a href="/trading"
+            className="text-xs px-3 py-1.5 rounded-lg bg-slate-500/10 text-slate-600 hover:bg-slate-500/20 transition-colors font-medium border border-slate-500/20">
+            🛒 {fa ? 'درخواست خرید مواد ↗' : 'Trading Purchase Request ↗'}
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 'use client';
 import { useLocaleStore } from '@/store/locale.store';
 
-export function FinanceReports() {
+interface Props { onNavigate?: (view: string) => void; }
+
+export function FinanceReports({ onNavigate }: Props) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
 
@@ -26,7 +28,7 @@ export function FinanceReports() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {reports.map((r, i) => (
-          <div key={i}
+          <div key={i} onClick={() => onNavigate?.(r.view)}
             className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 cursor-pointer hover:shadow-md transition-all hover:border-[hsl(var(--primary)/0.3)] group">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 group-hover:scale-110 transition-transform"
@@ -43,8 +45,8 @@ export function FinanceReports() {
                 {fa?'مشاهده گزارش ←':'View Report →'}
               </button>
               <div className="flex gap-1">
-                <button className="text-xs px-2 py-1 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">🖨️</button>
-                <button className="text-xs px-2 py-1 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">📥 Excel</button>
+                <button onClick={e => e.stopPropagation()} className="text-xs px-2 py-1 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">🖨️</button>
+                <button onClick={e => e.stopPropagation()} className="text-xs px-2 py-1 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">📥 Excel</button>
               </div>
             </div>
           </div>

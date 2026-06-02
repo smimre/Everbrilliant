@@ -27,6 +27,13 @@ export {
   useWorkflowRequests, useCreateWorkflowRequest, useApproveRequest, useRejectRequest,
 } from './use-automation';
 
+// Manufacturing
+export {
+  useWorkOrders, useCreateWorkOrder, useUpdateWorkOrder,
+  useBOMs, useMaterials, useCreateMaterialPO,
+  useWIP, useQualityChecks, useMfgReports,
+} from './use-manufacturing';
+
 // CRM
 export { useCRMConnections, useAddCRMConnection, useSearchCompanies } from './use-crm';
 

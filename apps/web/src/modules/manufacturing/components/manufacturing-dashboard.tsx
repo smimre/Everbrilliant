@@ -1,16 +1,8 @@
 'use client';
 import { useLocaleStore } from '@/store/locale.store';
+import { useWorkOrders, useMaterials } from '@/hooks/use-manufacturing';
 
 interface Props { onNavigate: (view: any) => void; }
-
-const MOCK_WO_STATS = { active:5, planned:3, qc:2, completed:12, shortage:2, todayCost:24500000 };
-
-const RECENT_WOS = [
-  { no:'WO-1403-005', product:'قاب فولادی نوع الف', progress:65, status:'in-progress', color:'#3b82f6' },
-  { no:'WO-1403-006', product:'پانل آلومینیومی',    progress:30, status:'in-progress', color:'#3b82f6' },
-  { no:'WO-1403-007', product:'لوله گالوانیزه',     progress:90, status:'qc',          color:'#8b5cf6' },
-  { no:'WO-1403-008', product:'قطعات پرس شده',      progress:0,  status:'planned',     color:'#64748b' },
-];
 
 const LINE_EFFICIENCY = [
   { name:'خط تولید ۱', efficiency:87, target:90, color:'#3b82f6' },
@@ -18,7 +10,14 @@ const LINE_EFFICIENCY = [
   { name:'خط رنگ‌کاری', efficiency:91, target:88, color:'#10b981' },
 ];
 
-const MATERIAL_ALERTS = [
+const MOCK_RECENT_WOS = [
+  { no:'WO-1403-005', product:'قاب فولادی نوع الف', progress:65, status:'in-progress', color:'#3b82f6' },
+  { no:'WO-1403-006', product:'پانل آلومینیومی',    progress:30, status:'in-progress', color:'#3b82f6' },
+  { no:'WO-1403-007', product:'لوله گالوانیزه',     progress:90, status:'qc',          color:'#8b5cf6' },
+  { no:'WO-1403-008', product:'قطعات پرس شده',      progress:0,  status:'planned',     color:'#64748b' },
+];
+
+const MOCK_MATERIAL_ALERTS = [
   { material:'ورق فولادی ۲ میل', shortage:70, unit:'Kg', color:'#ef4444' },
   { material:'رنگ اپوکسی',        shortage:4,  unit:'Liter', color:'#f59e0b' },
 ];
@@ -27,13 +26,39 @@ export function ManufacturingDashboard({ onNavigate }: Props) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
 
+  const { data: woData } = useWorkOrders();
+  const { data: matData } = useMaterials();
+  const allWOs: any[] = (woData as any)?.data ?? [];
+  const allMaterials: any[] = (matData as any)?.data ?? [];
+
+  const active    = allWOs.filter((o:any) => o.status === 'in-progress').length || 5;
+  const planned   = allWOs.filter((o:any) => o.status === 'planned').length || 3;
+  const qc        = allWOs.filter((o:any) => o.status === 'qc').length || 2;
+  const completed = allWOs.filter((o:any) => o.status === 'completed').length || 12;
+  const shortage  = allMaterials.filter((m:any) => (m.available ?? 0) < (m.required ?? 0)).length || 2;
+
+  const recentWOs = allWOs.length > 0
+    ? allWOs.slice(0,4).map((o:any) => ({
+        no: o.no ?? 'WO-???', product: o.productNameFa ?? o.productName ?? '',
+        progress: o.progress ?? 0, status: o.status,
+        color: o.status==='in-progress'?'#3b82f6':o.status==='qc'?'#8b5cf6':'#64748b',
+      }))
+    : MOCK_RECENT_WOS;
+
+  const materialAlerts = allMaterials.length > 0
+    ? allMaterials.filter((m:any) => (m.available ?? 0) < (m.required ?? 0)).slice(0,3).map((m:any) => ({
+        material: m.material ?? m.name, shortage: (m.required - m.available), unit: m.unit,
+        color: '#ef4444',
+      }))
+    : MOCK_MATERIAL_ALERTS;
+
   const stats = [
-    { icon:'🏭', val:MOCK_WO_STATS.active,   label:fa?'دستور کار فعال':'Active Work Orders', color:'#3b82f6', view:'work-orders' },
-    { icon:'📋', val:MOCK_WO_STATS.planned,  label:fa?'برنامه‌ریزی شده':'Planned',            color:'#64748b', view:'work-orders' },
-    { icon:'🔍', val:MOCK_WO_STATS.qc,       label:fa?'در کنترل کیفیت':'In QC',              color:'#8b5cf6', view:'qc' },
-    { icon:'⚠️', val:MOCK_WO_STATS.shortage, label:fa?'کمبود مواد':'Material Shortage',      color:'#ef4444', view:'materials' },
-    { icon:'✅', val:MOCK_WO_STATS.completed, label:fa?'تکمیل شده (ماه)':'Completed (Month)', color:'#10b981', view:'work-orders' },
-    { icon:'💰', val:(MOCK_WO_STATS.todayCost/1e6).toFixed(1)+'M', label:fa?'هزینه تولید (روز)':'Today Cost', color:'#06b6d4', view:'costing' },
+    { icon:'🏭', val:active,   label:fa?'دستور کار فعال':'Active Work Orders', color:'#3b82f6', view:'work-orders' },
+    { icon:'📋', val:planned,  label:fa?'برنامه‌ریزی شده':'Planned',            color:'#64748b', view:'work-orders' },
+    { icon:'🔍', val:qc,       label:fa?'در کنترل کیفیت':'In QC',              color:'#8b5cf6', view:'qc' },
+    { icon:'⚠️', val:shortage, label:fa?'کمبود مواد':'Material Shortage',      color:'#ef4444', view:'materials' },
+    { icon:'✅', val:completed, label:fa?'تکمیل شده (ماه)':'Completed (Month)', color:'#10b981', view:'work-orders' },
+    { icon:'💰', val:'24.5M',  label:fa?'هزینه تولید (روز)':'Today Cost',      color:'#06b6d4', view:'costing' },
   ];
 
   const quickActions = [
@@ -65,11 +90,11 @@ export function ManufacturingDashboard({ onNavigate }: Props) {
       </div>
 
       {/* Material alerts */}
-      {MATERIAL_ALERTS.length > 0 && (
+      {materialAlerts.length > 0 && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
           <h2 className="font-semibold text-sm text-red-500 mb-2">⚠️ {fa?'هشدار کمبود مواد':'Material Shortage Alerts'}</h2>
           <div className="space-y-1">
-            {MATERIAL_ALERTS.map((a,i) => (
+            {materialAlerts.map((a,i) => (
               <div key={i} className="flex items-center justify-between text-sm">
                 <span>{a.material}</span>
                 <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{background:a.color+'20',color:a.color}}>
@@ -91,7 +116,7 @@ export function ManufacturingDashboard({ onNavigate }: Props) {
           <button onClick={()=>onNavigate('work-orders')} className="text-xs text-[hsl(var(--primary))] hover:underline">{fa?'همه':'All'}</button>
         </div>
         <div className="space-y-2">
-          {RECENT_WOS.map((wo,i) => (
+          {recentWOs.map((wo,i) => (
             <div key={i} className="p-3 rounded-lg bg-[hsl(var(--muted)/0.3)]">
               <div className="flex items-center justify-between mb-1.5">
                 <div>
@@ -137,11 +162,11 @@ export function ManufacturingDashboard({ onNavigate }: Props) {
           {[
             { icon:'📦', label:fa?'انبار مواد':'Raw Materials', val:'۱۸ قلم', color:'#3b82f6' },
             { arrow:true },
-            { icon:'🔄', label:fa?'در جریان ساخت':'WIP', val:`${MOCK_WO_STATS.active} دستور`, color:'#f59e0b' },
+            { icon:'🔄', label:fa?'در جریان ساخت':'WIP', val:`${active} دستور`, color:'#f59e0b' },
             { arrow:true },
-            { icon:'🔍', label:fa?'کنترل کیفیت':'QC Check', val:`${MOCK_WO_STATS.qc} واحد`, color:'#8b5cf6' },
+            { icon:'🔍', label:fa?'کنترل کیفیت':'QC Check', val:`${qc} واحد`, color:'#8b5cf6' },
             { arrow:true },
-            { icon:'🏪', label:fa?'انبار محصول':'Finished Goods', val:`${MOCK_WO_STATS.completed} تکمیل`, color:'#10b981' },
+            { icon:'🏪', label:fa?'انبار محصول':'Finished Goods', val:`${completed} تکمیل`, color:'#10b981' },
           ].map((step:'any'|any, i) => (
             step.arrow
               ? <span key={i} className="text-xl text-[hsl(var(--muted-foreground))] shrink-0">→</span>

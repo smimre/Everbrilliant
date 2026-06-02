@@ -4,3 +4,4 @@ export { tradingService } from './trading.service';
 export { financeService } from './finance.service';
 export { automationService } from './automation.service';
 export { notificationService } from './notification.service';
+export { manufacturingService } from './manufacturing.service';
