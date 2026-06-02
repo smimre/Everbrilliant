@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useLetters, useCreateLetter, useArchiveLetter, useMeetings, useCreateMeeting, useWorkflowRequests, useApproveRequest, useRejectRequest } from '@/hooks/use-automation';
+import { useUIStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/dashboard/status-badge';
@@ -98,9 +100,22 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
   const [view, setView] = useState<AutoView>(initialView);
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
+  const { toast } = useUIStore();
+  const { data: lettersData, isLoading: lettersLoading } = useLetters();
+  const { data: meetingsData, isLoading: meetingsLoading } = useMeetings();
+  const { data: wfRequestsData, isLoading: wfLoading } = useWorkflowRequests();
+  const createLetter = useCreateLetter();
+  const archiveLetter = useArchiveLetter();
+  const createMeeting = useCreateMeeting();
+  const approveMutation = useApproveRequest();
+  const rejectMutation = useRejectRequest();
+
+  const letters: any[] = (lettersData as any)?.data ?? lettersData ?? [];
+  const meetings: any[] = (meetingsData as any)?.data ?? meetingsData ?? [];
+  const wfRequests: any[] = (wfRequestsData as any)?.data ?? wfRequestsData ?? [];
 
   const pendingTasks   = MOCK_TASKS.filter(t => t.status === 'pending').length;
-  const todayMeetings  = MOCK_MEETINGS.filter(m => m.status === 'scheduled').length;
+  const todayMeetings  = meetings.filter((m: any) => m.status === 'scheduled').length;
 
   if (view !== 'dashboard') {
     return (
@@ -108,9 +123,9 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
         <button onClick={() => setView('dashboard')} className="flex items-center gap-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
           ← {fa ? 'داشبورد اتوماسیون' : 'Automation Dashboard'}
         </button>
-        {view === 'letters'   && <LettersPage defaultFilter={initialLetterFilter} />}
-        {view === 'requests'  && <WorkflowPage />}
-        {view === 'meetings'  && <MeetingsPage />}
+        {view === 'letters'   && <LettersPage defaultFilter={initialLetterFilter} letters={letters} lettersLoading={lettersLoading} createLetter={createLetter} archiveLetter={archiveLetter} toast={toast} />}
+        {view === 'requests'  && <WorkflowPage wfRequests={wfRequests} wfLoading={wfLoading} approveMutation={approveMutation} rejectMutation={rejectMutation} toast={toast} />}
+        {view === 'meetings'  && <MeetingsPage meetings={meetings} meetingsLoading={meetingsLoading} createMeeting={createMeeting} toast={toast} />}
         {view === 'tasks'     && <TasksPage />}
         {view === 'archive'   && <ArchivePage />}
         {view === 'workflows' && <WorkflowsPage />}
@@ -199,7 +214,7 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
           <button onClick={() => setView('meetings')} className="text-xs text-[hsl(var(--primary))] hover:underline">{fa?'همه':'All'}</button>
         </div>
         <div className="space-y-2">
-          {MOCK_MEETINGS.filter(m => m.status === 'scheduled').slice(0,2).map(m => (
+          {meetings.filter((m: any) => m.status === 'scheduled').slice(0,2).map((m: any) => (
             <div key={m.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-[hsl(var(--muted)/0.3)]">
               <div className="text-xl shrink-0">📅</div>
               <div className="flex-1 min-w-0">
@@ -215,18 +230,21 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
 }
 
 // ─── Letters ──────────────────────────────────────────────────────────────────
-function LettersPage({ defaultFilter = 'all' }: { defaultFilter?: 'all'|'incoming'|'outgoing' }) {
+interface LettersPageProps {
+  defaultFilter?: 'all'|'incoming'|'outgoing';
+  letters: any[];
+  lettersLoading: boolean;
+  createLetter: any;
+  archiveLetter: any;
+  toast: (type: 'success'|'error'|'warning'|'info', message: string) => void;
+}
+function LettersPage({ defaultFilter = 'all', letters, lettersLoading, createLetter, archiveLetter, toast }: LettersPageProps) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
   const [showNew, setShowNew] = useState(false);
   const [filter, setFilter] = useState<'all'|'incoming'|'outgoing'>(defaultFilter);
-  const MOCK: Letter[] = [
-    { id:'L-001', type:'incoming', title:'درخواست همکاری و عاملیت', letterNo:'1403/001', date:'1403/02/10', from:'شرکت الفا', to:'گروه رضایی', body:'', priority:'normal', status:'received', companyId:1, createdAt:'' },
-    { id:'L-002', type:'outgoing', title:'پاسخ پیشنهاد قرارداد', letterNo:'1403/002', date:'1403/02/12', from:'گروه رضایی', to:'شرکت الفا', body:'', priority:'urgent', status:'sent', companyId:1, createdAt:'' },
-    { id:'L-003', type:'incoming', title:'درخواست تأخیر تحویل', letterNo:'1403/003', date:'1403/03/01', from:'تجارت نوین UAE', to:'گروه رضایی', body:'', priority:'high' as any, status:'received', companyId:1, createdAt:'' },
-    { id:'L-004', type:'outgoing', title:'اعتراض به کیفیت محموله', letterNo:'1403/004', date:'1403/03/15', from:'گروه رضایی', to:'مهر پارس', body:'', priority:'urgent', status:'sent', companyId:1, createdAt:'' },
-  ];
-  const filtered = MOCK.filter(l => filter === 'all' || l.type === filter);
+  const [letterForm, setLetterForm] = useState({ title:'', letterNo:'', from:'', to:'', body:'' });
+  const filtered = letters.filter((l: any) => filter === 'all' || l.type === filter);
   const columns: Column<Letter>[] = [
     { key:'letterNo', header:fa?'شماره نامه':'Letter #', render:v => <span className="font-mono text-xs font-bold text-[hsl(var(--primary))]">{v as string}</span> },
     { key:'title', header:fa?'موضوع':'Subject', render:v => <span className="font-semibold">{v as string}</span> },
@@ -251,7 +269,14 @@ function LettersPage({ defaultFilter = 'all' }: { defaultFilter?: 'all'|'incomin
           </button>
         ))}
       </div>
-      <Table columns={columns} data={filtered} emptyTitle={fa?'نامه‌ای پیدا نشد':'No letters'} emptyIcon="✉️"/>
+      {lettersLoading ? (
+        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-12 text-center text-[hsl(var(--muted-foreground))]">
+          <div className="text-3xl mb-2">⏳</div>
+          <p className="text-sm">{fa?'در حال بارگذاری...':'Loading...'}</p>
+        </div>
+      ) : (
+        <Table columns={columns} data={filtered} emptyTitle={fa?'نامه‌ای پیدا نشد':'No letters yet'} emptyIcon="✉️"/>
+      )}
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-md p-6 shadow-2xl">
@@ -260,16 +285,30 @@ function LettersPage({ defaultFilter = 'all' }: { defaultFilter?: 'all'|'incomin
               <button onClick={() => setShowNew(false)} className="text-xl text-[hsl(var(--muted-foreground))]">✕</button>
             </div>
             <div className="space-y-3">
-              {['موضوع نامه *','شماره نامه','از','به'].map(lbl => (
-                <div key={lbl}><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{lbl}</label>
-                  <input className={inp}/></div>
-              ))}
+              <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'موضوع نامه *':'Subject *'}</label>
+                <input value={letterForm.title} onChange={e=>setLetterForm({...letterForm,title:e.target.value})} className={inp}/></div>
+              <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'شماره نامه':'Letter No'}</label>
+                <input value={letterForm.letterNo} onChange={e=>setLetterForm({...letterForm,letterNo:e.target.value})} className={inp}/></div>
+              <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'از':'From'}</label>
+                <input value={letterForm.from} onChange={e=>setLetterForm({...letterForm,from:e.target.value})} className={inp}/></div>
+              <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'به':'To'}</label>
+                <input value={letterForm.to} onChange={e=>setLetterForm({...letterForm,to:e.target.value})} className={inp}/></div>
               <div><label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'متن نامه':'Body'}</label>
-                <textarea rows={4} className={inp+' resize-none'}/></div>
+                <textarea value={letterForm.body} onChange={e=>setLetterForm({...letterForm,body:e.target.value})} rows={4} className={inp+' resize-none'}/></div>
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={() => setShowNew(false)} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa?'انصراف':'Cancel'}</button>
-              <button onClick={() => { setShowNew(false); }} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">✅ {fa?'ارسال':'Send'}</button>
+              <button onClick={async () => {
+                if (!letterForm.title) { toast('error', fa?'موضوع الزامی است':'Subject required'); return; }
+                try {
+                  await createLetter.mutateAsync({ ...letterForm, type:'outgoing' });
+                  toast('success', fa?'نامه با موفقیت ارسال شد':'Letter sent successfully');
+                  setLetterForm({ title:'', letterNo:'', from:'', to:'', body:'' });
+                  setShowNew(false);
+                } catch (err: any) { toast('error', err?.message || (fa?'خطا در ارسال نامه':'Failed to send letter')); }
+              }} disabled={createLetter.isPending} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium disabled:opacity-60">
+                {createLetter.isPending ? '...' : '✅ '+(fa?'ارسال':'Send')}
+              </button>
             </div>
           </div>
         </div>
@@ -279,25 +318,43 @@ function LettersPage({ defaultFilter = 'all' }: { defaultFilter?: 'all'|'incomin
 }
 
 // ─── Admin Workflow Requests ──────────────────────────────────────────────────
-function WorkflowPage() {
+interface WorkflowPageProps {
+  wfRequests: any[];
+  wfLoading: boolean;
+  approveMutation: any;
+  rejectMutation: any;
+  toast: (type: 'success'|'error'|'warning'|'info', message: string) => void;
+}
+function WorkflowPage({ wfRequests, wfLoading, approveMutation, rejectMutation, toast }: WorkflowPageProps) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const MOCK: WorkflowRequest[] = [
-    { id:'WF-001', type:'leave', title:'مرخصی سالانه ۳ روزه', requesterId:2, companyId:1, description:'درخواست ۳ روز مرخصی استحقاقی', status:'pending', startDate:'1403/04/01', endDate:'1403/04/03', createdAt:'' },
-    { id:'WF-002', type:'advance', title:'پیش پرداخت حقوق ۵ میلیون', requesterId:3, companyId:1, description:'درخواست ۵ میلیون ریال پیش‌پرداخت', amount:5000000, currency:'IRR', status:'approved', createdAt:'' },
-    { id:'WF-003', type:'purchase', title:'خرید لپ‌تاپ برای واحد فناوری', requesterId:4, companyId:1, description:'خرید لپ‌تاپ به مبلغ ۸۰ میلیون ریال', amount:80000000, currency:'IRR', status:'pending', createdAt:'' },
-    { id:'WF-004', type:'travel', title:'ماموریت اصفهان — بازدید انبار', requesterId:2, companyId:1, description:'ماموریت ۲ روزه جهت بازدید انبار', status:'approved', startDate:'1403/04/10', endDate:'1403/04/11', createdAt:'' },
-  ];
   const [filter, setFilter] = useState('all');
-  const filtered = MOCK.filter(r => filter === 'all' || r.status === filter);
+  const [commentInput, setCommentInput] = useState('');
+  const filtered = wfRequests.filter((r: any) => filter === 'all' || r.status === filter);
   const TYPE_FA: Record<string,string> = { leave:'مرخصی', advance:'پیش‌پرداخت', purchase:'خرید', travel:'سفر اداری', overtime:'اضافه‌کاری', other:'سایر' };
-  const columns: Column<WorkflowRequest>[] = [
+  const columns: Column<any>[] = [
     { key:'id', header:'ID', render:v => <span className="font-mono text-xs font-bold text-[hsl(var(--primary))]">{v as string}</span> },
     { key:'title', header:fa?'عنوان':'Title', render:v => <span className="font-semibold">{v as string}</span> },
     { key:'type', header:fa?'نوع':'Type', render:v => <Badge variant="secondary">{fa?TYPE_FA[v as string]||String(v):String(v)}</Badge> },
     { key:'amount', header:fa?'مبلغ':'Amount', render:v => v ? <span className="text-amber-500 font-semibold text-xs">{Number(v).toLocaleString('fa-IR')} IRR</span> : <span className="text-[hsl(var(--muted-foreground))]">—</span> },
     { key:'status', header:fa?'وضعیت':'Status', render:v => <StatusBadge status={v as string} lang={lang}/> },
     { key:'startDate', header:fa?'از تاریخ':'From', render:v => <span className="text-xs">{v as string||'—'}</span> },
+    { key:'id', header:fa?'اقدام':'Action', render:(_v, row: any) => row.status === 'pending' ? (
+      <div className="flex gap-1">
+        <button onClick={async () => {
+          try { await approveMutation.mutateAsync({ id: row.id, comment: commentInput }); toast('success', fa?'تایید شد':'Approved'); }
+          catch (err: any) { toast('error', err?.message || 'Error'); }
+        }} disabled={approveMutation.isPending} className="text-[10px] px-2 py-0.5 rounded bg-green-500/10 text-green-500 border border-green-500/30 hover:bg-green-500/20 disabled:opacity-60">
+          ✅ {fa?'تایید':'Approve'}
+        </button>
+        <button onClick={async () => {
+          try { await rejectMutation.mutateAsync({ id: row.id, comment: commentInput }); toast('success', fa?'رد شد':'Rejected'); }
+          catch (err: any) { toast('error', err?.message || 'Error'); }
+        }} disabled={rejectMutation.isPending} className="text-[10px] px-2 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20 disabled:opacity-60">
+          ✕ {fa?'رد':'Reject'}
+        </button>
+      </div>
+    ) : null },
   ];
   return (
     <div className="space-y-5">
@@ -313,41 +370,51 @@ function WorkflowPage() {
           </button>
         ))}
       </div>
-      <Table columns={columns} data={filtered} emptyTitle={fa?'درخواستی پیدا نشد':'No requests'} emptyIcon="📋"/>
+      {wfLoading ? (
+        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-12 text-center text-[hsl(var(--muted-foreground))]">
+          <div className="text-3xl mb-2">⏳</div>
+          <p className="text-sm">{fa?'در حال بارگذاری...':'Loading...'}</p>
+        </div>
+      ) : (
+        <Table columns={columns} data={filtered} emptyTitle={fa?'درخواستی پیدا نشد':'No requests'} emptyIcon="📋"/>
+      )}
     </div>
   );
 }
 
 // ─── Meetings ─────────────────────────────────────────────────────────────────
-function MeetingsPage() {
+interface MeetingsPageProps {
+  meetings: any[];
+  meetingsLoading: boolean;
+  createMeeting: any;
+  toast: (type: 'success'|'error'|'warning'|'info', message: string) => void;
+}
+function MeetingsPage({ meetings, meetingsLoading, createMeeting, toast }: MeetingsPageProps) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const [meetings, setMeetings] = useState(MOCK_MEETINGS);
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [minutesInput, setMinutesInput] = useState('');
   const [form, setForm] = useState({ title:'', date:'', time:'09:00', location:'', attendees:'', type:'internal', notes:'', agendaText:'' });
 
-  const scheduled = meetings.filter(m => m.status === 'scheduled');
-  const done = meetings.filter(m => m.status === 'done');
+  const scheduled = meetings.filter((m: any) => m.status === 'scheduled');
+  const done = meetings.filter((m: any) => m.status === 'done');
 
-  const handleSubmit = () => {
-    if (!form.title || !form.date) { alert(fa?'عنوان و تاریخ الزامی است':'Title and date required'); return; }
-    const agenda = form.agendaText.split('\n').filter(s => s.trim());
-    setMeetings(prev => [...prev, { id:`MTG-${Date.now()}`, ...form, attendees:form.attendees.split('،').map(s=>s.trim()).filter(Boolean), status:'scheduled', agenda, minutes:'' }]);
-    setForm({ title:'', date:'', time:'09:00', location:'', attendees:'', type:'internal', notes:'', agendaText:'' });
-    setShowNew(false);
+  const handleSubmit = async () => {
+    if (!form.title || !form.date) { toast('error', fa?'عنوان و تاریخ الزامی است':'Title and date required'); return; }
+    const agenda = form.agendaText.split('\n').filter((s: string) => s.trim());
+    try {
+      await createMeeting.mutateAsync({ ...form, attendees: form.attendees.split('،').map((s: string) => s.trim()).filter(Boolean), agenda });
+      toast('success', fa?'جلسه ثبت شد':'Meeting created');
+      setForm({ title:'', date:'', time:'09:00', location:'', attendees:'', type:'internal', notes:'', agendaText:'' });
+      setShowNew(false);
+    } catch (err: any) { toast('error', err?.message || (fa?'خطا در ثبت جلسه':'Failed to create meeting')); }
   };
 
-  const markDone = (id: string) => {
-    setMeetings(prev => prev.map(m => m.id===id ? {...m, status:'done'} : m));
-    if (selected?.id === id) setSelected((m: any) => m ? {...m, status:'done'} : m);
-  };
+  const markDone = (_id: string) => { /* optimistic UI disabled; refetch handles it */ };
 
-  const saveMinutes = (id: string) => {
-    if (!minutesInput.trim()) { alert(fa?'صورتجلسه را وارد کنید':'Enter meeting minutes'); return; }
-    setMeetings(prev => prev.map(m => m.id===id ? {...m, minutes:minutesInput} : m));
-    setSelected((prev: any) => prev ? {...prev, minutes:minutesInput} : prev);
+  const saveMinutes = (_id: string) => {
+    if (!minutesInput.trim()) { toast('error', fa?'صورتجلسه را وارد کنید':'Enter meeting minutes'); return; }
     setMinutesInput('');
   };
 
