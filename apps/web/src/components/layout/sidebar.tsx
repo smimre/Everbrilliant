@@ -197,7 +197,7 @@ export function Sidebar() {
           </div>
           <div className="flex gap-1 mt-1">
             <button
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={() => router.push('/settings')}
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg hover:bg-[hsl(var(--muted)/0.5)] transition-colors"
             >
               <Settings className="h-3.5 w-3.5" />

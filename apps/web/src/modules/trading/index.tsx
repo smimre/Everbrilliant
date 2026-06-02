@@ -26,6 +26,7 @@ import { MyInvoices } from './components/my-invoices';
 import { MyQuotes } from './components/my-quotes';
 import { RequestTemplates } from './components/request-templates';
 import { LetterheadPage } from './components/letterhead';
+import { TenderBlacklist } from './components/blacklist';
 
 type TradingView =
   | 'dashboard' | 'my-requests' | 'incoming-req' | 'my-quotes'
@@ -34,7 +35,7 @@ type TradingView =
   | 'manaqeseh' | 'my-manaqeseh' | 'quality-checks'
   | 'disputes' | 'inventory'
   | 'logistics' | 'exchange-rates' | 'approval-workflows' | 'partner-profile'
-  | 'my-payments' | 'my-invoices' | 'req-templates' | 'letterhead';
+  | 'my-payments' | 'my-invoices' | 'req-templates' | 'letterhead' | 'blacklist';
 
 interface NavItem {
   id: TradingView;
@@ -70,6 +71,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'reports',       label: 'Reports',           labelFa: 'گزارشات',             icon: '📊', section: 'reports' },
   { id: 'quality-checks',label: 'Quality Checks',    labelFa: 'کنترل کیفیت',        icon: '✅', section: 'reports' },
   { id: 'disputes',      label: 'Disputes',          labelFa: 'اختلافات',            icon: '⚖️', section: 'reports' },
+  { id: 'blacklist',     label: 'Blacklist',         labelFa: 'لیست سیاه',           icon: '🚫', section: 'reports' },
   // عملیات
   { id: 'logistics',          label: 'Logistics',       labelFa: 'لجستیک و حمل',       icon: '🚛', section: 'operations' },
   { id: 'exchange-rates',     label: 'Exchange Rates',  labelFa: 'نرخ ارز',             icon: '💱', section: 'operations' },
@@ -124,6 +126,7 @@ export function TradingModule({ initialView }: { initialView?: string } = {}) {
       case 'my-invoices':         return <MyInvoices />;
       case 'req-templates':       return <RequestTemplates />;
       case 'letterhead':          return <LetterheadPage />;
+      case 'blacklist':           return <TenderBlacklist />;
       default:               return <TradingDashboard onNavigate={setView} />;
     }
   };
