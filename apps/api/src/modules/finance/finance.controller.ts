@@ -59,4 +59,25 @@ export class FinanceController {
   stockOut(@Req() req: any, @Param('id') id: string, @Body() dto: { qty: number; ref?: string }) {
     return this.finance.stockMove(req.user.companyId, id, 'out', dto.qty, req.user.id, dto.ref);
   }
+
+  // Reports
+  @Get('reports/balance-sheet')
+  getBalanceSheet(@Req() req: any) {
+    return this.finance.getBalanceSheet(req.user.companyId);
+  }
+
+  @Get('reports/income-statement')
+  getIncomeStatement(@Req() req: any, @Query() q: any) {
+    return this.finance.getIncomeStatement(req.user.companyId, q.from, q.to);
+  }
+
+  @Get('reports/cash-flow')
+  getCashFlow(@Req() req: any, @Query() q: any) {
+    return this.finance.getCashFlow(req.user.companyId, q.from, q.to);
+  }
+
+  @Get('reports/trial-balance')
+  getTrialBalance(@Req() req: any) {
+    return this.finance.getTrialBalance(req.user.companyId);
+  }
 }

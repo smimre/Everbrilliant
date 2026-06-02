@@ -170,4 +170,175 @@ export class FinanceService {
 
     return this.prisma.inventoryItem.update({ where: { id: itemId }, data: { qty: newQty } });
   }
+
+  // ── Finance Reports ───────────────────────────────────────────
+
+  private ser(v: any): any {
+    return JSON.parse(JSON.stringify(v, (_, x) => (typeof x === 'bigint' ? x.toString() : x)));
+  }
+
+  async getBalanceSheet(companyId: number) {
+    const accounts = await this.prisma.account.findMany({
+      where: { companyId, isActive: true },
+      orderBy: [{ type: 'asc' }, { code: 'asc' }],
+    });
+
+    const byType = (t: string) => accounts.filter(a => a.type === t);
+    const sum = (list: typeof accounts) => list.reduce((s, a) => s + a.balance, BigInt(0));
+
+    const assets      = byType('ASSET');
+    const liabilities = byType('LIABILITY');
+    const equity      = byType('EQUITY');
+    const totalA      = sum(assets);
+    const totalL      = sum(liabilities);
+    const totalE      = sum(equity);
+
+    return this.ser({
+      assets:      assets.map(a => ({ code: a.code, name: a.name, nameFa: a.nameFa, balance: a.balance })),
+      liabilities: liabilities.map(a => ({ code: a.code, name: a.name, nameFa: a.nameFa, balance: a.balance })),
+      equity:      equity.map(a => ({ code: a.code, name: a.name, nameFa: a.nameFa, balance: a.balance })),
+      totalAssets: totalA,
+      totalLiabilities: totalL,
+      totalEquity: totalE,
+      isBalanced:  totalA === totalL + totalE,
+      generatedAt: new Date().toISOString(),
+    });
+  }
+
+  async getIncomeStatement(companyId: number, from?: string, to?: string) {
+    const dateFilter = from && to
+      ? { createdAt: { gte: new Date(from), lte: new Date(to) } }
+      : {};
+
+    const [revenueAccounts, expenseAccounts, invoices, buyerInvoices] = await Promise.all([
+      this.prisma.account.findMany({ where: { companyId, isActive: true, type: 'REVENUE' }, orderBy: { code: 'asc' } }),
+      this.prisma.account.findMany({ where: { companyId, isActive: true, type: 'EXPENSE' }, orderBy: { code: 'asc' } }),
+      // Sales invoices as revenue source
+      this.prisma.invoice.findMany({
+        where: { sellerCompanyId: companyId, status: { in: ['PAID', 'PARTIALLY_PAID'] as any }, ...dateFilter },
+        select: { total: true, paid: true, vatAmount: true },
+      }),
+      // Purchase invoices as COGS source
+      this.prisma.invoice.findMany({
+        where: { buyerCompanyId: companyId, status: { in: ['PAID', 'PARTIALLY_PAID'] as any }, ...dateFilter },
+        select: { total: true, paid: true },
+      }),
+    ]);
+
+    const acctRevenue = revenueAccounts.reduce((s, a) => s + a.balance, BigInt(0));
+    const acctExpense = expenseAccounts.reduce((s, a) => s + a.balance, BigInt(0));
+    const invoiceRevenue = invoices.reduce((s, i) => s + i.paid, BigInt(0));
+    const invoiceCOGS    = buyerInvoices.reduce((s, i) => s + i.paid, BigInt(0));
+
+    // Use account balances if they exist, otherwise derive from invoices
+    const totalRevenue  = acctRevenue > BigInt(0) ? acctRevenue : invoiceRevenue;
+    const totalExpenses = acctExpense > BigInt(0) ? acctExpense : invoiceCOGS;
+    const grossProfit   = totalRevenue - totalExpenses;
+    const tax           = grossProfit > BigInt(0) ? grossProfit * BigInt(25) / BigInt(100) : BigInt(0);
+    const netProfit     = grossProfit - tax;
+
+    return this.ser({
+      revenue:  revenueAccounts.map(a => ({ code: a.code, name: a.name, nameFa: a.nameFa, amount: a.balance })),
+      expenses: expenseAccounts.map(a => ({ code: a.code, name: a.name, nameFa: a.nameFa, amount: a.balance })),
+      invoiceSalesCount:    invoices.length,
+      invoicePurchaseCount: buyerInvoices.length,
+      totalRevenue,
+      totalExpenses,
+      grossProfit,
+      tax,
+      netProfit,
+      period: { from: from ?? null, to: to ?? null },
+      generatedAt: new Date().toISOString(),
+    });
+  }
+
+  async getCashFlow(companyId: number, from?: string, to?: string) {
+    const dateFilter = from && to
+      ? { date: { gte: new Date(from), lte: new Date(to) } }
+      : {};
+
+    const bankAccounts = await this.prisma.bankAccount.findMany({
+      where: { companyId },
+      include: { transactions: { where: dateFilter, orderBy: { date: 'asc' } } },
+    });
+
+    let totalInflow  = BigInt(0);
+    let totalOutflow = BigInt(0);
+    const monthly: Record<string, { in: bigint; out: bigint }> = {};
+
+    for (const acct of bankAccounts) {
+      for (const tx of acct.transactions) {
+        const month = tx.date.toISOString().slice(0, 7); // YYYY-MM
+        if (!monthly[month]) monthly[month] = { in: BigInt(0), out: BigInt(0) };
+
+        if (tx.type === 'credit' || tx.type === 'deposit' || tx.type === 'transfer_in') {
+          totalInflow += tx.amount;
+          monthly[month].in += tx.amount;
+        } else {
+          totalOutflow += tx.amount;
+          monthly[month].out += tx.amount;
+        }
+      }
+    }
+
+    // Paid invoices as operating cash flow proxy when no bank transactions
+    const [salesPaid, purchPaid] = await Promise.all([
+      this.prisma.invoice.aggregate({
+        where: { sellerCompanyId: companyId, status: 'PAID' as any },
+        _sum: { paid: true },
+      }),
+      this.prisma.invoice.aggregate({
+        where: { buyerCompanyId: companyId, status: 'PAID' as any },
+        _sum: { paid: true },
+      }),
+    ]);
+
+    const hasBankData = totalInflow > BigInt(0) || totalOutflow > BigInt(0);
+    const effectiveInflow  = hasBankData ? totalInflow  : (salesPaid._sum.paid  ?? BigInt(0));
+    const effectiveOutflow = hasBankData ? totalOutflow : (purchPaid._sum.paid  ?? BigInt(0));
+    const netFlow          = effectiveInflow - effectiveOutflow;
+
+    const totalBalance = bankAccounts.reduce((s, a) => s + a.balance, BigInt(0));
+    const openingCash  = totalBalance - netFlow;
+
+    return this.ser({
+      totalInflow:  effectiveInflow,
+      totalOutflow: effectiveOutflow,
+      netFlow,
+      openingCash,
+      closingCash: totalBalance,
+      hasBankData,
+      bankAccounts: bankAccounts.map(a => ({
+        id: a.id, bankName: a.bankName, accountNo: a.accountNo,
+        currency: a.currency, balance: a.balance,
+      })),
+      monthlyBreakdown: Object.entries(monthly)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, v]) => ({ month, inflow: v.in, outflow: v.out, net: v.in - v.out })),
+      period: { from: from ?? null, to: to ?? null },
+      generatedAt: new Date().toISOString(),
+    });
+  }
+
+  async getTrialBalance(companyId: number) {
+    const accounts = await this.prisma.account.findMany({
+      where: { companyId, isActive: true },
+      include: {
+        debitLines:  { select: { debit: true } },
+        creditLines: { select: { credit: true } },
+      },
+      orderBy: [{ type: 'asc' }, { code: 'asc' }],
+    });
+
+    const rows = accounts.map(a => {
+      const totalDebit  = a.debitLines.reduce((s, l) => s + l.debit,  BigInt(0));
+      const totalCredit = a.creditLines.reduce((s, l) => s + l.credit, BigInt(0));
+      return { code: a.code, name: a.name, nameFa: a.nameFa, type: a.type, totalDebit, totalCredit, balance: a.balance };
+    });
+
+    const sumDebit  = rows.reduce((s, r) => s + r.totalDebit,  BigInt(0));
+    const sumCredit = rows.reduce((s, r) => s + r.totalCredit, BigInt(0));
+
+    return this.ser({ accounts: rows, totalDebit: sumDebit, totalCredit: sumCredit, isBalanced: sumDebit === sumCredit });
+  }
 }

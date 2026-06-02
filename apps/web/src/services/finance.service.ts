@@ -33,4 +33,12 @@ export const financeService = {
     api.post<InventoryItem>('/finance/inventory', dto),
   stockIn: (id: string, qty: number, ref?: string) => api.post(`/finance/inventory/${id}/stock-in`, { qty, ref }),
   stockOut: (id: string, qty: number, ref?: string) => api.post(`/finance/inventory/${id}/stock-out`, { qty, ref }),
+
+  // Reports
+  getBalanceSheet: () => api.get<any>('/finance/reports/balance-sheet'),
+  getIncomeStatement: (from?: string, to?: string) =>
+    api.get<any>('/finance/reports/income-statement', (from && to ? { from, to } : {}) as Record<string, unknown>),
+  getCashFlow: (from?: string, to?: string) =>
+    api.get<any>('/finance/reports/cash-flow', (from && to ? { from, to } : {}) as Record<string, unknown>),
+  getTrialBalance: () => api.get<any>('/finance/reports/trial-balance'),
 };

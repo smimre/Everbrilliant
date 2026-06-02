@@ -9,6 +9,10 @@ export const financeKeys = {
   invoice: (id: string) => [...financeKeys.all, 'invoice', id] as const,
   employees: (query?: PaginationQuery) => [...financeKeys.all, 'employees', query] as const,
   inventory: (query?: PaginationQuery) => [...financeKeys.all, 'inventory', query] as const,
+  balanceSheet: () => [...financeKeys.all, 'balance-sheet'] as const,
+  incomeStatement: (from?: string, to?: string) => [...financeKeys.all, 'income-statement', from, to] as const,
+  cashFlow: (from?: string, to?: string) => [...financeKeys.all, 'cash-flow', from, to] as const,
+  trialBalance: () => [...financeKeys.all, 'trial-balance'] as const,
 };
 
 export function useInvoices(query?: PaginationQuery & { status?: string }) {
@@ -56,5 +60,41 @@ export function useInventory(query?: PaginationQuery) {
     queryFn: () => financeService.getInventory(query),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+  });
+}
+
+export function useBalanceSheet() {
+  return useQuery({
+    queryKey: financeKeys.balanceSheet(),
+    queryFn: () => financeService.getBalanceSheet(),
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
+export function useIncomeStatement(from?: string, to?: string) {
+  return useQuery({
+    queryKey: financeKeys.incomeStatement(from, to),
+    queryFn: () => financeService.getIncomeStatement(from, to),
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
+export function useCashFlow(from?: string, to?: string) {
+  return useQuery({
+    queryKey: financeKeys.cashFlow(from, to),
+    queryFn: () => financeService.getCashFlow(from, to),
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
+export function useTrialBalance() {
+  return useQuery({
+    queryKey: financeKeys.trialBalance(),
+    queryFn: () => financeService.getTrialBalance(),
+    staleTime: 60_000,
+    retry: false,
   });
 }

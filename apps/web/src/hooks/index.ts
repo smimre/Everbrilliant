@@ -18,6 +18,7 @@ export {
 export {
   useInvoices, useInvoice, useCreateInvoice,
   useEmployees, useInventory,
+  useBalanceSheet, useIncomeStatement, useCashFlow, useTrialBalance,
 } from './use-finance';
 
 // Automation
