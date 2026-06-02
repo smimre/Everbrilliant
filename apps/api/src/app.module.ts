@@ -18,6 +18,7 @@ import { TradingModule }       from './modules/trading/trading.module';
 import { FinanceModule }       from './modules/finance/finance.module';
 import { AutomationModule }    from './modules/automation/automation.module';
 import { CrmModule }           from './modules/crm/crm.module';
+import { ManufacturingModule } from './modules/manufacturing/manufacturing.module';
 
 // Infrastructure
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -47,6 +48,7 @@ import { SaasModule }          from './modules/saas/saas.module';
     FinanceModule,
     AutomationModule,
     CrmModule,
+    ManufacturingModule,
     NotificationsModule,
     HealthModule,
     GatewayModule,

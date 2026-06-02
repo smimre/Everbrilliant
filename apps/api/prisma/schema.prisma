@@ -204,6 +204,29 @@ enum AuditAction {
   PRINT
 }
 
+enum WorkOrderStatus {
+  PLANNED
+  IN_PROGRESS
+  PAUSED
+  QC
+  COMPLETED
+  CANCELLED
+}
+
+enum WorkOrderPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum QCResult {
+  PENDING
+  PASS
+  FAIL
+  CONDITIONAL
+}
+
 // ══════════════════════════════════════════════
 // MULTI-TENANT: COMPANIES
 // ══════════════════════════════════════════════
@@ -260,6 +283,9 @@ model Company {
   auditLogs        AuditLog[]
   products         Product[]
   priceLists       PriceList[]
+  workOrders       WorkOrder[]
+  bomTemplates     BOMTemplate[]
+  rawMaterials     RawMaterial[]
 
   @@index([nationalId])
   @@index([economicCode])
@@ -307,6 +333,10 @@ model User {
   workflowReqs    WorkflowRequest[]
   meetings        Meeting[]        @relation("MeetingCreator")
   journalEntries  JournalEntry[]
+  workOrdersCreated WorkOrder[]    @relation("WorkOrderCreator")
+  bomsCreated       BOMTemplate[]  @relation("BOMCreator")
+  wipEntries        WIPEntry[]     @relation("WIPRecorder")
+  qcInspections     QCInspection[] @relation("QCInspector")
 
   @@index([companyId])
   @@index([phone])
@@ -1555,4 +1585,149 @@ model WhiteLabelConfig {
   company         Company  @relation(fields: [companyId], references: [id])
 
   @@map("white_label_configs")
+}
+
+// ══════════════════════════════════════════════
+// MANUFACTURING
+// ══════════════════════════════════════════════
+
+model BOMTemplate {
+  id            String    @id @default(cuid())
+  companyId     Int
+  code          String
+  product       String
+  productFa     String?
+  unit          String    @default("Pcs")
+  description   String?
+  laborMinutes  Int?
+  overheadRate  Decimal?  @db.Decimal(10, 4)
+  isActive      Boolean   @default(true)
+  createdById   Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  company       Company      @relation(fields: [companyId], references: [id])
+  createdBy     User         @relation("BOMCreator", fields: [createdById], references: [id])
+  items         BOMItem[]
+  workOrders    WorkOrder[]
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@map("bom_templates")
+}
+
+model BOMItem {
+  id              Int       @id @default(autoincrement())
+  bomId           String
+  materialCode    String
+  material        String
+  materialFa      String?
+  qty             Decimal   @db.Decimal(15, 3)
+  unit            String
+  scrapFactor     Decimal   @db.Decimal(5, 4) @default(0)
+  unitCostIRR     BigInt?
+  notes           String?
+
+  bom             BOMTemplate @relation(fields: [bomId], references: [id], onDelete: Cascade)
+
+  @@index([bomId])
+  @@map("bom_items")
+}
+
+model WorkOrder {
+  id            String            @id @default(cuid())
+  companyId     Int
+  orderNo       String
+  bomId         String?
+  productName   String
+  productNameFa String?
+  qty           Decimal           @db.Decimal(15, 3)
+  unit          String            @default("Pcs")
+  startDate     DateTime?
+  dueDate       DateTime
+  status        WorkOrderStatus   @default(PLANNED)
+  priority      WorkOrderPriority @default(NORMAL)
+  progress      Int               @default(0)
+  workcenter    String?
+  estimatedCostIRR BigInt?
+  actualCostIRR    BigInt?
+  notes         String?
+  completedAt   DateTime?
+  createdById   Int
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  company       Company           @relation(fields: [companyId], references: [id])
+  bom           BOMTemplate?      @relation(fields: [bomId], references: [id])
+  createdBy     User              @relation("WorkOrderCreator", fields: [createdById], references: [id])
+  wipEntries    WIPEntry[]
+  qcInspections QCInspection[]
+
+  @@unique([companyId, orderNo])
+  @@index([companyId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("work_orders")
+}
+
+model RawMaterial {
+  id              String    @id @default(cuid())
+  companyId       Int
+  code            String
+  material        String
+  materialFa      String?
+  unit            String
+  available       Decimal   @db.Decimal(15, 3) @default(0)
+  required        Decimal   @db.Decimal(15, 3) @default(0)
+  reorderPoint    Decimal   @db.Decimal(15, 3) @default(0)
+  unitCostIRR     BigInt?
+  supplier        String?
+  dueDate         DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  company         Company   @relation(fields: [companyId], references: [id])
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@map("raw_materials")
+}
+
+model WIPEntry {
+  id              Int       @id @default(autoincrement())
+  workOrderId     String
+  stage           String
+  completedQty    Decimal   @db.Decimal(15, 3) @default(0)
+  actualCostIRR   BigInt?
+  note            String?
+  recordedById    Int
+  recordedAt      DateTime  @default(now())
+
+  workOrder       WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  recordedBy      User      @relation("WIPRecorder", fields: [recordedById], references: [id])
+
+  @@index([workOrderId])
+  @@map("wip_entries")
+}
+
+model QCInspection {
+  id              Int       @id @default(autoincrement())
+  workOrderId     String
+  companyId       Int
+  inspectedQty    Decimal   @db.Decimal(15, 3)
+  passedQty       Decimal   @db.Decimal(15, 3)
+  failedQty       Decimal   @db.Decimal(15, 3) @default(0)
+  result          QCResult  @default(PENDING)
+  notes           String?
+  defectCodes     String?
+  inspectedById   Int
+  inspectedAt     DateTime  @default(now())
+
+  workOrder       WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  inspectedBy     User      @relation("QCInspector", fields: [inspectedById], references: [id])
+
+  @@index([workOrderId])
+  @@index([companyId])
+  @@map("qc_inspections")
 }
