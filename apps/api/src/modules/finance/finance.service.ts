@@ -210,20 +210,22 @@ export class FinanceService {
       ? { createdAt: { gte: new Date(from), lte: new Date(to) } }
       : {};
 
-    const [revenueAccounts, expenseAccounts, invoices, buyerInvoices] = await Promise.all([
-      this.prisma.account.findMany({ where: { companyId, isActive: true, type: 'REVENUE' }, orderBy: { code: 'asc' } }),
-      this.prisma.account.findMany({ where: { companyId, isActive: true, type: 'EXPENSE' }, orderBy: { code: 'asc' } }),
+    // Fetch all accounts then filter in JS — avoids Prisma enum string mismatch
+    const [allAccounts, invoices, buyerInvoices] = await Promise.all([
+      this.prisma.account.findMany({ where: { companyId, isActive: true }, orderBy: { code: 'asc' } }),
       // Sales invoices as revenue source
       this.prisma.invoice.findMany({
-        where: { sellerCompanyId: companyId, status: { in: ['PAID', 'PARTIALLY_PAID'] as any }, ...dateFilter },
+        where: { sellerCompanyId: companyId, status: { in: ['PAID', 'PARTIAL'] as any }, ...dateFilter },
         select: { total: true, paid: true, vatAmount: true },
       }),
       // Purchase invoices as COGS source
       this.prisma.invoice.findMany({
-        where: { buyerCompanyId: companyId, status: { in: ['PAID', 'PARTIALLY_PAID'] as any }, ...dateFilter },
+        where: { buyerCompanyId: companyId, status: { in: ['PAID', 'PARTIAL'] as any }, ...dateFilter },
         select: { total: true, paid: true },
       }),
     ]);
+    const revenueAccounts = allAccounts.filter(a => String(a.type) === 'REVENUE');
+    const expenseAccounts = allAccounts.filter(a => String(a.type) === 'EXPENSE');
 
     const acctRevenue = revenueAccounts.reduce((s, a) => s + a.balance, BigInt(0));
     const acctExpense = expenseAccounts.reduce((s, a) => s + a.balance, BigInt(0));
