@@ -27,6 +27,9 @@ export {
   useWorkflowRequests, useCreateWorkflowRequest, useApproveRequest, useRejectRequest,
 } from './use-automation';
 
+// CRM
+export { useCRMConnections, useAddCRMConnection, useSearchCompanies } from './use-crm';
+
 // Notifications
 export {
   useNotifications, useUnreadCount, useMarkRead, useMarkAllRead,

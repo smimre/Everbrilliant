@@ -8,6 +8,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Table, Column } from '@/components/ui/table';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useCRMConnections } from '@/hooks/use-crm';
 import { Plus, Search, Building2, Star, TrendingUp, Users } from 'lucide-react';
 
 interface CRMCompany {
@@ -37,13 +38,37 @@ export function CRMModule() {
   return <CRMList onSelect={(c) => { setSelected(c); setView('detail'); }} />;
 }
 
+function normalizeConnection(raw: any): CRMCompany {
+  return {
+    id: raw.id || raw._id || Math.random(),
+    name: raw.name || raw.companyName || raw.partnerName || '—',
+    type: raw.type || raw.businessType || raw.role || 'buyer',
+    country: raw.country || raw.countryCode || '—',
+    contacts: raw.contactCount || raw.contacts || 0,
+    deals: raw.dealCount || raw.deals || 0,
+    totalValue: raw.totalValue || raw.tradingVolume || 0,
+    rating: raw.rating || 0,
+    status: raw.status || 'active',
+    lastActivity: raw.lastActivity || raw.updatedAt
+      ? new Date(raw.lastActivity || raw.updatedAt).toLocaleDateString('fa-IR')
+      : '—',
+  };
+}
+
 function CRMList({ onSelect }: { onSelect: (c: CRMCompany) => void }) {
   const { lang } = useLocaleStore();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all'|'buyer'|'supplier'|'logistics'>('all');
   const d = useDebounce(search);
 
-  const filtered = MOCK_COMPANIES.filter(c =>
+  const { data: apiData, isLoading: apiLoading } = useCRMConnections();
+  const apiConnections: any[] = (apiData as any)?.data ?? (Array.isArray(apiData) ? apiData : []);
+  const useMock = apiConnections.length === 0 && !apiLoading;
+  const companies: CRMCompany[] = useMock
+    ? MOCK_COMPANIES
+    : apiConnections.map(normalizeConnection);
+
+  const filtered = companies.filter(c =>
     (filter === 'all' || c.type === filter) &&
     (!d || c.name.toLowerCase().includes(d.toLowerCase()))
   );
@@ -98,11 +123,16 @@ function CRMList({ onSelect }: { onSelect: (c: CRMCompany) => void }) {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Building2 className="h-5 w-5"/>} label={lang==='fa'?'کل شرکت‌ها':'Total Companies'} value={MOCK_COMPANIES.length} color="#3b82f6"/>
-        <StatCard icon={<Users className="h-5 w-5"/>} label={lang==='fa'?'مشتریان فعال':'Active'} value={MOCK_COMPANIES.filter(c=>c.status==='active').length} color="#10b981"/>
-        <StatCard icon={<TrendingUp className="h-5 w-5"/>} label={lang==='fa'?'بالقوه':'Prospects'} value={MOCK_COMPANIES.filter(c=>c.status==='prospect').length} color="#f59e0b"/>
-        <StatCard icon={<Star className="h-5 w-5"/>} label={lang==='fa'?'میانگین امتیاز':'Avg Rating'} value="4.2" color="#8b5cf6"/>
+        <StatCard icon={<Building2 className="h-5 w-5"/>} label={lang==='fa'?'کل شرکت‌ها':'Total Companies'} value={companies.length} color="#3b82f6"/>
+        <StatCard icon={<Users className="h-5 w-5"/>} label={lang==='fa'?'مشتریان فعال':'Active'} value={companies.filter(c=>c.status==='active').length} color="#10b981"/>
+        <StatCard icon={<TrendingUp className="h-5 w-5"/>} label={lang==='fa'?'بالقوه':'Prospects'} value={companies.filter(c=>c.status==='prospect').length} color="#f59e0b"/>
+        <StatCard icon={<Star className="h-5 w-5"/>} label={lang==='fa'?'میانگین امتیاز':'Avg Rating'} value={companies.length ? (companies.reduce((s,c)=>s+(c.rating||0),0)/companies.length).toFixed(1) : '0'} color="#8b5cf6"/>
       </div>
+      {useMock && !apiLoading && (
+        <div className="text-xs px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 inline-block">
+          {lang==='fa'?'داده نمونه — اتصالات واقعی بعد از ثبت شرکت نمایش داده می‌شود':'Sample data — real connections appear after company setup'}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
@@ -118,7 +148,7 @@ function CRMList({ onSelect }: { onSelect: (c: CRMCompany) => void }) {
         </div>
       </div>
 
-      <Table columns={columns} data={filtered} onRowClick={onSelect}
+      <Table columns={columns} data={filtered} onRowClick={onSelect} loading={apiLoading}
         emptyTitle={lang==='fa'?'شرکتی پیدا نشد':'No companies found'} emptyIcon="🏢"/>
     </div>
   );
