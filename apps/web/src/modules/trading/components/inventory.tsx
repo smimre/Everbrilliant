@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useInventory } from '@/hooks/use-finance';
 
 const INV_CATS = ['روغن خوراکی', 'دانه‌های روغنی', 'غلات', 'مواد شیمیایی', 'تجهیزات صنعتی', 'فلزات', 'پلیمرها', 'سایر'];
 
@@ -11,11 +12,35 @@ const MOCK_INVENTORY = [
   { id:'INV-004', name:'پلی اتیلن سبک', category:'پلیمرها', qty:60, minQty:30, unit:'تن', unitCost:95000000, location:'انبار شیراز', available:false, owner:'my', reserved:0 },
 ];
 
+function normalizeInventoryItem(raw: any) {
+  return {
+    id: raw.id || raw._id || 'INV-' + Math.random().toString(36).slice(2,6).toUpperCase(),
+    name: raw.name || raw.productName || '—',
+    category: raw.category || raw.type || 'سایر',
+    qty: raw.quantity || raw.qty || raw.stock || 0,
+    minQty: raw.minQty || raw.reorderPoint || 0,
+    unit: raw.unit || 'تن',
+    unitCost: raw.unitPrice || raw.unitCost || raw.price || 0,
+    location: raw.location || raw.warehouse || '—',
+    available: (raw.quantity || raw.qty || raw.stock || 0) > 0,
+    owner: 'my' as const,
+    partnerName: '',
+    reserved: raw.reserved || 0,
+  };
+}
+
 export function InventoryPage() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
   const [showNew, setShowNew] = useState(false);
-  const [items, setItems] = useState(MOCK_INVENTORY);
+  const [extraItems, setExtraItems] = useState<typeof MOCK_INVENTORY>([]);
+
+  const { data: apiData, isLoading } = useInventory();
+  const apiItems: any[] = (apiData as any)?.data ?? (Array.isArray(apiData) ? apiData : []);
+  const useMock = !isLoading && apiItems.length === 0;
+  const baseItems = useMock ? MOCK_INVENTORY : apiItems.map(normalizeInventoryItem);
+  const items = [...baseItems, ...extraItems];
+  const setItems = (fn: (prev: any[]) => any[]) => setExtraItems(prev => fn([...baseItems, ...prev]).slice(baseItems.length));
   const [ownerFilter, setOwnerFilter] = useState<'all'|'my'|'partner'>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<any>(null);
