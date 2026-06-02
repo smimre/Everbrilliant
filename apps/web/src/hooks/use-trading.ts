@@ -55,3 +55,38 @@ export function useConnections() {
     staleTime: 60_000,
   });
 }
+
+// ── Quotes ────────────────────────────────────────────────────
+export function useQuotesForRequest(requestId: string) {
+  return useQuery({
+    queryKey: ['trading', 'quotes', requestId],
+    queryFn: () => api.get(`/trading/requests/${requestId}/quotes`),
+    enabled: !!requestId,
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateQuote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => api.post('/trading/quotes', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading'] }),
+  });
+}
+
+export function useAcceptQuote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/quotes/${id}/accept`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading'] }),
+  });
+}
+
+// ── Sign Contract ─────────────────────────────────────────────
+export function useSignContract() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/contracts/${id}/sign`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'contracts'] }),
+  });
+}

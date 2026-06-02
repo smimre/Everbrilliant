@@ -143,13 +143,26 @@ function ContractCard({ contract: c, lang, onView, onSign }: { contract: any; la
             {c.incoterms && <span>🚢 {c.incoterms}</span>}
           </div>
           {/* Signature Status */}
-          <div className="flex gap-3 mt-2">
+          <div className="flex gap-3 mt-2 flex-wrap">
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.buyerSigned ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
               🏢 {fa ? 'خریدار' : 'Buyer'}: {c.buyerSigned ? (fa ? 'امضا شد ✅' : 'Signed ✅') : (fa ? 'در انتظار ⏳' : 'Pending ⏳')}
             </span>
             <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.sellerSigned ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
               🏭 {fa ? 'فروشنده' : 'Seller'}: {c.sellerSigned ? (fa ? 'امضا شد ✅' : 'Signed ✅') : (fa ? 'در انتظار ⏳' : 'Pending ⏳')}
             </span>
+            {/* Cross-module: invoice link */}
+            {c.invoiceId && (
+              <a href="/finance/invoices"
+                className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors">
+                🧾 {fa ? 'فاکتور مالی ↗' : 'Finance Invoice ↗'}
+              </a>
+            )}
+            {c.status === 'signed' && !c.invoiceId && (
+              <a href="/finance/invoices"
+                className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors">
+                + {fa ? 'ایجاد فاکتور مالی' : 'Create Finance Invoice'}
+              </a>
+            )}
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -226,6 +239,27 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
             ✍️ {fa ? 'امضای قرارداد' : 'Sign Contract'}
           </button>
         )}
+
+        {/* Cross-module: Finance Invoice link */}
+        <div className="mt-4 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+          <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-2">🔗 {fa ? 'ماژول‌های مرتبط' : 'Related Modules'}</p>
+          <div className="flex gap-2 flex-wrap">
+            <a href="/finance/invoices"
+              className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors font-medium">
+              🧾 {fa ? 'فاکتورهای مالی' : 'Finance Invoices'}
+            </a>
+            {c.shipmentId && (
+              <a href="/logistics"
+                className="text-xs px-3 py-1.5 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors font-medium">
+                🚛 {fa ? 'مشاهده حمل' : 'View Shipment'}
+              </a>
+            )}
+            <a href="/trading/letterhead"
+              className="text-xs px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors font-medium">
+              📄 {fa ? 'سربرگ / امضا دیجیتال' : 'Letterhead / Sign'}
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

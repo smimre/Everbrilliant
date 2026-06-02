@@ -84,10 +84,16 @@ export function MaterialsPlanning() {
         ))}
       </div>
 
-      {/* Shortage alert */}
+      {/* Shortage alert with cross-module trading link */}
       {shortages.length > 0 && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
-          <h3 className="font-semibold text-sm text-red-500 mb-2">⚠️ {fa?'مواد نیاز به سفارش دارند':'Materials Requiring Purchase Orders'}</h3>
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="font-semibold text-sm text-red-500">⚠️ {fa?'مواد نیاز به سفارش دارند':'Materials Requiring Purchase Orders'}</h3>
+            <a href="/trading"
+              className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors font-medium border border-blue-500/20">
+              📊 {fa ? 'ثبت درخواست خرید در بازرگانی ↗' : 'Create Trading Purchase Request ↗'}
+            </a>
+          </div>
           <div className="space-y-1">
             {shortages.map(m => (
               <div key={m.id} className="flex items-center justify-between">
@@ -102,6 +108,11 @@ export function MaterialsPlanning() {
               </div>
             ))}
           </div>
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
+            {fa
+              ? '💡 برای خرید مواد اولیه می‌توانید از ماژول بازرگانی درخواست خرید ثبت کنید'
+              : '💡 Use the Trading module to create purchase requests for shortage materials'}
+          </p>
         </div>
       )}
 

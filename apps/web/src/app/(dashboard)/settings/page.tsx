@@ -1,13 +1,14 @@
 
 'use client';
 export const dynamic = 'force-dynamic';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings, User, Bell, Palette, Shield, Globe, Users, Building2, Key, UserCog, Plus, Trash2, Check, X, BookOpen, Cpu, FileText, CreditCard } from 'lucide-react';
+import { CountrySelector } from '@/components/ui/country-selector';
+import { Settings, User, Bell, Palette, Shield, Globe, Users, Building2, Key, UserCog, Plus, Trash2, Check, X, BookOpen, Cpu, FileText, CreditCard, ImagePlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { AuditLogPage } from '@/modules/admin/audit-log';
@@ -181,6 +182,88 @@ function AddCompanyModal({fa,onClose,onSave}: {fa:boolean;onClose:()=>void;onSav
     </div>
   );
 }
+
+function CompanyInfoTab({ fa }: { fa: boolean }) {
+  const logoRef = useRef<HTMLInputElement>(null);
+  const stampRef = useRef<HTMLInputElement>(null);
+  const [logo, setLogo] = useState('');
+  const [stamp, setStamp] = useState('');
+  const [country, setCountry] = useState('IR');
+  const [saved, setSaved] = useState(false);
+
+  const handleImg = (setter: (v:string)=>void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setter(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="space-y-4">
+      <h2 className="font-semibold text-lg">{fa?'اطلاعات شرکت':'Company Info'}</h2>
+
+      {/* Logo & Stamp row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="text-xs text-[hsl(var(--muted-foreground))] block mb-1">{fa?'لوگوی شرکت':'Company Logo'}</label>
+          <div onClick={() => logoRef.current?.click()}
+            className="border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-4 text-center cursor-pointer hover:border-[hsl(var(--primary)/0.5)] transition-colors">
+            {logo ? (
+              <img src={logo} alt="logo" className="h-14 object-contain mx-auto rounded-lg"/>
+            ) : (
+              <div className="py-3 flex flex-col items-center gap-2">
+                <ImagePlus className="w-8 h-8 text-[hsl(var(--muted-foreground))]"/>
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">{fa?'آپلود لوگو':'Upload logo'}</span>
+              </div>
+            )}
+            <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={handleImg(setLogo)}/>
+          </div>
+        </div>
+        <div>
+          <label className="text-xs text-[hsl(var(--muted-foreground))] block mb-1">{fa?'مهر / تمبر':'Company Stamp'}</label>
+          <div onClick={() => stampRef.current?.click()}
+            className="border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-4 text-center cursor-pointer hover:border-[hsl(var(--primary)/0.5)] transition-colors">
+            {stamp ? (
+              <img src={stamp} alt="stamp" className="h-14 object-contain mx-auto rounded-lg"/>
+            ) : (
+              <div className="py-3 flex flex-col items-center gap-2">
+                <ImagePlus className="w-8 h-8 text-[hsl(var(--muted-foreground))]"/>
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">{fa?'آپلود مهر (PNG شفاف)':'Upload stamp (PNG transparent)'}</span>
+              </div>
+            )}
+            <input ref={stampRef} type="file" accept="image/*" className="hidden" onChange={handleImg(setStamp)}/>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Input label={fa?'نام شرکت':'Company Name'} defaultValue="شرکت ایورتریدینگ"/>
+        <Input label={fa?'شناسه ملی':'National ID'} defaultValue="14005678901"/>
+        <Input label={fa?'کد اقتصادی':'Economic Code'} defaultValue="411234567890"/>
+        <Input label={fa?'شماره ثبت':'Reg No'} defaultValue="12345"/>
+        <Input label={fa?'تلفن':'Phone'} defaultValue="02112345678"/>
+        <Input label={fa?'ایمیل':'Email'} defaultValue="info@everbrilliant.com"/>
+      </div>
+
+      <CountrySelector
+        label={fa?'کشور':'Country'}
+        value={country}
+        onChange={setCountry}
+      />
+
+      <Input label={fa?'آدرس':'Address'} defaultValue="تهران، خیابان ولیعصر"/>
+
+      <div className="flex items-center gap-3">
+        <Button onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2500); }}>
+          {saved ? '✅ ' : ''}{fa?'ذخیره':'Save'}
+        </Button>
+        {saved && <span className="text-sm text-[hsl(var(--primary))]">{fa?'اطلاعات ذخیره شد':'Saved successfully'}</span>}
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { lang, setLocale } = useLocaleStore();
   const { user } = useAuthStore();
@@ -360,21 +443,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {tab==='company' && (
-            <div className="space-y-4">
-              <h2 className="font-semibold text-lg">{fa?'اطلاعات شرکت':'Company Info'}</h2>
-              <div className="grid grid-cols-2 gap-3">
-                <Input label={fa?'نام شرکت':'Name'} defaultValue="شرکت ایورتریدینگ"/>
-                <Input label={fa?'شناسه ملی':'National ID'} defaultValue="14005678901"/>
-                <Input label={fa?'کد اقتصادی':'Economic Code'} defaultValue="411234567890"/>
-                <Input label={fa?'شماره ثبت':'Reg No'} defaultValue="12345"/>
-                <Input label={fa?'تلفن':'Phone'} defaultValue="02112345678"/>
-                <Input label={fa?'ایمیل':'Email'} defaultValue="info@everbrilliant.com"/>
-              </div>
-              <Input label={fa?'آدرس':'Address'} defaultValue="تهران، خیابان ولیعصر"/>
-              <Button>{fa?'ذخیره':'Save'}</Button>
-            </div>
-          )}
+          {tab==='company' && <CompanyInfoTab fa={fa}/>}
 
           {tab==='admin' && (
             <div className="space-y-5">

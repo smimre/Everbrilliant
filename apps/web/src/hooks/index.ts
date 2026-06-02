@@ -8,9 +8,10 @@ export { useLogin, useRegister, useLogout } from './use-auth';
 // Trading
 export {
   useRequests, useCreateRequest,
-  useContracts,
+  useContracts, useSignContract,
   useTenders, useCreateTender,
   useConnections,
+  useQuotesForRequest, useCreateQuote, useAcceptQuote,
 } from './use-trading';
 
 // Finance
@@ -18,6 +19,13 @@ export {
   useInvoices, useInvoice, useCreateInvoice,
   useEmployees, useInventory,
 } from './use-finance';
+
+// Automation
+export {
+  useLetters, useCreateLetter, useArchiveLetter,
+  useMeetings, useCreateMeeting, useAddMinutes,
+  useWorkflowRequests, useCreateWorkflowRequest, useApproveRequest, useRejectRequest,
+} from './use-automation';
 
 // Notifications
 export {

@@ -68,14 +68,21 @@ export function InvoiceListPage({ onSelect, onCreate }: InvoiceListProps) {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold">🧾 {t.title}</h1>
           <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
             {data?.total ?? 0} {lang === 'fa' ? 'فاکتور' : 'invoices'}
           </p>
         </div>
-        <Button onClick={onCreate}><Plus className="h-4 w-4" />{t.create}</Button>
+        <div className="flex gap-2 flex-wrap items-center">
+          {/* Cross-module: link to trading contracts */}
+          <a href="/trading"
+            className="text-xs px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted)/0.3)] transition-colors">
+            📊 {lang === 'fa' ? 'قراردادهای بازرگانی' : 'Trading Contracts'}
+          </a>
+          <Button onClick={onCreate}><Plus className="h-4 w-4" />{t.create}</Button>
+        </div>
       </div>
 
       {/* Filters */}

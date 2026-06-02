@@ -23,6 +23,7 @@ import { ApprovalWorkflowsPage } from './components/approval-workflows';
 import { PartnerProfilePage } from './components/partner-profile';
 import { MyPayments } from './components/my-payments';
 import { MyInvoices } from './components/my-invoices';
+import { MyQuotes } from './components/my-quotes';
 import { RequestTemplates } from './components/request-templates';
 import { LetterheadPage } from './components/letterhead';
 
@@ -101,7 +102,7 @@ export function TradingModule({ initialView }: { initialView?: string } = {}) {
       case 'dashboard':      return <TradingDashboard onNavigate={setView} />;
       case 'my-requests':    return <MyRequests />;
       case 'incoming-req':   return <IncomingRequests />;
-      case 'my-quotes':      return <IncomingRequests showQuotes />;
+      case 'my-quotes':      return <MyQuotes />;
       case 'my-contracts':   return <MyContracts />;
       case 'inventory':      return <InventoryPage />;
       case 'tender-browse':  return <TenderBrowse />;
