@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class FinanceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(protected prisma: PrismaService) {}
 
   private paginate(query: any) {
     const page = Math.max(1, Number(query.page) || 1);

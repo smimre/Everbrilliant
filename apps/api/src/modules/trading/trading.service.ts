@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class TradingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(protected prisma: PrismaService) {}
 
   private paginate(q: any) {
     const page = Math.max(1, Number(q.page) || 1);
@@ -192,5 +192,3 @@ export class TradingService {
     return this.page(data, total, page, limit);
   }
 }
-
-import { BadRequestException } from '@nestjs/common';

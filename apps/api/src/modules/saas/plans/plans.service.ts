@@ -130,8 +130,8 @@ export class PlansService implements OnModuleInit {
           nameFa: plan.nameFa,
           priceMonthly: plan.priceMonthly,
           priceAnnual: plan.priceAnnual,
-          limits: plan.limits,
-          features: plan.features,
+          limits: plan.limits as any,
+          features: plan.features as any,
         },
         create: plan as any,
       });
@@ -153,8 +153,8 @@ export class PlansService implements OnModuleInit {
         displayName: lang === 'fa' ? p.nameFa || p.name : p.name,
         priceMonthly: Number(p.priceMonthly),
         priceAnnual: Number(p.priceAnnual),
-        limits: p.limits as PlanLimits,
-        features: p.features as PlanFeatures,
+        limits: p.limits as unknown as PlanLimits,
+        features: p.features as unknown as PlanFeatures,
       }));
     }, this.cache.TTL.HOUR);
   }

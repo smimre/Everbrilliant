@@ -364,18 +364,18 @@ export class ManufacturingService {
       plannedWOs,
       inQCWOs,
       completedThisMonth,
-      materialShortages,
+      allMaterials,
       costAggregate,
     ] = await Promise.all([
       this.prisma.workOrder.count({ where: { companyId, status: 'IN_PROGRESS' } }),
       this.prisma.workOrder.count({ where: { companyId, status: 'PLANNED' } }),
       this.prisma.workOrder.count({ where: { companyId, status: 'QC' } }),
       this.prisma.workOrder.count({ where: { companyId, status: 'COMPLETED', completedAt: { gte: startOfMonth } } }),
-      this.prisma.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*) as count FROM raw_materials WHERE company_id = ${companyId} AND available < required`,
+      this.prisma.rawMaterial.findMany({ where: { companyId }, select: { available: true, required: true } }),
       this.prisma.workOrder.aggregate({ where: { companyId }, _sum: { estimatedCostIRR: true } }),
     ]);
 
-    const shortageCount = Number((materialShortages as any)[0]?.count ?? 0);
+    const shortageCount = allMaterials.filter(m => Number(m.available) < Number(m.required)).length;
 
     return this.serialize({
       activeWorkOrders: activeWOs,
