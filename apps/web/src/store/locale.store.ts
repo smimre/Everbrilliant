@@ -36,10 +36,11 @@ export const useLocaleStore = create<LocaleStore>()(
       currentLocale: () => LOCALES[get().lang],
 
       setLocale: (lang) => {
-        const locale = LOCALES[lang];
-        set({ lang, dir: locale.dir });
+        const locale = LOCALES[lang] ?? LOCALES.en;
+        const safeLang = LOCALES[lang] ? lang : 'en';
+        set({ lang: safeLang, dir: locale.dir });
         if (typeof document !== 'undefined') {
-          document.documentElement.lang = lang;
+          document.documentElement.lang = safeLang;
           document.documentElement.dir = locale.dir;
           document.body.style.fontFamily = locale.font;
         }
