@@ -5,45 +5,63 @@ import { useRequests, useCreateRequest } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: '#f59e0b', quoted: '#3b82f6', approved: '#10b981',
-  paid: '#06b6d4', issued: '#8b5cf6', completed: '#10b981', rejected: '#ef4444',
+  PENDING: '#f59e0b', QUOTED: '#3b82f6', APPROVED: '#10b981',
+  PAID: '#06b6d4', ISSUED: '#8b5cf6', COMPLETED: '#10b981',
+  CANCELLED: '#94a3b8', REJECTED: '#ef4444',
 };
 const STATUS_ICONS: Record<string, string> = {
-  pending: '⏳', quoted: '💬', approved: '✅', paid: '💳', issued: '📜', completed: '✔️', rejected: '❌',
+  PENDING: '⏳', QUOTED: '💬', APPROVED: '✅', PAID: '💳',
+  ISSUED: '📜', COMPLETED: '✔️', CANCELLED: '🚫', REJECTED: '❌',
 };
+const STATUS_LABELS: Record<string, { fa: string; en: string }> = {
+  PENDING:   { fa: '⏳ در انتظار',    en: '⏳ Pending' },
+  QUOTED:    { fa: '💬 قیمت داده',   en: '💬 Quoted' },
+  APPROVED:  { fa: '✅ تایید شده',   en: '✅ Approved' },
+  PAID:      { fa: '💳 پرداخت شده', en: '💳 Paid' },
+  ISSUED:    { fa: '📜 صادر شده',    en: '📜 Issued' },
+  COMPLETED: { fa: '✔️ تکمیل شده',  en: '✔️ Completed' },
+  CANCELLED: { fa: '🚫 لغو شده',    en: '🚫 Cancelled' },
+  REJECTED:  { fa: '❌ رد شده',      en: '❌ Rejected' },
+};
+
+function fmtDate(iso: string) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('fa-IR'); } catch { return iso; }
+}
 
 export function MyRequests() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
   const { data: rawRequests, isLoading } = useRequests();
   const requests: any[] = rawRequests?.data ?? [];
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<any>(null);
 
-  const statusLabel: Record<string, { fa: string; en: string }> = {
-    all:       { fa: 'همه', en: 'All' },
-    pending:   { fa: 'در انتظار', en: 'Pending' },
-    quoted:    { fa: 'قیمت داده', en: 'Quoted' },
-    approved:  { fa: 'تایید شده', en: 'Approved' },
-    paid:      { fa: 'پرداخت شده', en: 'Paid' },
-    completed: { fa: 'تکمیل', en: 'Completed' },
-    rejected:  { fa: 'رد شده', en: 'Rejected' },
+  const tabLabel: Record<string, { fa: string; en: string }> = {
+    ALL:      { fa: 'همه',         en: 'All' },
+    PENDING:  { fa: 'در انتظار',   en: 'Pending' },
+    QUOTED:   { fa: 'قیمت داده',  en: 'Quoted' },
+    APPROVED: { fa: 'تایید شده',  en: 'Approved' },
+    REJECTED: { fa: 'رد شده',     en: 'Rejected' },
   };
 
   const filtered = requests.filter((r: any) => {
-    const matchStatus = filter === 'all' || r.status === filter;
+    const st = (r.status || '').toUpperCase();
+    const matchStatus =
+      filter === 'ALL' ||
+      (filter === 'APPROVED' ? ['APPROVED', 'PAID', 'ISSUED', 'COMPLETED'].includes(st) : st === filter);
     const matchSearch = !search || (r.product || r.title || '').toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
   });
 
   const counts = {
-    all: requests.length,
-    pending: requests.filter((r: any) => r.status === 'pending').length,
-    quoted: requests.filter((r: any) => r.status === 'quoted').length,
-    approved: requests.filter((r: any) => ['approved','paid','completed'].includes(r.status)).length,
-    rejected: requests.filter((r: any) => r.status === 'rejected').length,
+    ALL:      requests.length,
+    PENDING:  requests.filter(r => (r.status || '').toUpperCase() === 'PENDING').length,
+    QUOTED:   requests.filter(r => (r.status || '').toUpperCase() === 'QUOTED').length,
+    APPROVED: requests.filter(r => ['APPROVED','PAID','ISSUED','COMPLETED'].includes((r.status || '').toUpperCase())).length,
+    REJECTED: requests.filter(r => (r.status || '').toUpperCase() === 'REJECTED').length,
   };
 
   return (
@@ -63,7 +81,7 @@ export function MyRequests() {
 
       {/* 5-column stats */}
       <div className="grid grid-cols-5 gap-2">
-        {(['all','pending','quoted','approved','rejected'] as const).map(s => (
+        {(['ALL','PENDING','QUOTED','APPROVED','REJECTED'] as const).map(s => (
           <button
             key={s}
             onClick={() => setFilter(s)}
@@ -73,11 +91,11 @@ export function MyRequests() {
                 : 'border-[hsl(var(--border))] bg-[hsl(var(--secondary))] hover:border-[hsl(var(--primary)/0.3)]'
             }`}
           >
-            <div className="text-lg font-bold" style={{ color: s === 'all' ? 'hsl(var(--foreground))' : STATUS_COLORS[s] }}>
+            <div className="text-lg font-bold" style={{ color: s === 'ALL' ? 'hsl(var(--foreground))' : (STATUS_COLORS[s] || '#64748b') }}>
               {counts[s]}
             </div>
             <div className="text-[10px] text-[hsl(var(--muted-foreground))] leading-tight">
-              {fa ? statusLabel[s].fa : statusLabel[s].en}
+              {fa ? tabLabel[s].fa : tabLabel[s].en}
             </div>
           </button>
         ))}
@@ -118,17 +136,9 @@ export function MyRequests() {
 
 function RequestCard({ request: r, lang, onSelect }: { request: any; lang: string; onSelect: () => void }) {
   const fa = lang === 'fa';
-  const { toast } = useUIStore();
-  const color = STATUS_COLORS[r.status] || '#64748b';
-  const statusLabels: Record<string, string> = {
-    pending: fa ? '⏳ در انتظار' : '⏳ Pending',
-    quoted: fa ? '💬 قیمت داده' : '💬 Quoted',
-    approved: fa ? '✅ تایید شده' : '✅ Approved',
-    paid: fa ? '💳 پرداخت شده' : '💳 Paid',
-    issued: fa ? '📜 صادر شده' : '📜 Issued',
-    completed: fa ? '✔️ تکمیل شده' : '✔️ Completed',
-    rejected: fa ? '❌ رد شده' : '❌ Rejected',
-  };
+  const st = (r.status || '').toUpperCase();
+  const color = STATUS_COLORS[st] || '#64748b';
+  const label = STATUS_LABELS[st] ? (fa ? STATUS_LABELS[st].fa : STATUS_LABELS[st].en) : r.status;
 
   return (
     <div
@@ -141,36 +151,34 @@ function RequestCard({ request: r, lang, onSelect }: { request: any; lang: strin
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-semibold text-sm truncate">{r.product || r.title || (fa ? 'درخواست' : 'Request')}</span>
             <span className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" style={{ background: `${color}20`, color }}>
-              {statusLabels[r.status] || r.status}
+              {label}
             </span>
           </div>
           <div className="flex items-center gap-4 text-xs text-[hsl(var(--muted-foreground))] flex-wrap">
             {r.qty && <span>📦 {Number(r.qty)} {r.unit || ''}</span>}
             {r.amountIRR && <span className="font-semibold" style={{ color: '#f59e0b' }}>💰 {Number(r.amountIRR).toLocaleString('fa-IR')} IRR</span>}
-            {r.createdAt && <span>📅 {r.createdAt}</span>}
+            {r.createdAt && <span>📅 {fmtDate(r.createdAt)}</span>}
           </div>
           {r.note && (
             <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2 line-clamp-2">{r.note}</p>
           )}
         </div>
         {/* Quoted: show Confirm/Reject actions */}
-        {r.status === 'quoted' && (
+        {st === 'QUOTED' && (
           <div className="flex gap-2 shrink-0" onClick={e => e.stopPropagation()}>
             <button
               className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-500 text-xs font-bold hover:bg-green-500/20 transition-colors"
-              onClick={() => toast('success', fa ? 'قیمت تایید شد' : 'Quote confirmed')}
             >
               ✅ {fa ? 'تایید' : 'Confirm'}
             </button>
             <button
               className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold hover:bg-red-500/20 transition-colors"
-              onClick={() => toast('success', fa ? 'قیمت رد شد' : 'Quote rejected')}
             >
               ❌ {fa ? 'رد' : 'Reject'}
             </button>
           </div>
         )}
-        {r.status !== 'quoted' && (
+        {st !== 'QUOTED' && (
           <button className="text-xs px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors shrink-0">
             {fa ? 'جزئیات' : 'Details'}
           </button>
@@ -182,13 +190,15 @@ function RequestCard({ request: r, lang, onSelect }: { request: any; lang: strin
 
 function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang: string; onClose: () => void }) {
   const fa = lang === 'fa';
-  const color = STATUS_COLORS[r.status] || '#64748b';
+  const st = (r.status || '').toUpperCase();
+  const color = STATUS_COLORS[st] || '#64748b';
+  const label = STATUS_LABELS[st] ? (fa ? STATUS_LABELS[st].fa : STATUS_LABELS[st].en) : r.status;
   const fields: [string, any][] = [
     [fa ? 'نام کالا' : 'Product', r.product || r.title],
     [fa ? 'مقدار' : 'Quantity', r.qty ? `${Number(r.qty)} ${r.unit || ''}` : null],
     [fa ? 'مبلغ' : 'Amount', r.amountIRR ? `${Number(r.amountIRR).toLocaleString('fa-IR')} IRR` : null],
-    [fa ? 'تاریخ' : 'Date', r.createdAt],
-    [fa ? 'وضعیت' : 'Status', r.status],
+    [fa ? 'تاریخ' : 'Date', r.createdAt ? fmtDate(r.createdAt) : null],
+    [fa ? 'وضعیت' : 'Status', label],
   ].filter(([, v]) => v) as [string, any][];
 
   return (
@@ -199,7 +209,7 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
           <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
         </div>
         <span className="text-xs px-2 py-1 rounded-full mb-4 inline-block" style={{ background: color + '20', color }}>
-          {STATUS_ICONS[r.status]} {r.status}
+          {STATUS_ICONS[st]} {label}
         </span>
         <div className="space-y-1 mt-3">
           {fields.map(([k, v]) => (
@@ -212,7 +222,7 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
         {r.note && (
           <p className="mt-3 text-xs text-[hsl(var(--muted-foreground))] p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg">{r.note}</p>
         )}
-        {r.status === 'quoted' && (
+        {st === 'QUOTED' && (
           <div className="flex gap-3 mt-5">
             <button
               onClick={onClose}
