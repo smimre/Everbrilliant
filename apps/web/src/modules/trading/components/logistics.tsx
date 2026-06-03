@@ -1,6 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import {
+  useShipments, useCreateShipment, useUpdateShipment,
+  useAdvanceStage, useIssueWaybill,
+  useRateQuotes, useCreateRateQuote, useToggleRateQuote,
+  useLogisticsReports,
+} from '@/hooks/use-logistics';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -218,16 +224,76 @@ export function LogisticsPage() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
 
+  // ── API hooks ────────────────────────────────────────────────
+  const { data: shipmentsData } = useShipments();
+  const { data: quotesData } = useRateQuotes();
+  const { data: reportsData } = useLogisticsReports();
+  const createShipmentMut = useCreateShipment();
+  const updateShipmentMut = useUpdateShipment();
+  const advanceStageMut = useAdvanceStage();
+  const issueWaybillMut = useIssueWaybill();
+  const createRateQuoteMut = useCreateRateQuote();
+  const toggleRateQuoteMut = useToggleRateQuote();
+
   const [tab, setTab] = useState<TabId>('dashboard');
-  const [shipments, setShipments] = useState<Shipment[]>(MOCK_SHIPMENTS);
   const [statusFilter, setStatusFilter] = useState<ShipmentStatus | 'all'>('all');
 
-  // Quotes state
-  const [quotes, setQuotes] = useState([
+  // Merge API data with mock fallback
+  const apiShipments: Shipment[] = shipmentsData?.data?.map((s: any) => ({
+    id: s.id,
+    trackingCode: s.trackingCode,
+    cargo: s.cargo,
+    type: (s.shipType as ShipmentType) || 'domestic',
+    status: (s.status as ShipmentStatus) || 'booked',
+    origin: s.origin || '',
+    destination: s.destination || '',
+    weight: Number(s.weight) || 0,
+    weightUnit: s.weightUnit || 'تن',
+    volume: Number(s.volume) || 0,
+    cost: Number(s.cost) || 0,
+    costPaid: s.costPaid || false,
+    sellerName: s.sellerName || '',
+    buyerName: s.buyerName || '',
+    waybillNo: s.waybillNo || undefined,
+    notes: s.notes || undefined,
+    createdAt: s.createdAt ? new Date(s.createdAt).toLocaleDateString('fa-IR') : '',
+    stages: (s.stages || []).map((st: any) => ({
+      key: st.key,
+      label: st.label,
+      labelFa: st.labelFa,
+      done: st.isDone,
+      date: st.date || undefined,
+    })),
+    insurance: s.insurer ? { company: s.insurer, amount: Number(s.insuranceAmt) || 0, policyNo: s.policyNo || '' } : undefined,
+    customsStatus: s.customsStatus as CustomsStatus | undefined,
+    hsCode: s.hsCode || undefined,
+    customsNotes: s.customsNotes || undefined,
+  })) ?? [];
+
+  const [localShipments, setLocalShipments] = useState<Shipment[]>(MOCK_SHIPMENTS);
+  const shipments: Shipment[] = apiShipments.length > 0 ? apiShipments : localShipments;
+
+  const apiQuotes: Array<{ id: string; from: string; to: string; type: string; rate: number; unit: string; active: boolean }> =
+    Array.isArray(quotesData)
+      ? quotesData.map((q: any) => ({
+          id: q.id,
+          from: q.fromLoc,
+          to: q.toLoc,
+          type: q.mode,
+          rate: Number(q.rate),
+          unit: q.unit,
+          active: q.active,
+        }))
+      : [];
+
+  const MOCK_QUOTES = [
     { id: 'LQ-001', from: fa ? 'تهران' : 'Tehran',       to: fa ? 'اصفهان' : 'Isfahan',   type: fa ? 'کامیون' : 'Truck',         rate: 28000000,  unit: fa ? 'هر بار' : 'per load', active: true  },
     { id: 'LQ-002', from: fa ? 'تهران' : 'Tehran',       to: fa ? 'مشهد' : 'Mashhad',    type: fa ? 'کامیون' : 'Truck',         rate: 45000000,  unit: fa ? 'هر بار' : 'per load', active: true  },
     { id: 'LQ-003', from: fa ? 'بندر امام' : 'Imam Port', to: fa ? 'تهران' : 'Tehran',   type: fa ? 'بین‌المللی' : 'International', rate: 185000000, unit: fa ? 'هر TEU' : 'per TEU', active: true  },
-  ]);
+  ];
+  const [localQuotes, setLocalQuotes] = useState(MOCK_QUOTES);
+  const quotes = apiQuotes.length > 0 ? apiQuotes : localQuotes;
+
   const [showNewQuote, setShowNewQuote] = useState(false);
   const [quoteForm, setQuoteForm] = useState({ from: '', to: '', type: fa ? 'کامیون' : 'Truck', rate: '', unit: fa ? 'هر بار' : 'per load' });
 
@@ -265,46 +331,70 @@ export function LogisticsPage() {
     s.type === 'international' && ['in_transit', 'customs'].includes(s.status)
   );
 
+  const usingApiShipments = apiShipments.length > 0;
+  const usingApiQuotes = apiQuotes.length > 0;
+
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const handleUpdateStatus = () => {
     if (!updateShip) return;
     const nextStage = updateShip.stages.find(s => !s.done);
     if (!nextStage) return;
-    const updated = shipments.map(s => {
-      if (s.id !== updateShip.id) return s;
-      const newStages = s.stages.map(st =>
-        st.key === nextStage.key ? { ...st, done: true, date: updateForm.date || new Date().toLocaleDateString('fa-IR') } : st
-      );
-      const allDone = newStages.every(st => st.done);
-      const newStatus: ShipmentStatus = allDone ? 'delivered' : (nextStage.key as ShipmentStatus) ?? s.status;
-      return { ...s, stages: newStages, status: newStatus };
-    });
-    setShipments(updated);
+    if (usingApiShipments) {
+      advanceStageMut.mutate({ id: updateShip.id, dto: { date: updateForm.date || undefined, note: updateForm.notes || undefined } });
+    } else {
+      const updated = localShipments.map(s => {
+        if (s.id !== updateShip.id) return s;
+        const newStages = s.stages.map(st =>
+          st.key === nextStage.key ? { ...st, done: true, date: updateForm.date || new Date().toLocaleDateString('fa-IR') } : st
+        );
+        const allDone = newStages.every(st => st.done);
+        const newStatus: ShipmentStatus = allDone ? 'delivered' : (nextStage.key as ShipmentStatus) ?? s.status;
+        return { ...s, stages: newStages, status: newStatus };
+      });
+      setLocalShipments(updated);
+    }
     setUpdateShip(null);
     setUpdateForm({ date: '', location: '', notes: '' });
   };
 
   const handleIssueWaybill = (id: string) => {
-    setShipments(prev => prev.map(s => s.id === id ? { ...s, waybillNo: genWaybill() } : s));
+    if (usingApiShipments) {
+      issueWaybillMut.mutate(id);
+    } else {
+      setLocalShipments(prev => prev.map(s => s.id === id ? { ...s, waybillNo: genWaybill() } : s));
+    }
   };
 
   const handleMarkPaid = (id: string) => {
-    setShipments(prev => prev.map(s => s.id === id ? { ...s, costPaid: true } : s));
+    if (usingApiShipments) {
+      updateShipmentMut.mutate({ id, dto: { costPaid: true } });
+    } else {
+      setLocalShipments(prev => prev.map(s => s.id === id ? { ...s, costPaid: true } : s));
+    }
   };
 
   const handleCustomsUpdate = (id: string, fields: Partial<Shipment>) => {
-    setShipments(prev => prev.map(s => s.id === id ? { ...s, ...fields } : s));
+    if (usingApiShipments) {
+      updateShipmentMut.mutate({ id, dto: fields });
+    } else {
+      setLocalShipments(prev => prev.map(s => s.id === id ? { ...s, ...fields } : s));
+    }
   };
 
   const handleMarkCleared = (ship: Shipment) => {
-    const updated = ship.stages.map(st =>
-      st.key === 'customs' ? { ...st, done: true, date: new Date().toLocaleDateString('fa-IR') } : st
-    );
-    const newStatus: ShipmentStatus = updated.every(s => s.done) ? 'delivered' : 'in_transit';
-    setShipments(prev => prev.map(s =>
-      s.id === ship.id ? { ...s, stages: updated, status: newStatus, customsStatus: 'cleared' } : s
-    ));
+    if (usingApiShipments) {
+      advanceStageMut.mutate({ id: ship.id, dto: {} });
+      updateShipmentMut.mutate({ id: ship.id, dto: { customsStatus: 'cleared' } });
+    } else {
+      const updated = ship.stages.map(st =>
+        st.key === 'customs' ? { ...st, done: true, date: new Date().toLocaleDateString('fa-IR') } : st
+      );
+      const newStatus: ShipmentStatus = updated.every(s => s.done) ? 'delivered' : 'in_transit';
+      setLocalShipments(prev => prev.map(s =>
+        s.id === ship.id ? { ...s, stages: updated, status: newStatus, customsStatus: 'cleared' } : s
+      ));
+    }
   };
 
   const handleNewShipment = () => {
@@ -312,34 +402,34 @@ export function LogisticsPage() {
       alert(fa ? 'فیلدهای الزامی را پر کنید' : 'Fill required fields');
       return;
     }
-    const stages = buildStages(newForm.type);
-    stages[0].done = true;
-    stages[0].date = new Date().toLocaleDateString('fa-IR');
-    const ship: Shipment = {
-      id: `SHP-${String(shipments.length + 1).padStart(3, '0')}`,
-      trackingCode: `EB-TRK-${10000 + Math.floor(Math.random() * 90000)}`,
-      cargo: newForm.cargo,
-      type: newForm.type,
-      status: 'booked',
-      origin: newForm.origin,
-      destination: newForm.destination,
-      weight: Number(newForm.weight) || 0,
-      weightUnit: newForm.weightUnit,
-      volume: Number(newForm.volume) || 0,
-      cost: Number(newForm.cost) || 0,
-      costPaid: newForm.costPaid,
-      sellerName: newForm.sellerName,
-      buyerName: newForm.buyerName,
-      notes: newForm.notes,
-      createdAt: new Date().toLocaleDateString('fa-IR'),
-      stages,
-      customsStatus: newForm.type === 'international' ? 'pending' : undefined,
-    };
-    setShipments(prev => [ship, ...prev]);
-    setNewForm({ cargo: '', type: 'domestic', origin: '', destination: '', sellerName: '', buyerName: '', weight: '', weightUnit: 'تن', volume: '', cost: '', costPaid: false, notes: '' });
-    setNewSuccess(true);
-    setTimeout(() => setNewSuccess(false), 3500);
-    setTab('shipments');
+    const resetForm = { cargo: '', type: 'domestic' as ShipmentType, origin: '', destination: '', sellerName: '', buyerName: '', weight: '', weightUnit: 'تن', volume: '', cost: '', costPaid: false, notes: '' };
+    if (usingApiShipments) {
+      createShipmentMut.mutate(
+        { cargo: newForm.cargo, shipType: newForm.type, origin: newForm.origin, destination: newForm.destination, sellerName: newForm.sellerName, buyerName: newForm.buyerName, weight: newForm.weight, weightUnit: newForm.weightUnit, volume: newForm.volume, cost: newForm.cost, costPaid: newForm.costPaid, notes: newForm.notes },
+        { onSuccess: () => { setNewForm(resetForm); setNewSuccess(true); setTimeout(() => setNewSuccess(false), 3500); setTab('shipments'); } }
+      );
+    } else {
+      const stages = buildStages(newForm.type);
+      stages[0].done = true;
+      stages[0].date = new Date().toLocaleDateString('fa-IR');
+      const ship: Shipment = {
+        id: `SHP-${String(localShipments.length + 1).padStart(3, '0')}`,
+        trackingCode: `EB-TRK-${10000 + Math.floor(Math.random() * 90000)}`,
+        cargo: newForm.cargo, type: newForm.type, status: 'booked',
+        origin: newForm.origin, destination: newForm.destination,
+        weight: Number(newForm.weight) || 0, weightUnit: newForm.weightUnit,
+        volume: Number(newForm.volume) || 0, cost: Number(newForm.cost) || 0,
+        costPaid: newForm.costPaid, sellerName: newForm.sellerName,
+        buyerName: newForm.buyerName, notes: newForm.notes,
+        createdAt: new Date().toLocaleDateString('fa-IR'), stages,
+        customsStatus: newForm.type === 'international' ? 'pending' : undefined,
+      };
+      setLocalShipments(prev => [ship, ...prev]);
+      setNewForm(resetForm);
+      setNewSuccess(true);
+      setTimeout(() => setNewSuccess(false), 3500);
+      setTab('shipments');
+    }
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -852,7 +942,7 @@ export function LogisticsPage() {
                       </td>
                       <td className="px-3 py-2.5">
                         <button
-                          onClick={() => setQuotes(qs => qs.map(x => x.id === q.id ? { ...x, active: !x.active } : x))}
+                          onClick={() => usingApiQuotes ? toggleRateQuoteMut.mutate(q.id) : setLocalQuotes(qs => qs.map(x => x.id === q.id ? { ...x, active: !x.active } : x))}
                           className={btnSecondary}
                         >
                           {q.active ? (fa ? 'غیرفعال' : 'Deactivate') : (fa ? 'فعال' : 'Activate')}
@@ -907,9 +997,17 @@ export function LogisticsPage() {
                   <button onClick={() => setShowNewQuote(false)} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
                   <button onClick={() => {
                     if (!quoteForm.from || !quoteForm.to || !quoteForm.rate) return;
-                    setQuotes(qs => [...qs, { id: 'LQ-' + Date.now(), from: quoteForm.from, to: quoteForm.to, type: quoteForm.type, rate: Number(quoteForm.rate), unit: quoteForm.unit, active: true }]);
-                    setQuoteForm({ from: '', to: '', type: fa ? 'کامیون' : 'Truck', rate: '', unit: fa ? 'هر بار' : 'per load' });
-                    setShowNewQuote(false);
+                    const resetQuoteForm = { from: '', to: '', type: fa ? 'کامیون' : 'Truck', rate: '', unit: fa ? 'هر بار' : 'per load' };
+                    if (usingApiQuotes) {
+                      createRateQuoteMut.mutate(
+                        { from: quoteForm.from, to: quoteForm.to, mode: quoteForm.type, rate: Number(quoteForm.rate), unit: quoteForm.unit },
+                        { onSuccess: () => { setQuoteForm(resetQuoteForm); setShowNewQuote(false); } }
+                      );
+                    } else {
+                      setLocalQuotes(qs => [...qs, { id: 'LQ-' + Date.now(), from: quoteForm.from, to: quoteForm.to, type: quoteForm.type, rate: Number(quoteForm.rate), unit: quoteForm.unit, active: true }]);
+                      setQuoteForm(resetQuoteForm);
+                      setShowNewQuote(false);
+                    }
                   }} className={`flex-1 ${btnPrimary}`}>
                     💾 {fa ? 'ذخیره' : 'Save'}
                   </button>

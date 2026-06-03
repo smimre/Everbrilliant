@@ -5,3 +5,4 @@ export { financeService } from './finance.service';
 export { automationService } from './automation.service';
 export { notificationService } from './notification.service';
 export { manufacturingService } from './manufacturing.service';
+export { logisticsService } from './logistics.service';

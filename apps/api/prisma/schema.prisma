@@ -287,6 +287,8 @@ model Company {
   bomTemplates     BOMTemplate[]
   rawMaterials     RawMaterial[]
   deals            Deal[]            @relation("CompanyDeals")
+  logisticsShipments LogisticsShipment[]
+  rateQuotes         LogisticsRateQuote[]
 
   @@index([nationalId])
   @@index([economicCode])
@@ -1809,4 +1811,74 @@ model CompanyBlacklist {
 
   @@index([ownerCompanyId])
   @@map("company_blacklist")
+}
+
+// ══════════════════════════════════════════════
+// LOGISTICS MODULE
+// ══════════════════════════════════════════════
+
+model LogisticsShipment {
+  id            String   @id @default(cuid())
+  companyId     Int
+  trackingCode  String   @unique
+  cargo         String
+  shipType      String   @default("domestic")
+  status        String   @default("booked")
+  origin        String
+  destination   String
+  weight        Decimal? @db.Decimal(12, 3)
+  weightUnit    String   @default("تن")
+  volume        Decimal? @db.Decimal(12, 3)
+  cost          BigInt   @default(0)
+  costPaid      Boolean  @default(false)
+  sellerName    String?
+  buyerName     String?
+  waybillNo     String?
+  hsCode        String?
+  customsStatus String?
+  customsNotes  String?
+  insurer       String?
+  insuranceAmt  BigInt?
+  policyNo      String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  company  Company          @relation(fields: [companyId], references: [id])
+  stages   LogisticsStage[]
+
+  @@index([companyId])
+  @@map("logistics_shipments")
+}
+
+model LogisticsStage {
+  id         Int               @id @default(autoincrement())
+  shipmentId String
+  key        String
+  label      String
+  labelFa    String
+  isDone     Boolean           @default(false)
+  date       String?
+  stageOrder Int               @default(0)
+
+  shipment   LogisticsShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@map("logistics_stages")
+}
+
+model LogisticsRateQuote {
+  id        String   @id @default(cuid())
+  companyId Int
+  fromLoc   String
+  toLoc     String
+  mode      String   @default("Truck")
+  rate      BigInt   @default(0)
+  unit      String   @default("per load")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@map("logistics_rate_quotes")
 }
