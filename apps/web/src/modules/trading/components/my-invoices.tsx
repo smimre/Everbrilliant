@@ -1,80 +1,73 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useAuthStore } from '@/store/auth.store';
 import { useInvoices } from '@/hooks/use-finance';
-import { Receipt, Search, Eye, Download, AlertCircle, CheckCircle, Clock, ExternalLink } from 'lucide-react';
+import { Receipt, Search, Eye, Download, AlertCircle, ExternalLink } from 'lucide-react';
 
-const MOCK_INVOICES = [
-  { id: 'INV-2024-001', no: '۱۴۰۳/۰۰۱', type: 'purchase', status: 'paid',    seller: 'مهر پارس',       product: 'روغن پالم ۲۰ تن',    amount: 4200000000, dueAt: '۱۴۰۳/۰۱/۳۱', issuedAt: '۱۴۰۳/۰۱/۱۵' },
-  { id: 'INV-2024-002', no: '۱۴۰۳/۰۰۲', type: 'purchase', status: 'overdue', seller: 'ارمغان لجستیک',  product: 'حمل و نقل بین‌الملل', amount:  980000000, dueAt: '۱۴۰۳/۰۲/۱۰', issuedAt: '۱۴۰۳/۰۱/۲۵' },
-  { id: 'INV-2024-003', no: '۱۴۰۳/۰۰۳', type: 'purchase', status: 'sent',    seller: 'تجارت نوین',      product: 'مواد اولیه شیمیایی',  amount: 1600000000, dueAt: '۱۴۰۳/۰۳/۰۵', issuedAt: '۱۴۰۳/۰۲/۲۰' },
-  { id: 'INV-2024-004', no: '۱۴۰۳/۰۰۴', type: 'sale',     status: 'draft',   seller: 'الفا بازرگانی',   product: 'صادرات ادویه جات',    amount:  750000000, dueAt: '۱۴۰۳/۰۳/۱۵', issuedAt: '۱۴۰۳/۰۳/۰۱' },
-  { id: 'INV-2024-005', no: '۱۴۰۳/۰۰۵', type: 'purchase', status: 'partial', seller: 'مهر پارس',        product: 'روغن آفتابگردان ۱۵ تن',amount: 3100000000, dueAt: '۱۴۰۳/۰۳/۲۰', issuedAt: '۱۴۰۳/۰۳/۰۵' },
-];
-
-const STATUS_MAP = {
-  draft:     { fa: 'پیش‌نویس',      en: 'Draft',     color: '#94a3b8' },
-  sent:      { fa: 'ارسال شده',     en: 'Sent',      color: '#3b82f6' },
-  paid:      { fa: 'پرداخت شده',    en: 'Paid',      color: '#10b981' },
-  partial:   { fa: 'پرداخت جزئی',  en: 'Partial',   color: '#f59e0b' },
-  overdue:   { fa: 'سررسید گذشته', en: 'Overdue',   color: '#ef4444' },
-  cancelled: { fa: 'لغو شده',       en: 'Cancelled', color: '#6b7280' },
+const STATUS_MAP: Record<string, { fa: string; en: string; color: string }> = {
   DRAFT:     { fa: 'پیش‌نویس',      en: 'Draft',     color: '#94a3b8' },
   SENT:      { fa: 'ارسال شده',     en: 'Sent',      color: '#3b82f6' },
   PAID:      { fa: 'پرداخت شده',    en: 'Paid',      color: '#10b981' },
   PARTIAL:   { fa: 'پرداخت جزئی',  en: 'Partial',   color: '#f59e0b' },
   OVERDUE:   { fa: 'سررسید گذشته', en: 'Overdue',   color: '#ef4444' },
   CANCELLED: { fa: 'لغو شده',       en: 'Cancelled', color: '#6b7280' },
-} as const;
+  DISPUTED:  { fa: 'مورد اعتراض',  en: 'Disputed',  color: '#8b5cf6' },
+};
 
 function fmt(n: number) {
   return new Intl.NumberFormat('fa-IR').format(n);
 }
 
-function normalizeInvoice(raw: any) {
-  const status = (raw.status || 'draft').toLowerCase();
+function normalizeInvoice(raw: any, myCompanyId: number) {
+  const st = (raw.status || 'DRAFT').toUpperCase();
+  const isSeller = raw.sellerCompanyId === myCompanyId;
+  const peer = isSeller ? raw.buyerCompany : raw.sellerCompany;
+  const product = raw.items?.[0]?.desc || raw.items?.[0]?.description || '—';
+
   return {
-    id: raw.id || raw._id || '',
-    no: raw.invoiceNo || raw.no || raw.id?.slice(-6) || '—',
-    type: raw.type === 'SALE' ? 'sale' : raw.type === 'PURCHASE' ? 'purchase' : (raw.type || 'purchase'),
-    status,
-    seller: raw.supplierName || raw.sellerName || raw.companyName || raw.party || '—',
-    product: raw.description || raw.title || raw.items?.[0]?.description || '—',
-    amount: raw.totalAmount || raw.amount || raw.total || 0,
-    dueAt: raw.dueDate ? new Date(raw.dueDate).toLocaleDateString('fa-IR') : raw.dueAt || '—',
-    issuedAt: raw.issueDate || raw.createdAt ? new Date(raw.issueDate || raw.createdAt).toLocaleDateString('fa-IR') : '—',
-    financeId: raw.id || null,
+    id:       raw.id || '',
+    no:       raw.invoiceNo || raw.id?.slice(-8) || '—',
+    type:     isSeller ? 'sale' : 'purchase',
+    status:   st,
+    party:    peer?.name || (isSeller ? `Company #${raw.buyerCompanyId}` : `Company #${raw.sellerCompanyId}`),
+    product,
+    amount:   Number(raw.total ?? raw.subtotal ?? 0),
+    paid:     Number(raw.paid ?? 0),
+    remaining: Number(raw.remaining ?? raw.total ?? 0),
+    dueAt:    raw.dueAt || '—',
+    issuedAt: raw.issuedAt || (raw.createdAt ? new Date(raw.createdAt).toLocaleDateString('fa-IR') : '—'),
   };
 }
 
 export function MyInvoices() {
   const { lang } = useLocaleStore();
+  const { user } = useAuthStore();
   const fa = lang === 'fa';
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [search, setSearch]           = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [typeFilter, setTypeFilter]   = useState('all');
+  const [viewingId, setViewingId]     = useState<string | null>(null);
 
-  const { data: apiData, isLoading, isError } = useInvoices();
-  const apiInvoices: any[] = (apiData as any)?.data ?? [];
-  const useMock = isError || apiInvoices.length === 0;
-  const invoices = useMock
-    ? MOCK_INVOICES
-    : apiInvoices.map(normalizeInvoice);
+  const { data: apiData, isLoading } = useInvoices();
+  const raw: any[] = (apiData as any)?.data ?? [];
+  const myCompanyId = user?.companyId ?? 0;
 
-  const filtered = invoices.filter((inv: any) => {
-    const matchStatus = statusFilter === 'all' || inv.status === statusFilter;
+  const invoices = raw.map(r => normalizeInvoice(r, myCompanyId));
+
+  const filtered = invoices.filter(inv => {
+    const matchStatus = statusFilter === 'ALL' || inv.status === statusFilter;
     const matchType   = typeFilter   === 'all' || inv.type   === typeFilter;
     const matchSearch = !search ||
-      (inv.product || '').includes(search) ||
-      (inv.seller  || '').includes(search) ||
-      (inv.id      || '').toLowerCase().includes(search.toLowerCase());
+      inv.product.toLowerCase().includes(search.toLowerCase()) ||
+      inv.party.toLowerCase().includes(search.toLowerCase()) ||
+      inv.id.toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchType && matchSearch;
   });
 
-  const totalPaid    = invoices.filter((i: any) => ['paid','PAID'].includes(i.status)).reduce((s: number, i: any) => s + (i.amount||0), 0);
-  const totalUnpaid  = invoices.filter((i: any) => ['sent','partial','overdue','SENT','PARTIAL','OVERDUE'].includes(i.status)).reduce((s: number, i: any) => s + (i.amount||0), 0);
-  const totalOverdue = invoices.filter((i: any) => ['overdue','OVERDUE'].includes(i.status)).length;
+  const totalPaid    = invoices.filter(i => i.status === 'PAID').reduce((s, i) => s + i.amount, 0);
+  const totalUnpaid  = invoices.filter(i => ['SENT','PARTIAL','OVERDUE'].includes(i.status)).reduce((s, i) => s + i.remaining, 0);
+  const totalOverdue = invoices.filter(i => i.status === 'OVERDUE').length;
 
   return (
     <div className="space-y-5">
@@ -83,19 +76,14 @@ export function MyInvoices() {
           <Receipt className="w-5 h-5 text-[hsl(var(--primary))]"/>
           {fa ? 'فاکتورهای من' : 'My Invoices'}
         </h2>
-        {useMock && !isLoading && (
-          <span className="text-xs px-2 py-1 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
-            {fa ? 'داده نمونه' : 'Sample Data'}
-          </span>
-        )}
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: fa ? 'کل فاکتورها' : 'Total',    value: String(invoices.length), color: '#3b82f6' },
-          { label: fa ? 'پرداخت شده' : 'Paid',      value: fmt(totalPaid),          color: '#10b981' },
-          { label: fa ? 'پرداخت نشده' : 'Unpaid',   value: fmt(totalUnpaid),        color: '#f59e0b' },
+          { label: fa ? 'کل فاکتورها'   : 'Total',   value: String(invoices.length), color: '#3b82f6' },
+          { label: fa ? 'پرداخت شده'    : 'Paid',    value: fmt(totalPaid),          color: '#10b981' },
+          { label: fa ? 'پرداخت نشده'   : 'Unpaid',  value: fmt(totalUnpaid),        color: '#f59e0b' },
           { label: fa ? 'سررسید گذشته' : 'Overdue', value: String(totalOverdue),    color: '#ef4444' },
         ].map((s, i) => (
           <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
@@ -122,8 +110,8 @@ export function MyInvoices() {
         </div>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
           className="px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] outline-none">
-          <option value="all">{fa ? 'همه وضعیت‌ها' : 'All Status'}</option>
-          {Object.entries(STATUS_MAP).filter(([k]) => !k.includes('_') && k === k.toLowerCase()).map(([k, v]) => (
+          <option value="ALL">{fa ? 'همه وضعیت‌ها' : 'All Status'}</option>
+          {Object.entries(STATUS_MAP).map(([k, v]) => (
             <option key={k} value={k}>{fa ? v.fa : v.en}</option>
           ))}
         </select>
@@ -156,15 +144,14 @@ export function MyInvoices() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[hsl(var(--border))]">
-                  {[fa?'شماره':'No.', fa?'نوع':'Type', fa?'طرف حساب':'Party', fa?'محصول':'Product', fa?'سررسید':'Due', fa?'مبلغ':'Amount', fa?'وضعیت':'Status', ''].map((h,i) => (
+                  {[fa?'شماره':'No.', fa?'نوع':'Type', fa?'طرف حساب':'Party', fa?'محصول':'Product', fa?'سررسید':'Due', fa?'مبلغ':'Amount', fa?'وضعیت':'Status', ''].map((h, i) => (
                     <th key={i} className="px-3 py-2.5 text-start text-xs font-semibold text-[hsl(var(--muted-foreground))]">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((inv: any) => {
-                  const stKey = inv.status?.toLowerCase() as keyof typeof STATUS_MAP;
-                  const st = STATUS_MAP[stKey] || { fa: inv.status, en: inv.status, color: '#94a3b8' };
+                {filtered.map(inv => {
+                  const st = STATUS_MAP[inv.status] || { fa: inv.status, en: inv.status, color: '#94a3b8' };
                   return (
                     <tr key={inv.id} className="border-b border-[hsl(var(--border))] last:border-0 hover:bg-[hsl(var(--background))] transition-colors">
                       <td className="px-3 py-3 font-mono text-xs text-[hsl(var(--primary))] font-bold">{inv.no}</td>
@@ -173,8 +160,8 @@ export function MyInvoices() {
                           {inv.type === 'purchase' ? (fa ? 'خرید' : 'Purchase') : (fa ? 'فروش' : 'Sale')}
                         </span>
                       </td>
-                      <td className="px-3 py-3 text-xs text-[hsl(var(--muted-foreground))]">{inv.seller}</td>
-                      <td className="px-3 py-3 font-medium text-sm">{inv.product}</td>
+                      <td className="px-3 py-3 text-xs text-[hsl(var(--muted-foreground))]">{inv.party}</td>
+                      <td className="px-3 py-3 font-medium text-sm max-w-[160px] truncate">{inv.product}</td>
                       <td className="px-3 py-3 text-xs text-[hsl(var(--muted-foreground))]">{inv.dueAt}</td>
                       <td className="px-3 py-3 font-bold text-sm">
                         {fmt(inv.amount)}<span className="text-[10px] font-normal text-[hsl(var(--muted-foreground))] ms-1">{fa?'ریال':'IRR'}</span>
@@ -187,12 +174,10 @@ export function MyInvoices() {
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex gap-1">
-                          {inv.financeId && (
-                            <a href="/finance/invoices" title={fa ? 'مشاهده در مالی' : 'View in Finance'}
-                              className="p-1.5 rounded-lg hover:bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--primary))]">
-                              <ExternalLink className="w-3.5 h-3.5"/>
-                            </a>
-                          )}
+                          <a href="/finance/invoices" title={fa ? 'مشاهده در مالی' : 'View in Finance'}
+                            className="p-1.5 rounded-lg hover:bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--primary))]">
+                            <ExternalLink className="w-3.5 h-3.5"/>
+                          </a>
                           <button onClick={() => setViewingId(inv.id)}
                             className="p-1.5 rounded-lg hover:bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))]">
                             <Eye className="w-3.5 h-3.5"/>
@@ -213,10 +198,9 @@ export function MyInvoices() {
 
       {/* Quick view modal */}
       {viewingId && (() => {
-        const inv = filtered.find((i: any) => i.id === viewingId);
+        const inv = filtered.find(i => i.id === viewingId);
         if (!inv) return null;
-        const stKey = inv.status?.toLowerCase() as keyof typeof STATUS_MAP;
-        const st = STATUS_MAP[stKey] || { fa: inv.status, en: inv.status, color: '#94a3b8' };
+        const st = STATUS_MAP[inv.status] || { fa: inv.status, en: inv.status, color: '#94a3b8' };
         return (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-[hsl(var(--background))] rounded-2xl p-6 w-full max-w-md border border-[hsl(var(--border))]">
@@ -226,12 +210,15 @@ export function MyInvoices() {
               </div>
               <dl className="space-y-2 text-sm">
                 {[
-                  [fa?'شماره':'Invoice No', inv.no],
-                  [fa?'نوع':'Type', inv.type === 'purchase' ? (fa?'خرید':'Purchase') : (fa?'فروش':'Sale')],
-                  [fa?'طرف حساب':'Party', inv.seller],
-                  [fa?'محصول':'Product', inv.product],
-                  [fa?'مبلغ':'Amount', fmt(inv.amount) + (fa?' ریال':' IRR')],
-                  [fa?'سررسید':'Due', inv.dueAt],
+                  [fa?'شماره':'Invoice No',     inv.no],
+                  [fa?'نوع':'Type',              inv.type === 'purchase' ? (fa?'خرید':'Purchase') : (fa?'فروش':'Sale')],
+                  [fa?'طرف حساب':'Party',        inv.party],
+                  [fa?'محصول':'Product',         inv.product],
+                  [fa?'مبلغ کل':'Total',        fmt(inv.amount) + (fa?' ریال':' IRR')],
+                  [fa?'پرداخت شده':'Paid',       fmt(inv.paid) + (fa?' ریال':' IRR')],
+                  [fa?'باقیمانده':'Remaining',   fmt(inv.remaining) + (fa?' ریال':' IRR')],
+                  [fa?'تاریخ صدور':'Issued',     inv.issuedAt],
+                  [fa?'سررسید':'Due',            inv.dueAt],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-4 py-1.5 border-b border-[hsl(var(--border))]">
                     <dt className="text-[hsl(var(--muted-foreground))]">{k}</dt>
@@ -245,9 +232,9 @@ export function MyInvoices() {
               </dl>
               <div className="flex gap-2 mt-4 justify-end">
                 <button onClick={() => setViewingId(null)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa?'بستن':'Close'}</button>
-                <button className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold flex items-center gap-1.5">
-                  <Download className="w-3.5 h-3.5"/> PDF
-                </button>
+                <a href="/finance/invoices" className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold flex items-center gap-1.5">
+                  <ExternalLink className="w-3.5 h-3.5"/> {fa ? 'مشاهده کامل' : 'Full View'}
+                </a>
               </div>
             </div>
           </div>

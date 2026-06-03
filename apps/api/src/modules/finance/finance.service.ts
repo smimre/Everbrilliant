@@ -28,7 +28,14 @@ export class FinanceService {
     };
 
     const [data, total] = await Promise.all([
-      this.prisma.invoice.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, include: { items: true } }),
+      this.prisma.invoice.findMany({
+        where, skip, take, orderBy: { createdAt: 'desc' },
+        include: {
+          items: true,
+          sellerCompany: { select: { id: true, name: true } },
+          buyerCompany:  { select: { id: true, name: true } },
+        },
+      }),
       this.prisma.invoice.count({ where }),
     ]);
     return this.paginatedResponse(data, total, page, limit);
