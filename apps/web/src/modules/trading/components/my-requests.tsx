@@ -34,7 +34,7 @@ export function MyRequests() {
 
   const filtered = requests.filter((r: any) => {
     const matchStatus = filter === 'all' || r.status === filter;
-    const matchSearch = !search || (r.productName || r.title || '').toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || (r.product || r.title || '').toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchSearch;
   });
 
@@ -139,18 +139,18 @@ function RequestCard({ request: r, lang, onSelect }: { request: any; lang: strin
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="font-semibold text-sm truncate">{r.productName || r.title || (fa ? 'درخواست' : 'Request')}</span>
+            <span className="font-semibold text-sm truncate">{r.product || r.title || (fa ? 'درخواست' : 'Request')}</span>
             <span className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" style={{ background: `${color}20`, color }}>
               {statusLabels[r.status] || r.status}
             </span>
           </div>
           <div className="flex items-center gap-4 text-xs text-[hsl(var(--muted-foreground))] flex-wrap">
-            {r.quantity && <span>📦 {r.quantity} {r.unit || ''}</span>}
+            {r.qty && <span>📦 {Number(r.qty)} {r.unit || ''}</span>}
             {r.amountIRR && <span className="font-semibold" style={{ color: '#f59e0b' }}>💰 {Number(r.amountIRR).toLocaleString('fa-IR')} IRR</span>}
             {r.createdAt && <span>📅 {r.createdAt}</span>}
           </div>
-          {r.description && (
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2 line-clamp-2">{r.description}</p>
+          {r.note && (
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2 line-clamp-2">{r.note}</p>
           )}
         </div>
         {/* Quoted: show Confirm/Reject actions */}
@@ -184,8 +184,8 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
   const fa = lang === 'fa';
   const color = STATUS_COLORS[r.status] || '#64748b';
   const fields: [string, any][] = [
-    [fa ? 'نام کالا' : 'Product', r.productName || r.title],
-    [fa ? 'مقدار' : 'Quantity', r.quantity ? `${r.quantity} ${r.unit || ''}` : null],
+    [fa ? 'نام کالا' : 'Product', r.product || r.title],
+    [fa ? 'مقدار' : 'Quantity', r.qty ? `${Number(r.qty)} ${r.unit || ''}` : null],
     [fa ? 'مبلغ' : 'Amount', r.amountIRR ? `${Number(r.amountIRR).toLocaleString('fa-IR')} IRR` : null],
     [fa ? 'تاریخ' : 'Date', r.createdAt],
     [fa ? 'وضعیت' : 'Status', r.status],
@@ -195,7 +195,7 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-md p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold">📋 {r.productName || r.title || (fa ? 'درخواست' : 'Request')}</h2>
+          <h2 className="font-bold">📋 {r.product || r.title || (fa ? 'درخواست' : 'Request')}</h2>
           <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
         </div>
         <span className="text-xs px-2 py-1 rounded-full mb-4 inline-block" style={{ background: color + '20', color }}>
@@ -209,8 +209,8 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
             </div>
           ))}
         </div>
-        {r.description && (
-          <p className="mt-3 text-xs text-[hsl(var(--muted-foreground))] p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg">{r.description}</p>
+        {r.note && (
+          <p className="mt-3 text-xs text-[hsl(var(--muted-foreground))] p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg">{r.note}</p>
         )}
         {r.status === 'quoted' && (
           <div className="flex gap-3 mt-5">

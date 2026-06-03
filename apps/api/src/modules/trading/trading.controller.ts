@@ -18,6 +18,7 @@ export class TradingController {
   @Patch('quotes/:id/accept') acceptQuote(@Req() r: any, @Param('id') id: string)          { return this.trading.acceptQuote(r.user.companyId, id); }
 
   @Get('contracts')          getContracts(@Req() r: any, @Query() q: any)                  { return this.trading.getContracts(r.user.companyId, q); }
+  @Post('contracts')         createContract(@Req() r: any, @Body() dto: any)               { return this.trading.createContractDirect(r.user.companyId, r.user.id, dto); }
   @Patch('contracts/:id/sign') signContract(@Req() r: any, @Param('id') id: string)        { return this.trading.signContract(r.user.companyId, id); }
 
   @Get('tenders')            getTenders(@Query() q: any)                                    { return this.trading.getTenders(q); }

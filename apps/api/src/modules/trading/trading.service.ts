@@ -47,7 +47,9 @@ export class TradingService {
     return this.prisma.tradeRequest.create({
       data: {
         buyerCompanyId: companyId,
-        product: dto.product, qty: dto.qty, unit: dto.unit,
+        product: dto.product,
+        qty: dto.qty ?? 0,
+        unit: dto.unit || 'unit',
         amountIRR: dto.amountIRR ? BigInt(dto.amountIRR) : undefined,
         currency: dto.currency || 'IRR',
         status: 'PENDING', priority: (dto.priority || 'NORMAL').toUpperCase() as any,
@@ -55,6 +57,37 @@ export class TradingService {
         note: dto.note, hsCode: dto.hsCode,
         createdById: userId,
       },
+    });
+  }
+
+  async createContractDirect(companyId: number, userId: number, dto: any) {
+    return this.prisma.$transaction(async (tx) => {
+      const req = await tx.tradeRequest.create({
+        data: {
+          buyerCompanyId: companyId,
+          product: dto.product || dto.title,
+          qty: dto.qty ? Number(dto.qty) : 0,
+          unit: dto.unit || 'unit',
+          currency: dto.currency || 'IRR',
+          status: 'COMPLETED' as any,
+          priority: 'NORMAL' as any,
+          createdById: userId,
+          note: dto.paymentTerms || undefined,
+        },
+      });
+      return tx.contract.create({
+        data: {
+          requestId: req.id,
+          buyerCompanyId: companyId,
+          sellerCompanyId: companyId,
+          title: dto.title,
+          amountIRR: dto.totalPrice ? BigInt(Math.round(Number(dto.totalPrice))) : BigInt(0),
+          currency: dto.currency || 'IRR',
+          status: 'DRAFT' as any,
+          deliveryDate: dto.deliveryDate ? new Date(dto.deliveryDate) : undefined,
+          terms: dto.paymentTerms || undefined,
+        },
+      });
     });
   }
 

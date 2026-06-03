@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useContracts } from '@/hooks/use-trading';
+import { useContracts, useCreateContract } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 
 const STATUS_MAP: Record<string, { label: string; labelFa: string; color: string; icon: string }> = {
@@ -270,6 +270,7 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
 function NewContractModal({ lang, onClose }: { lang: string; onClose: () => void }) {
   const fa = lang === 'fa';
   const { toast } = useUIStore();
+  const createContract = useCreateContract();
   const [form, setForm] = useState({
     title: '', role: 'buyer', product: '', qty: '', unit: 'ton', unitPrice: '',
     currency: 'IRR', deliveryDate: '', deliveryPlace: '', paymentTerms: '', incoterms: 'EXW', clauses: '',
@@ -361,10 +362,20 @@ function NewContractModal({ lang, onClose }: { lang: string; onClose: () => void
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
           <button
-            onClick={() => { if (!form.title) { toast('error', fa ? 'عنوان الزامی است' : 'Title required'); return; } onClose(); toast('success', fa ? 'قرارداد ایجاد شد' : 'Contract created'); }}
-            className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium"
+            disabled={createContract.isPending}
+            onClick={() => {
+              if (!form.title) { toast('error', fa ? 'عنوان الزامی است' : 'Title required'); return; }
+              createContract.mutate(
+                { ...form, totalPrice },
+                {
+                  onSuccess: () => { toast('success', fa ? 'قرارداد ایجاد شد' : 'Contract created'); onClose(); },
+                  onError: (err: any) => toast('error', err?.message || (fa ? 'خطا در ایجاد قرارداد' : 'Failed to create contract')),
+                },
+              );
+            }}
+            className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium disabled:opacity-50"
           >
-            ✅ {fa ? 'ثبت قرارداد' : 'Create'}
+            {createContract.isPending ? (fa ? 'در حال ثبت...' : 'Saving...') : `✅ ${fa ? 'ثبت قرارداد' : 'Create'}`}
           </button>
         </div>
       </div>

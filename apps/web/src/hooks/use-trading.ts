@@ -30,6 +30,14 @@ export function useContracts() {
   });
 }
 
+export function useCreateContract() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => api.post('/trading/contracts', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'contracts'] }),
+  });
+}
+
 // ── Tenders ───────────────────────────────────────────────────
 export function useTenders() {
   return useQuery({
