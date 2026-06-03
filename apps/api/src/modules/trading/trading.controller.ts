@@ -21,7 +21,7 @@ export class TradingController {
   @Post('contracts')         createContract(@Req() r: any, @Body() dto: any)               { return this.trading.createContractDirect(r.user.companyId, r.user.id, dto); }
   @Patch('contracts/:id/sign') signContract(@Req() r: any, @Param('id') id: string)        { return this.trading.signContract(r.user.companyId, id); }
 
-  @Get('tenders')            getTenders(@Query() q: any)                                    { return this.trading.getTenders(q); }
+  @Get('tenders')            getTenders(@Req() r: any, @Query() q: any)                    { return this.trading.getTenders(q, q.mine === 'true' ? r.user.companyId : undefined); }
   @Post('tenders')           createTender(@Req() r: any, @Body() dto: any)                 { return this.trading.createTender(r.user.companyId, r.user.id, dto); }
   @Post('tenders/:id/bids')  placeBid(@Req() r: any, @Param('id') id: string, @Body() d: any) { return this.trading.placeBid(r.user.companyId, r.user.id, id, d); }
 

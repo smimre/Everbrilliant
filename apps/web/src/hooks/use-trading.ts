@@ -39,10 +39,18 @@ export function useCreateContract() {
 }
 
 // ── Tenders ───────────────────────────────────────────────────
-export function useTenders() {
+export function useTenders(query?: Record<string, unknown>) {
   return useQuery({
-    queryKey: ['trading', 'tenders'],
-    queryFn: () => api.get('/trading/tenders'),
+    queryKey: ['trading', 'tenders', query],
+    queryFn: () => api.get('/trading/tenders', query),
+    staleTime: 30_000,
+  });
+}
+
+export function useMyTenders() {
+  return useQuery({
+    queryKey: ['trading', 'tenders', 'mine'],
+    queryFn: () => api.get('/trading/tenders', { mine: 'true' }),
     staleTime: 30_000,
   });
 }
@@ -51,6 +59,14 @@ export function useCreateTender() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => api.post('/trading/tenders', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'tenders'] }),
+  });
+}
+
+export function usePlaceBid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tenderId, ...data }: any) => api.post(`/trading/tenders/${tenderId}/bids`, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'tenders'] }),
   });
 }

@@ -168,16 +168,19 @@ export class TradingService {
   }
 
   // ── Tenders ───────────────────────────────
-  async getTenders(q: any) {
+  async getTenders(q: any, ownerCompanyId?: number) {
     const { skip, take, page, limit } = this.paginate(q);
-    const where: Prisma.TenderWhereInput = {
-      status: q.status ? q.status.toUpperCase() as any : 'OPEN',
-      ...(q.type && { type: q.type.toUpperCase() as any }),
-    };
+    const where: Prisma.TenderWhereInput = ownerCompanyId
+      ? { companyId: ownerCompanyId, ...(q.status && { status: q.status.toUpperCase() as any }) }
+      : { status: q.status ? q.status.toUpperCase() as any : 'OPEN', ...(q.type && { type: q.type.toUpperCase() as any }) };
     const [data, total] = await Promise.all([
       this.prisma.tender.findMany({
         where, skip, take, orderBy: { createdAt: 'desc' },
-        include: { products: true, _count: { select: { bids: true } } },
+        include: {
+          products: true,
+          company: { select: { id: true, name: true } },
+          _count: { select: { bids: true } },
+        },
       }),
       this.prisma.tender.count({ where }),
     ]);
@@ -188,16 +191,22 @@ export class TradingService {
     const type = (dto.type || '').toUpperCase();
     if (!['AUCTION', 'TENDER'].includes(type))
       throw new BadRequestException('type must be AUCTION or TENDER');
+    const startDate = dto.startDate ? new Date(dto.startDate) : new Date();
+    const endDate = dto.endDate ? new Date(dto.endDate) : new Date(Date.now() + 30 * 86400_000);
     return this.prisma.tender.create({
       data: {
         type: type as any,
-        title: dto.title, companyId,
-        startDate: new Date(dto.startDate),
-        endDate: new Date(dto.endDate),
-        status: 'DRAFT', createdById: userId,
-        products: { create: dto.products },
+        title: dto.title,
+        description: dto.description || undefined,
+        companyId,
+        startDate,
+        endDate,
+        isPublic: dto.isPublic !== false,
+        status: 'OPEN' as any,
+        createdById: userId,
+        products: { create: (dto.products || []).map((p: any) => ({ name: p.name, qty: p.qty || p.qtyMax || 0, unit: p.unit || 'unit' })) },
       },
-      include: { products: true },
+      include: { products: true, company: { select: { id: true, name: true } } },
     });
   }
 
