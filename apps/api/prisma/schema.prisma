@@ -286,6 +286,7 @@ model Company {
   workOrders       WorkOrder[]
   bomTemplates     BOMTemplate[]
   rawMaterials     RawMaterial[]
+  deals            Deal[]            @relation("CompanyDeals")
 
   @@index([nationalId])
   @@index([economicCode])
@@ -337,6 +338,8 @@ model User {
   bomsCreated       BOMTemplate[]  @relation("BOMCreator")
   wipEntries        WIPEntry[]     @relation("WIPRecorder")
   qcInspections     QCInspection[] @relation("QCInspector")
+  dealsCreated      Deal[]         @relation("DealCreator")
+  blacklistEntries  CompanyBlacklist[] @relation("BlacklistCreator")
 
   @@index([companyId])
   @@index([phone])
@@ -1730,4 +1733,80 @@ model QCInspection {
   @@index([workOrderId])
   @@index([companyId])
   @@map("qc_inspections")
+}
+
+// ══════════════════════════════════════════════
+// CRM — DEALS
+// ══════════════════════════════════════════════
+
+enum DealStage {
+  LEAD
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+model Deal {
+  id               String    @id @default(cuid())
+  companyId        Int
+  partnerCompanyId Int?
+  partnerName      String
+  title            String
+  titleFa          String?
+  stage            DealStage @default(LEAD)
+  valueIRR         BigInt?
+  probability      Int       @default(50)
+  closingDate      DateTime?
+  ownerName        String?
+  notes            String?
+  lostReason       String?
+  createdById      Int
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  ownerCompany     Company   @relation("CompanyDeals", fields: [companyId], references: [id])
+  createdBy        User      @relation("DealCreator", fields: [createdById], references: [id])
+
+  @@index([companyId])
+  @@index([stage])
+  @@map("deals")
+}
+
+// ══════════════════════════════════════════════
+// TRADING — COMPANY BLACKLIST
+// ══════════════════════════════════════════════
+
+enum BlacklistSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum BlacklistStatus {
+  ACTIVE
+  APPEALING
+  EXPIRED
+}
+
+model CompanyBlacklist {
+  id               Int               @id @default(autoincrement())
+  ownerCompanyId   Int
+  companyName      String
+  companyCode      String?
+  reason           String
+  reasonFa         String?
+  severity         BlacklistSeverity @default(MEDIUM)
+  status           BlacklistStatus   @default(ACTIVE)
+  tenderId         String?
+  tenderTitle      String?
+  addedById        Int
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  addedBy          User              @relation("BlacklistCreator", fields: [addedById], references: [id])
+
+  @@index([ownerCompanyId])
+  @@map("company_blacklist")
 }

@@ -191,4 +191,61 @@ export class TradingService {
     ]);
     return this.page(data, total, page, limit);
   }
+
+  // ── Company Blacklist ─────────────────────────────────
+
+  async getBlacklist(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where: any = {
+      ownerCompanyId: companyId,
+      ...(q.status   && { status:   q.status.toUpperCase() }),
+      ...(q.severity && { severity: q.severity.toUpperCase() }),
+      ...(q.search   && { companyName: { contains: q.search, mode: 'insensitive' } }),
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.companyBlacklist.findMany({
+        where, skip, take, orderBy: { createdAt: 'desc' },
+        include: { addedBy: { select: { id: true, name: true } } },
+      }),
+      this.prisma.companyBlacklist.count({ where }),
+    ]);
+    return this.page(data, total, page, limit);
+  }
+
+  async addToBlacklist(companyId: number, userId: number, dto: any) {
+    return this.prisma.companyBlacklist.create({
+      data: {
+        ownerCompanyId: companyId,
+        companyName:    dto.companyName,
+        companyCode:    dto.companyCode   ?? null,
+        reason:         dto.reason,
+        reasonFa:       dto.reasonFa      ?? null,
+        severity:       (dto.severity ?? 'MEDIUM').toUpperCase() as any,
+        status:         'ACTIVE' as any,
+        tenderId:       dto.tenderId      ?? null,
+        tenderTitle:    dto.tenderTitle   ?? null,
+        addedById:      userId,
+      },
+      include: { addedBy: { select: { id: true, name: true } } },
+    });
+  }
+
+  async appealBlacklist(companyId: number, id: number) {
+    const entry = await this.prisma.companyBlacklist.findFirst({
+      where: { id, ownerCompanyId: companyId },
+    });
+    if (!entry) throw new BadRequestException('Entry not found');
+    return this.prisma.companyBlacklist.update({
+      where: { id },
+      data:  { status: 'APPEALING' as any },
+    });
+  }
+
+  async removeFromBlacklist(companyId: number, id: number) {
+    const entry = await this.prisma.companyBlacklist.findFirst({
+      where: { id, ownerCompanyId: companyId },
+    });
+    if (!entry) throw new BadRequestException('Entry not found');
+    return this.prisma.companyBlacklist.delete({ where: { id } });
+  }
 }

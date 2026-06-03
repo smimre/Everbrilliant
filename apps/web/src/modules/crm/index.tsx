@@ -10,6 +10,7 @@ import { Table, Column } from '@/components/ui/table';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useCRMConnections } from '@/hooks/use-crm';
 import { Plus, Search, Building2, Star, TrendingUp, Users } from 'lucide-react';
+import { useDeals, useCreateDeal, useUpdateDeal, useDeleteDeal } from '@/hooks/use-crm';
 
 interface CRMCompany {
   id: number; name: string; type: string; country: string;
@@ -181,7 +182,23 @@ function makeSampleDeals(companyName: string): Deal[] {
 }
 
 function DealPipeline({ company, fa }: { company: CRMCompany; fa: boolean }) {
-  const [deals, setDeals] = useState<Deal[]>(() => makeSampleDeals(company.name));
+  const { data: apiData, isLoading } = useDeals();
+  const createDeal  = useCreateDeal();
+  const updateDeal  = useUpdateDeal();
+  const deleteDeal  = useDeleteDeal();
+
+  // Normalize API data: stage from API is uppercase (LEAD), frontend uses lowercase (lead)
+  const apiDeals: Deal[] = ((apiData as any)?.data ?? []).map((d: any) => ({
+    id: String(d.id), title: d.title, titleFa: d.titleFa ?? d.title,
+    stage: (d.stage ?? 'LEAD').toLowerCase() as Deal['stage'],
+    value: Number(d.valueIRR ?? 0), probability: d.probability ?? 50,
+    closingDate: d.closingDate ?? '', owner: d.ownerName ?? '',
+    notes: d.notes ?? '',
+  }));
+  const isMock = apiDeals.length === 0 && !isLoading;
+  const [localDeals, setLocalDeals] = useState<Deal[]>(() => makeSampleDeals(company.name));
+  const deals = isMock ? localDeals : apiDeals;
+
   const [showNew, setShowNew] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [form, setForm] = useState({ title:'', titleFa:'', value:'', probability:'50', closingDate:'', owner:'', notes:'' });
@@ -191,18 +208,34 @@ function DealPipeline({ company, fa }: { company: CRMCompany; fa: boolean }) {
   const closedStages   = DEAL_STAGES.filter(s => ['won','lost'].includes(s.id));
 
   function moveStage(dealId: string, stage: Deal['stage']) {
-    setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage } : d));
+    if (isMock) {
+      setLocalDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage } : d));
+    } else {
+      updateDeal.mutate({ id: dealId, dto: { stage: stage.toUpperCase() } });
+    }
     setDragId(null);
   }
 
   function addDeal() {
     if (!form.title || !form.value) return;
-    setDeals(prev => [...prev, {
-      id: 'D' + Date.now(), title: form.title, titleFa: form.titleFa || form.title,
-      stage: 'lead', value: parseInt(form.value) || 0,
-      probability: parseInt(form.probability) || 50,
-      closingDate: form.closingDate, owner: form.owner, notes: form.notes,
-    }]);
+    if (isMock) {
+      setLocalDeals(prev => [...prev, {
+        id: 'D' + Date.now(), title: form.title, titleFa: form.titleFa || form.title,
+        stage: 'lead', value: parseInt(form.value) || 0,
+        probability: parseInt(form.probability) || 50,
+        closingDate: form.closingDate, owner: form.owner, notes: form.notes,
+      }]);
+    } else {
+      createDeal.mutate({
+        partnerName: company.name,
+        title: form.title, titleFa: form.titleFa,
+        valueIRR: parseInt(form.value) || 0,
+        probability: parseInt(form.probability) || 50,
+        closingDate: form.closingDate || null,
+        ownerName: form.owner, notes: form.notes,
+        stage: 'LEAD',
+      });
+    }
     setForm({ title:'', titleFa:'', value:'', probability:'50', closingDate:'', owner:'', notes:'' });
     setShowNew(false);
   }

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useBlacklist, useAddToBlacklist, useAppealBlacklist, useRemoveFromBlacklist } from '@/hooks/use-trading';
 
 interface BlacklistEntry {
   id: string;
@@ -40,15 +41,31 @@ const inp = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[
 export function TenderBlacklist() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const [entries, setEntries] = useState<BlacklistEntry[]>(MOCK_BLACKLIST);
-  const [search, setSearch] = useState('');
+  const [search, setSearch]     = useState('');
   const [sevFilter, setSevFilter] = useState('all');
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAdd, setShowAdd]   = useState(false);
   const [removeTarget, setRemoveTarget] = useState<BlacklistEntry | null>(null);
   const [form, setForm] = useState({ companyName:'', reason:'', reasonFa:'', tenderId:'', tenderTitle:'', severity:'medium' as BlacklistEntry['severity'] });
 
+  const { data: apiData, isLoading } = useBlacklist({ search: search || undefined, severity: sevFilter !== 'all' ? sevFilter.toUpperCase() : undefined });
+  const addMutation    = useAddToBlacklist();
+  const appealMutation = useAppealBlacklist();
+  const removeMutation = useRemoveFromBlacklist();
+
+  const apiEntries: BlacklistEntry[] = ((apiData as any)?.data ?? []).map((e: any) => ({
+    id: String(e.id), companyName: e.companyName, companyId: e.companyCode ?? `BL-${e.id}`,
+    reason: e.reason, reasonFa: e.reasonFa ?? e.reason,
+    severity: (e.severity ?? 'MEDIUM').toLowerCase() as BlacklistEntry['severity'],
+    status: (e.status ?? 'ACTIVE').toLowerCase() as BlacklistEntry['status'],
+    addedBy: e.addedBy?.name ?? '—', addedAt: new Date(e.createdAt).toLocaleDateString('fa-IR'),
+    tenderId: e.tenderId ?? '', tenderTitle: e.tenderTitle ?? '',
+  }));
+  const isMock   = apiEntries.length === 0 && !isLoading;
+  const [localEntries, setLocalEntries] = useState<BlacklistEntry[]>(MOCK_BLACKLIST);
+  const entries  = isMock ? localEntries : apiEntries;
+
   const filtered = entries.filter(e => {
-    const matchSearch = !search || e.companyName.includes(search) || e.companyId.toLowerCase().includes(search.toLowerCase()) || (fa ? e.reasonFa : e.reason).toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || e.companyName.includes(search) || (fa ? e.reasonFa : e.reason).toLowerCase().includes(search.toLowerCase());
     const matchSev    = sevFilter === 'all' || e.severity === sevFilter;
     return matchSearch && matchSev;
   });
@@ -59,20 +76,32 @@ export function TenderBlacklist() {
 
   function addEntry() {
     if (!form.companyName || !form.reason) return;
-    setEntries(prev => [{
-      id: 'BL-' + String(prev.length + 1).padStart(3, '0'),
-      companyName: form.companyName, companyId: 'ACC-' + Math.floor(Math.random() * 900 + 100),
-      reason: form.reason, reasonFa: form.reasonFa || form.reason,
-      addedBy: 'کاربر جاری', addedAt: new Date().toLocaleDateString('fa-IR'),
-      tenderId: form.tenderId, tenderTitle: form.tenderTitle,
-      severity: form.severity, status: 'active',
-    }, ...prev]);
+    if (isMock) {
+      setLocalEntries(prev => [{
+        id: 'BL-' + String(prev.length + 1).padStart(3, '0'),
+        companyName: form.companyName, companyId: 'ACC-' + Math.floor(Math.random() * 900 + 100),
+        reason: form.reason, reasonFa: form.reasonFa || form.reason,
+        addedBy: 'کاربر جاری', addedAt: new Date().toLocaleDateString('fa-IR'),
+        tenderId: form.tenderId, tenderTitle: form.tenderTitle,
+        severity: form.severity, status: 'active',
+      }, ...prev]);
+    } else {
+      addMutation.mutate({
+        companyName: form.companyName, reason: form.reason, reasonFa: form.reasonFa,
+        severity: form.severity.toUpperCase(), tenderId: form.tenderId || null,
+        tenderTitle: form.tenderTitle || null,
+      });
+    }
     setForm({ companyName:'', reason:'', reasonFa:'', tenderId:'', tenderTitle:'', severity:'medium' });
     setShowAdd(false);
   }
 
   function removeEntry(id: string) {
-    setEntries(prev => prev.filter(e => e.id !== id));
+    if (isMock) {
+      setLocalEntries(prev => prev.filter(e => e.id !== id));
+    } else {
+      removeMutation.mutate(Number(id));
+    }
     setRemoveTarget(null);
   }
 

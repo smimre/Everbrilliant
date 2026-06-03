@@ -90,3 +90,37 @@ export function useSignContract() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'contracts'] }),
   });
 }
+
+// ── Company Blacklist ─────────────────────────────────────
+export function useBlacklist(query?: { status?: string; severity?: string; search?: string }) {
+  return useQuery({
+    queryKey: ['trading', 'blacklist', query],
+    queryFn: () => api.get('/trading/blacklist', query as Record<string, unknown>),
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
+export function useAddToBlacklist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: any) => api.post('/trading/blacklist', dto),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'blacklist'] }),
+  });
+}
+
+export function useAppealBlacklist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.patch(`/trading/blacklist/${id}/appeal`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'blacklist'] }),
+  });
+}
+
+export function useRemoveFromBlacklist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.delete(`/trading/blacklist/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'blacklist'] }),
+  });
+}

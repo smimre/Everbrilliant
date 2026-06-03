@@ -12,6 +12,7 @@ export {
   useTenders, useCreateTender,
   useConnections,
   useQuotesForRequest, useCreateQuote, useAcceptQuote,
+  useBlacklist, useAddToBlacklist, useAppealBlacklist, useRemoveFromBlacklist,
 } from './use-trading';
 
 // Finance
@@ -36,7 +37,10 @@ export {
 } from './use-manufacturing';
 
 // CRM
-export { useCRMConnections, useAddCRMConnection, useSearchCompanies } from './use-crm';
+export {
+  useCRMConnections, useAddCRMConnection, useSearchCompanies,
+  useDeals, useDealStats, useCreateDeal, useUpdateDeal, useDeleteDeal,
+} from './use-crm';
 
 // Notifications
 export {
