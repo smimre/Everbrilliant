@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useMaterials, useCreateMaterial, useCreateMaterialPO } from '@/hooks/use-manufacturing';
+import { useUIStore } from '@/store';
 
 interface Material {
   id: string; code: string; material: string; materialEn: string;
@@ -29,6 +30,7 @@ const inp = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[
 
 export function MaterialsPlanning() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const { data: apiData, isLoading } = useMaterials();
   const createMaterial = useCreateMaterial();
@@ -63,7 +65,7 @@ export function MaterialsPlanning() {
   }
 
   function addMaterial() {
-    if (!form.code || !form.material || !form.required) { alert(fa?'فیلدهای الزامی':'Required fields'); return; }
+    if (!form.code || !form.material || !form.required) { toast('error', fa?'فیلدهای الزامی':'Required fields'); return; }
     createMaterial.mutate({
       code: form.code,
       material: form.material,

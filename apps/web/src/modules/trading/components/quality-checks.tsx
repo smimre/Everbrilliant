@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 
 const MOCK_CHECKS = [
   { id:'QC-001', title:'بازرسی روغن پالم — محموله ۵۰۰ تن', contract:'قرارداد الفا', date:'۱۴۰۳/۰۳/۱۵', status:'approved', inspector:'آزمایشگاه ارمغان', result:'مطابق استاندارد', grade:'A' },
@@ -16,6 +17,7 @@ const STATUS_MAP: Record<string, { label: string; labelFa: string; color: string
 
 export function QualityChecks() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [items, setItems] = useState(MOCK_CHECKS);
   const [showNew, setShowNew] = useState(false);
@@ -34,7 +36,7 @@ export function QualityChecks() {
   ];
 
   const handleSubmit = () => {
-    if (!form.title) { alert(fa ? 'عنوان الزامی است' : 'Title required'); return; }
+    if (!form.title) { toast('error', fa ? 'عنوان الزامی است' : 'Title required'); return; }
     const newItem = {
       id: `QC-${String(items.length + 1).padStart(3, '0')}`,
       title: form.title,

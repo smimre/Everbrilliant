@@ -231,7 +231,7 @@ export function Cashflow() {
         <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
           <h3 className="font-semibold mb-4">{fa ? 'نمودار جریان نقدی' : 'Cash Flow Chart'}</h3>
           <div className="flex items-end gap-3" style={{ height: '160px' }}>
-            {chartLabels.map((m, i) => (
+            {chartLabels.map((m: string, i: number) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <div className="w-full flex gap-0.5 items-end" style={{ height: '120px' }}>
                   <div className="flex-1 rounded-t-sm" style={{ height: ((chartIn[i] ?? 0) / maxVal * 100) + '%', background: '#10b981', opacity: 0.8 }} />

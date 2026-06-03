@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useContracts } from '@/hooks/use-trading';
+import { useUIStore } from '@/store';
 
 const STATUS_MAP: Record<string, { label: string; labelFa: string; color: string; icon: string }> = {
   draft:     { label: 'Needs Signing', labelFa: 'نیاز به امضا',  color: '#f59e0b', icon: '✍️' },
@@ -16,6 +17,7 @@ const INCOTERMS = ['EXW','FCA','FAS','FOB','CFR','CIF','CPT','CIP','DAP','DPU','
 
 export function MyContracts() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const { data: rawContracts = [], isLoading } = useContracts();
   const contracts = rawContracts as any[];
@@ -105,7 +107,7 @@ export function MyContracts() {
               <button
                 onClick={() => {
                   if (!signPass) return;
-                  alert(fa ? 'قرارداد با موفقیت امضا شد ✅' : 'Contract signed successfully ✅');
+                  toast('success', fa ? 'قرارداد با موفقیت امضا شد' : 'Contract signed successfully');
                   setSignModal(null); setSignPass('');
                 }}
                 className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium"
@@ -267,6 +269,7 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
 
 function NewContractModal({ lang, onClose }: { lang: string; onClose: () => void }) {
   const fa = lang === 'fa';
+  const { toast } = useUIStore();
   const [form, setForm] = useState({
     title: '', role: 'buyer', product: '', qty: '', unit: 'ton', unitPrice: '',
     currency: 'IRR', deliveryDate: '', deliveryPlace: '', paymentTerms: '', incoterms: 'EXW', clauses: '',
@@ -358,7 +361,7 @@ function NewContractModal({ lang, onClose }: { lang: string; onClose: () => void
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
           <button
-            onClick={() => { if (!form.title) { alert(fa ? 'عنوان الزامی است' : 'Title required'); return; } onClose(); alert(fa ? 'قرارداد ایجاد شد ✅' : 'Contract created ✅'); }}
+            onClick={() => { if (!form.title) { toast('error', fa ? 'عنوان الزامی است' : 'Title required'); return; } onClose(); toast('success', fa ? 'قرارداد ایجاد شد' : 'Contract created'); }}
             className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium"
           >
             ✅ {fa ? 'ثبت قرارداد' : 'Create'}

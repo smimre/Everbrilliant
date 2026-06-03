@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useWorkOrders, useCreateWorkOrder, useUpdateWorkOrder } from '@/hooks/use-manufacturing';
+import { useUIStore } from '@/store';
 
 interface WorkOrder {
   id: string;
@@ -243,10 +244,11 @@ export function WorkOrders() {
 }
 
 function NewWOModal({ fa, inp, onClose, onSubmit }: { fa: boolean; inp: string; onClose: () => void; onSubmit: (dto: any) => void }) {
+  const { toast } = useUIStore();
   const [form, setForm] = useState({ productName:'', bomCode:'', qty:'', unit:'Pcs', startDate:'', dueDate:'', priority:'normal', workcenter:'', notes:'' });
   const set = (k: string, v: string) => setForm(f => ({...f, [k]: v}));
   function submit() {
-    if (!form.productName || !form.qty || !form.dueDate) { alert(fa?'فیلدهای الزامی را پر کنید':'Fill required fields'); return; }
+    if (!form.productName || !form.qty || !form.dueDate) { toast('error', fa?'فیلدهای الزامی را پر کنید':'Fill required fields'); return; }
     onSubmit({ ...form, qty: parseInt(form.qty) });
   }
   return (

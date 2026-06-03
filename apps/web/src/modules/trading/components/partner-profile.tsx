@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 
 interface Transaction {
   id: string; product: string; date: string; amount: number;
@@ -65,6 +66,7 @@ const inp = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[
 
 export function PartnerProfilePage() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [selId, setSelId]         = useState('P-001');
   const [ratingsDB, setRatingsDB] = useState(MOCK_RATINGS);
@@ -81,7 +83,7 @@ export function PartnerProfilePage() {
   const trustClr  = trust>=70?'#10b981':trust>=40?'#f59e0b':'#ef4444';
 
   function submitRating() {
-    if (!form.score) { alert(fa?'امتیاز را انتخاب کنید':'Select a score'); return; }
+    if (!form.score) { toast('error', fa?'امتیاز را انتخاب کنید':'Select a score'); return; }
     const r: Rating = { id:'R-'+Date.now(), reviewer:'شرکت من', score:form.score, category:form.category, comment:form.comment, date:'۱۴۰۳/۰۴/۱۵' };
     setRatingsDB(prev => ({ ...prev, [selId]: [...(prev[selId]||[]), r] }));
     setForm({ score:0, category:'overall', comment:'' });

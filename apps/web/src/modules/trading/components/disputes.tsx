@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 
 const MOCK_DISPUTES = [
   { id:'DSP-001', title:'اختلاف در کیفیت محموله روغن پالم', contract:'قرارداد الفا-۱۴۰۳', party:'شرکت بازرگانی الفا', amount:2500000000, date:'۱۴۰۳/۰۲/۲۵', status:'negotiating', desc:'محموله ۵۰۰ تن روغن پالم با مشخصات اعلام‌شده مطابقت نداشت. رطوبت ۱.۸٪ بجای ۰.۵٪ بود.' },
@@ -16,6 +17,7 @@ const STATUS_MAP: Record<string, { label: string; labelFa: string; color: string
 
 export function Disputes() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [items, setItems] = useState(MOCK_DISPUTES);
   const [showNew, setShowNew] = useState(false);
@@ -34,7 +36,7 @@ export function Disputes() {
   ];
 
   const handleSubmit = () => {
-    if (!form.title) { alert(fa ? 'عنوان الزامی است' : 'Title required'); return; }
+    if (!form.title) { toast('error', fa ? 'عنوان الزامی است' : 'Title required'); return; }
     const newItem = {
       id: `DSP-${String(items.length + 1).padStart(3, '0')}`,
       title: form.title,

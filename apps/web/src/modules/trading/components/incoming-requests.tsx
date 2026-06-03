@@ -2,11 +2,13 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useRequests } from '@/hooks/use-trading';
+import { useUIStore } from '@/store';
 
 interface Props { showQuotes?: boolean; }
 
 export function IncomingRequests({ showQuotes }: Props = {}) {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const { data: rawRequests } = useRequests();
   const requests: any[] = rawRequests?.data ?? [];
@@ -36,8 +38,8 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
     : [{ id: 'all', label: fa ? 'همه' : 'All' }, { id: 'pending', label: fa ? 'نیاز به قیمت' : 'Needs Quote' }, { id: 'quoted', label: fa ? 'قیمت داده' : 'Quoted' }, { id: 'approved', label: fa ? 'تایید شده' : 'Approved' }];
 
   const handleQuote = () => {
-    if (!quoteAmount) { alert(fa ? 'مبلغ قیمت الزامی است' : 'Quote amount required'); return; }
-    alert(fa ? `قیمت ${Number(quoteAmount).toLocaleString('fa-IR')} IRR ارسال شد ✅` : `Quote ${Number(quoteAmount).toLocaleString()} IRR sent ✅`);
+    if (!quoteAmount) { toast('error', fa ? 'مبلغ قیمت الزامی است' : 'Quote amount required'); return; }
+    toast('success', fa ? `قیمت ${Number(quoteAmount).toLocaleString('fa-IR')} IRR ارسال شد` : `Quote ${Number(quoteAmount).toLocaleString()} IRR sent`);
     setSelected(null);
     setQuoteAmount('');
     setQuoteNote('');

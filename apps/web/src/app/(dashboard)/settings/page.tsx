@@ -98,6 +98,7 @@ function UserRow({u,fa,onToggle,onDelete}: {u:SubUser;fa:boolean;onToggle:()=>vo
 }
 
 function AddUserModal({fa,onClose,onSave}: {fa:boolean;onClose:()=>void;onSave:(u:SubUser)=>void}) {
+  const { toast } = useUIStore();
   const [form,setForm] = useState({name:'',phone:'',title:'',department:'',role:'purchase'});
   const set = (k:string) => (e:any) => setForm(f=>({...f,[k]:e.target.value}));
   const role = PRESET_ROLES[form.role];
@@ -128,7 +129,7 @@ function AddUserModal({fa,onClose,onSave}: {fa:boolean;onClose:()=>void;onSave:(
         <div className="flex gap-2 mt-4 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa?'انصراف':'Cancel'}</button>
           <button onClick={()=>{
-            if(!form.name||!form.phone||!form.title){alert(fa?'فیلدهای الزامی':'Required');return;}
+            if(!form.name||!form.phone||!form.title){toast('error', fa?'فیلدهای الزامی':'Required');return;}
             onSave({...form,id:'u'+Date.now(),perms:PRESET_ROLES[form.role]?.perms||[],active:true,isAdmin:false});
           }} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold">{fa?'ثبت کاربر':'Add'}</button>
         </div>
@@ -138,6 +139,7 @@ function AddUserModal({fa,onClose,onSave}: {fa:boolean;onClose:()=>void;onSave:(
 }
 
 function AddCompanyModal({fa,onClose,onSave}: {fa:boolean;onClose:()=>void;onSave:(c:any)=>void}) {
+  const { toast } = useUIStore();
   const [form,setForm] = useState({name:'',phone:'',country:'Iran',type:'trading',adminName:'',adminPhone:''});
   const set = (k:string) => (e:any) => setForm(f=>({...f,[k]:e.target.value}));
   return (
@@ -174,7 +176,7 @@ function AddCompanyModal({fa,onClose,onSave}: {fa:boolean;onClose:()=>void;onSav
         <div className="flex gap-2 mt-4 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa?'انصراف':'Cancel'}</button>
           <button onClick={()=>{
-            if(!form.name||!form.phone||!form.adminName||!form.adminPhone){alert(fa?'فیلدهای الزامی':'Required');return;}
+            if(!form.name||!form.phone||!form.adminName||!form.adminPhone){toast('error', fa?'فیلدهای الزامی':'Required');return;}
             onSave({...form,id:'c'+Date.now(),users:1,active:true,code:form.name.slice(0,4).toUpperCase()+'-'+Date.now().toString().slice(-3)});
           }} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold">{fa?'ایجاد شرکت':'Create'}</button>
         </div>
@@ -267,7 +269,7 @@ function CompanyInfoTab({ fa }: { fa: boolean }) {
 export default function SettingsPage() {
   const { lang, setLocale } = useLocaleStore();
   const { user } = useAuthStore();
-  const { theme, setTheme } = useUIStore();
+  const { theme, setTheme, toast } = useUIStore();
   const router = useRouter();
   const fa = lang === 'fa';
   const [tab, setTab] = useState<SettingsTab>('profile');
@@ -480,7 +482,7 @@ export default function SettingsPage() {
                         <span className={'text-[10px] px-1.5 py-0.5 rounded-full '+(c.active?'bg-green-500/10 text-green-500':'bg-red-500/10 text-red-400')}>
                           {c.active?(fa?'فعال':'Active'):(fa?'غیرفعال':'Inactive')}
                         </span>
-                        <button onClick={()=>alert(fa?'ورود به: '+c.name:'Login: '+c.name)} className="text-xs px-2 py-1 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-lg">{fa?'ورود':'Login'}</button>
+                        <button onClick={()=>toast('info', fa?'ورود به: '+c.name:'Login: '+c.name)} className="text-xs px-2 py-1 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] rounded-lg">{fa?'ورود':'Login'}</button>
                         <button onClick={()=>setCompanies(cs=>cs.map(x=>x.id===c.id?{...x,active:!x.active}:x))} className="text-xs px-2 py-1 border border-[hsl(var(--border))] rounded-lg">{c.active?(fa?'تعلیق':'Suspend'):(fa?'فعال':'Activate')}</button>
                       </div>
                     </div>
@@ -506,8 +508,8 @@ export default function SettingsPage() {
 
         </div>
       </div>
-      {showAddUser && <AddUserModal fa={fa} onClose={()=>setShowAddUser(false)} onSave={u=>{setUsers(us=>[...us,u]);setShowAddUser(false);alert(fa?'کاربر اضافه شد':'User added');}}/>}
-      {showAddCompany && <AddCompanyModal fa={fa} onClose={()=>setShowAddCompany(false)} onSave={c=>{setCompanies(cs=>[...cs,c]);setShowAddCompany(false);alert(fa?'شرکت ایجاد شد':'Company created');}}/>}
+      {showAddUser && <AddUserModal fa={fa} onClose={()=>setShowAddUser(false)} onSave={u=>{setUsers(us=>[...us,u]);setShowAddUser(false);toast('success', fa?'کاربر اضافه شد':'User added');}}/>}
+      {showAddCompany && <AddCompanyModal fa={fa} onClose={()=>setShowAddCompany(false)} onSave={c=>{setCompanies(cs=>[...cs,c]);setShowAddCompany(false);toast('success', fa?'شرکت ایجاد شد':'Company created');}}/>}
     </div>
   );
 }

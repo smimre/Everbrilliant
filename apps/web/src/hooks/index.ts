@@ -44,8 +44,26 @@ export {
 
 // Notifications
 export {
-  useNotifications, useUnreadCount, useMarkRead, useMarkAllRead,
+  useNotifications, useUnreadCount, useMarkRead, useMarkAllRead, useDeleteNotification,
 } from './use-notifications';
+
+// Company
+export {
+  useMyCompany, useUpdateMyCompany,
+  useCompanyConnections, useAddCompanyConnection, useRemoveCompanyConnection,
+  useSearchCompany,
+} from './use-company';
+
+// Logistics
+export * from './use-logistics';
+
+// Tasks / Documents / Workflows (automation extras)
+export {
+  useTasks, useCreateTask, useUpdateTask,
+  useDocuments, useCreateDocument,
+  useWorkflowTemplates, useCreateWorkflowTemplate,
+  useStartWorkflowInstance, useApproveWorkflowStep,
+} from './use-automation';
 
 // Realtime
 export { useSocket }                    from './realtime/use-socket';

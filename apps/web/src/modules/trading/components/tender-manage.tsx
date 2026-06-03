@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useTenders, useCreateTender } from '@/hooks/use-trading';
+import { useUIStore } from '@/store';
 
 const WIN_CRITERIA_LABELS: Record<string, string> = {
   highest_price: 'بالاترین قیمت',
@@ -51,6 +52,7 @@ function fmt(n: number) {
 
 export function TenderManage() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const { data: rawTenders = [] } = useTenders();
   const [myTenders, setMyTenders] = useState(MOCK_MINE);
@@ -226,7 +228,7 @@ export function TenderManage() {
                         {i === 0 && (
                           <div className="flex gap-1 mt-2">
                             <button
-                              onClick={() => { alert(fa ? `برنده: ${b.acc} — اعلام شد ✅` : `Winner: ${b.acc} — Awarded ✅`); setResultsModal(null); }}
+                              onClick={() => { toast('success', fa ? `برنده: ${b.acc} — اعلام شد` : `Winner: ${b.acc} — Awarded`); setResultsModal(null); }}
                               className="text-xs px-2 py-1 rounded-lg bg-green-500/10 border border-green-500/30 text-green-500 hover:bg-green-500/20"
                             >
                               🏆 {fa ? 'اعلام برنده' : 'Award'}
@@ -249,6 +251,7 @@ export function TenderManage() {
 
 function NewAuctionModal({ lang, onClose, onSubmit }: { lang: string; onClose: () => void; onSubmit: (t: any) => void }) {
   const fa = lang === 'fa';
+  const { toast } = useUIStore();
   const [form, setForm] = useState({ title: '', deadline: '', deadlineTime: '23:59', type: 'sealed', description: '', isPublic: true });
   const [products, setProducts] = useState([{ name: '', qtyMin: '', qtyMax: '', unit: 'تن', min: '', priceMax: '', currency: 'IRR', deliveryLoc: '', criteria: 'lowest_price' }]);
 
@@ -259,15 +262,15 @@ function NewAuctionModal({ lang, onClose, onSubmit }: { lang: string; onClose: (
   const removeP = (i: number) => setProducts(p => p.filter((_, idx) => idx !== i));
 
   const handleSubmit = () => {
-    if (!form.title) { alert(fa ? 'عنوان الزامی است' : 'Title required'); return; }
-    if (!form.deadline) { alert(fa ? 'مهلت الزامی است' : 'Deadline required'); return; }
-    if (products.some(p => !p.name)) { alert(fa ? 'نام محصول الزامی است' : 'Product name required'); return; }
+    if (!form.title) { toast('error', fa ? 'عنوان الزامی است' : 'Title required'); return; }
+    if (!form.deadline) { toast('error', fa ? 'مهلت الزامی است' : 'Deadline required'); return; }
+    if (products.some(p => !p.name)) { toast('error', fa ? 'نام محصول الزامی است' : 'Product name required'); return; }
     onSubmit({
       id: `TND-MY-${Date.now()}`, title: form.title, status: 'open',
       deadline: form.deadline, deadlineTime: form.deadlineTime, opened: false,
       bids: [], products: products.filter(p => p.name),
     });
-    alert(fa ? 'مزایده منتشر شد ✅' : 'Auction published ✅');
+    toast('success', fa ? 'مزایده منتشر شد' : 'Auction published');
   };
 
   return (

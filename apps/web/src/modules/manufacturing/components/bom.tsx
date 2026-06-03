@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useBOMs, useCreateBOM } from '@/hooks/use-manufacturing';
+import { useUIStore } from '@/store';
 
 interface BOMItem {
   id: string;
@@ -51,6 +52,7 @@ function mapBOM(o: any): BOM {
 
 export function BOM() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const { data: apiData, isLoading } = useBOMs();
   const createBOM = useCreateBOM();
@@ -70,7 +72,7 @@ export function BOM() {
   };
 
   function submitBOM() {
-    if (!newForm.code || !newForm.product) { alert(fa?'فیلدهای الزامی را پر کنید':'Fill required fields'); return; }
+    if (!newForm.code || !newForm.product) { toast('error', fa?'فیلدهای الزامی را پر کنید':'Fill required fields'); return; }
     createBOM.mutate({
       code: newForm.code,
       product: newForm.product,

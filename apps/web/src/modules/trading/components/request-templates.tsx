@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { RefreshCw, Plus, Trash2, Edit2, Rocket, Package, Building2 } from 'lucide-react';
+import { useUIStore } from '@/store';
 
 interface ReqTemplate {
   id: string;
@@ -25,6 +26,7 @@ const UNITS = ['تن', 'کیلوگرم', 'عدد', 'لیتر', 'متر', 'متر
 
 export function RequestTemplates() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
 
   const [templates, setTemplates] = useState<ReqTemplate[]>(INIT_TEMPLATES);
@@ -48,7 +50,7 @@ export function RequestTemplates() {
   };
 
   const save = () => {
-    if (!form.name || !form.product) return alert(fa ? 'نام و محصول الزامی است' : 'Name and product are required');
+    if (!form.name || !form.product) { toast('error', fa ? 'نام و محصول الزامی است' : 'Name and product are required'); return; }
     if (editing) {
       setTemplates(ts => ts.map(t => t.id === editing.id ? { ...t, ...form, qty: Number(form.qty) || t.qty } : t));
     } else {
@@ -67,7 +69,7 @@ export function RequestTemplates() {
 
   const use = (tpl: ReqTemplate) => {
     setTemplates(ts => ts.map(t => t.id === tpl.id ? { ...t, usedCount: t.usedCount + 1, lastUsed: '۱۴۰۳/۰۳/۱۵' } : t));
-    alert(fa ? `الگوی "${tpl.name}" انتخاب شد — به صفحه درخواست جدید بروید` : `Template "${tpl.name}" selected — go to New Request`);
+    toast('success', fa ? `الگوی "${tpl.name}" انتخاب شد — به صفحه درخواست جدید بروید` : `Template "${tpl.name}" selected — go to New Request`);
   };
 
   return (

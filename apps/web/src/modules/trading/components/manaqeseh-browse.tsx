@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 
 const MANAQESEH = [
   { id:'MNQ-001', title:'مناقصه تأمین تجهیزات صنعتی', owner:'کارخانه ارمغان', deadline:'۱۴۰۳/۰۳/۲۸', proposals:3, connected:true, budget:5000000000, items:['پمپ سانتریفیوژ','شیر صنعتی','لوله استنلس'], status:'open' },
@@ -10,6 +11,7 @@ const MANAQESEH = [
 
 export function ManaqesehBrowse() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [search, setSearch] = useState('');
   const [connOnly, setConnOnly] = useState(false);
@@ -130,7 +132,7 @@ export function ManaqesehBrowse() {
             <div className="flex gap-2 mt-4 justify-end">
               <button onClick={() => setProposalModal(null)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
               <button
-                onClick={() => { setProposalModal(null); alert(fa ? 'پیشنهاد ارسال شد ✅' : 'Proposal submitted ✅'); }}
+                onClick={() => { setProposalModal(null); toast('success', fa ? 'پیشنهاد ارسال شد' : 'Proposal submitted'); }}
                 className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold"
               >
                 {fa ? '✅ ارسال' : '✅ Submit'}

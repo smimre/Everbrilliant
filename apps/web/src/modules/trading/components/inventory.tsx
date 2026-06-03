@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useInventory } from '@/hooks/use-finance';
+import { useUIStore } from '@/store';
 
 const INV_CATS = ['روغن خوراکی', 'دانه‌های روغنی', 'غلات', 'مواد شیمیایی', 'تجهیزات صنعتی', 'فلزات', 'پلیمرها', 'سایر'];
 
@@ -31,6 +32,7 @@ function normalizeInventoryItem(raw: any) {
 
 export function InventoryPage() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [showNew, setShowNew] = useState(false);
   const [extraItems, setExtraItems] = useState<typeof MOCK_INVENTORY>([]);
@@ -61,7 +63,7 @@ export function InventoryPage() {
   const inp = "w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]";
 
   const handleAddItem = () => {
-    if (!form.name) { alert(fa ? 'نام کالا الزامی است' : 'Item name required'); return; }
+    if (!form.name) { toast('error', fa ? 'نام کالا الزامی است' : 'Item name required'); return; }
     const newItem = {
       id: `INV-${String(items.length + 1).padStart(3, '0')}`,
       name: form.name, category: form.category, qty: Number(form.qty) || 0,

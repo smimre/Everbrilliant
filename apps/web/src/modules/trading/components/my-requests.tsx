@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useRequests } from '@/hooks/use-trading';
+import { useUIStore } from '@/store';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: '#f59e0b', quoted: '#3b82f6', approved: '#10b981',
@@ -117,6 +118,7 @@ export function MyRequests() {
 
 function RequestCard({ request: r, lang, onSelect }: { request: any; lang: string; onSelect: () => void }) {
   const fa = lang === 'fa';
+  const { toast } = useUIStore();
   const color = STATUS_COLORS[r.status] || '#64748b';
   const statusLabels: Record<string, string> = {
     pending: fa ? '⏳ در انتظار' : '⏳ Pending',
@@ -156,13 +158,13 @@ function RequestCard({ request: r, lang, onSelect }: { request: any; lang: strin
           <div className="flex gap-2 shrink-0" onClick={e => e.stopPropagation()}>
             <button
               className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-500 text-xs font-bold hover:bg-green-500/20 transition-colors"
-              onClick={() => alert(fa ? 'قیمت تایید شد ✅' : 'Quote confirmed ✅')}
+              onClick={() => toast('success', fa ? 'قیمت تایید شد' : 'Quote confirmed')}
             >
               ✅ {fa ? 'تایید' : 'Confirm'}
             </button>
             <button
               className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold hover:bg-red-500/20 transition-colors"
-              onClick={() => alert(fa ? 'قیمت رد شد ❌' : 'Quote rejected ❌')}
+              onClick={() => toast('success', fa ? 'قیمت رد شد' : 'Quote rejected')}
             >
               ❌ {fa ? 'رد' : 'Reject'}
             </button>
@@ -233,6 +235,7 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
 
 function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void }) {
   const fa = lang === 'fa';
+  const { toast } = useUIStore();
   const [form, setForm] = useState({
     productName: '', quantity: '', unit: 'ton', currency: 'IRR',
     priority: 'normal', deadline: '', description: '', hsCode: '',
@@ -306,7 +309,7 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
             {fa ? 'انصراف' : 'Cancel'}
           </button>
           <button
-            onClick={() => { if (!form.productName) { alert(fa ? 'نام کالا الزامی است' : 'Product name required'); return; } onClose(); alert(fa ? 'درخواست ثبت شد ✅' : 'Request submitted ✅'); }}
+            onClick={() => { if (!form.productName) { toast('error', fa ? 'نام کالا الزامی است' : 'Product name required'); return; } onClose(); toast('success', fa ? 'درخواست ثبت شد' : 'Request submitted'); }}
             className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90"
           >
             ✅ {fa ? 'ثبت درخواست' : 'Submit'}

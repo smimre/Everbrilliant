@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { Check, Zap, Building2, Star, Crown, Phone } from 'lucide-react';
+import { useUIStore } from '@/store';
 
 interface Plan {
   id: string;
@@ -109,6 +110,7 @@ function LimitRow({ label, value, fa }: { label: string; value: number | string;
 
 export function PricingPlansPage() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly');
   const [currentPlan] = useState('basic');
@@ -117,7 +119,7 @@ export function PricingPlansPage() {
   const selectPlan = (plan: Plan) => {
     if (plan.enterprise) { setShowContact(true); return; }
     if (plan.id === currentPlan) return;
-    alert(fa
+    toast('info', fa
       ? `پلن "${plan.name.fa}" انتخاب شد — در حالت واقعی به درگاه پرداخت منتقل می‌شوید`
       : `Plan "${plan.name.en}" selected — in production you would be redirected to payment`);
   };

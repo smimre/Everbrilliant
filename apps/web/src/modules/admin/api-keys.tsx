@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 
 interface ApiKey {
   id: string; name: string; key: string; scopes: string[];
@@ -32,6 +33,7 @@ const inp = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[
 
 export function ApiKeysPage() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [keys, setKeys]           = useState<ApiKey[]>(MOCK_KEYS);
   const [showNew, setShowNew]     = useState(false);
@@ -40,7 +42,7 @@ export function ApiKeysPage() {
   const [form, setForm]           = useState({ name:'', scopes:[] as string[], expiry:'' });
 
   function createKey() {
-    if (!form.name.trim()) { alert(fa?'نام الزامی':'Name required'); return; }
+    if (!form.name.trim()) { toast('error', fa?'نام الزامی':'Name required'); return; }
     const k: ApiKey = {
       id: 'AK-'+Date.now(), name: form.name.trim(), key: genKey(),
       scopes: form.scopes, active: true,
@@ -63,10 +65,9 @@ export function ApiKeysPage() {
   }
 
   function copyKey(key: string, id: string) {
-    navigator.clipboard?.writeText(key).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
+    (navigator.clipboard?.writeText(key) ?? Promise.resolve())
+      .then(() => { setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); })
+      .catch(() => {});
   }
 
   function toggleScope(scope: string) {

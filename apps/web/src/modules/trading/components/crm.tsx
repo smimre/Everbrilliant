@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useRequests } from '@/hooks/use-trading';
+import { useUIStore } from '@/store';
 
 const FOLLOWUP_TYPES = [
   { id: 'call', icon: '📞', label: 'تماس تلفنی', en: 'Phone Call' },
@@ -22,6 +23,7 @@ const STAGES = [
 
 export function CRMPage() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const { data: rawRequests = [] } = useRequests();
   const requests = (rawRequests as any[]) || [];
@@ -308,7 +310,7 @@ export function CRMPage() {
                 />
               </div>
               <button
-                onClick={() => { alert(fa ? 'فعالیت ثبت شد ✅' : 'Activity logged ✅'); setActNote(''); setShowActivity(null); }}
+                onClick={() => { toast('success', fa ? 'فعالیت ثبت شد' : 'Activity logged'); setActNote(''); setShowActivity(null); }}
                 className="w-full py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium"
               >
                 ✅ {fa ? 'ثبت فعالیت' : 'Log Activity'}

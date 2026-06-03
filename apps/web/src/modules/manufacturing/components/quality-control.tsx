@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useQualityChecks, useCreateQCInspection, useWorkOrders } from '@/hooks/use-manufacturing';
+import { useUIStore } from '@/store';
 
 interface Inspection {
   id: string; wo: string; woId: string; product: string; inspector: string;
@@ -29,6 +30,7 @@ const inp = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[
 
 export function QualityControl() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const { data: qcData, isLoading } = useQualityChecks();
   const { data: woData } = useWorkOrders();
@@ -48,7 +50,7 @@ export function QualityControl() {
 
   function submitInspection() {
     if (!form.workOrderId || !form.qty || !form.passed) {
-      alert(fa?'فیلدهای الزامی را پر کنید':'Fill required fields'); return;
+      toast('error', fa?'فیلدهای الزامی را پر کنید':'Fill required fields'); return;
     }
     const qty = parseInt(form.qty);
     const passed = parseInt(form.passed);

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useRouter } from 'next/navigation';
+import { useUIStore } from '@/store';
 
 const UNITS = ['تن','کیلوگرم','لیتر','متر','متر مربع','عدد','دست','سری','کارتن','پالت'];
 const CURRENCIES = ['IRR','USD','EUR','AED','CNY','TRY'];
@@ -78,6 +79,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2,'0') + '
 
 export function TenderNew() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const router = useRouter();
 
@@ -102,9 +104,9 @@ export function TenderNew() {
     setProducts(p => p.map((r, idx) => idx === pi ? { ...r, enabled: Object.fromEntries(Object.keys(r.enabled).map(k => [k, val])) } : r));
 
   const submit = () => {
-    if (!form.title) { alert(fa ? 'عنوان مزایده الزامی است' : 'Title required'); return; }
-    if (!form.deadline) { alert(fa ? 'تاریخ مهلت الزامی است' : 'Deadline required'); return; }
-    if (products.some(p => !p.name)) { alert(fa ? 'نام محصول الزامی است' : 'Product name required'); return; }
+    if (!form.title) { toast('error', fa ? 'عنوان مزایده الزامی است' : 'Title required'); return; }
+    if (!form.deadline) { toast('error', fa ? 'تاریخ مهلت الزامی است' : 'Deadline required'); return; }
+    if (products.some(p => !p.name)) { toast('error', fa ? 'نام محصول الزامی است' : 'Product name required'); return; }
     setSubmitted(true);
     setTimeout(() => router.push('/trading'), 2500);
   };

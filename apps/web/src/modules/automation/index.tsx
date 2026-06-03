@@ -618,6 +618,7 @@ function MeetingsPage({ meetings, meetingsLoading, createMeeting, toast }: Meeti
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 function TasksPage({ apiTasks, createTask, updateTask }: { apiTasks: any[]; createTask: any; updateTask: any }) {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const usingApi = apiTasks.length > 0;
   const [localTasks, setLocalTasks] = useState(MOCK_TASKS);
@@ -646,7 +647,7 @@ function TasksPage({ apiTasks, createTask, updateTask }: { apiTasks: any[]; crea
   };
 
   const handleSubmit = () => {
-    if (!form.title) { alert(fa?'عنوان الزامی است':'Title required'); return; }
+    if (!form.title) { toast('error', fa?'عنوان الزامی است':'Title required'); return; }
     if (usingApi) {
       createTask.mutate({ ...form }, { onSuccess: () => { setForm({ title:'', assignee:'', due:'', priority:'normal', tag:'', description:'' }); setShowNew(false); } });
     } else {
@@ -856,6 +857,7 @@ function TasksPage({ apiTasks, createTask, updateTask }: { apiTasks: any[]; crea
 // ─── Archive ──────────────────────────────────────────────────────────────────
 function ArchivePage({ apiDocs, createDocument }: { apiDocs: any[]; createDocument: any }) {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const usingApi = apiDocs.length > 0;
   const [localDocs, setLocalDocs] = useState(MOCK_DOCUMENTS);
@@ -881,7 +883,7 @@ function ArchivePage({ apiDocs, createDocument }: { apiDocs: any[]; createDocume
   });
 
   const handleUpload = () => {
-    if (!uploadForm.title) { alert(fa?'عنوان الزامی است':'Title required'); return; }
+    if (!uploadForm.title) { toast('error', fa?'عنوان الزامی است':'Title required'); return; }
     if (usingApi) {
       createDocument.mutate(
         { title: uploadForm.title, type: 'pdf', category: uploadForm.category, version: uploadForm.version, confidential: uploadForm.confidential, tags: uploadForm.tags.split(',').map((t: string)=>t.trim()).filter(Boolean), content: uploadForm.description },
@@ -902,7 +904,7 @@ function ArchivePage({ apiDocs, createDocument }: { apiDocs: any[]; createDocume
 
   const shareDoc = (id: string) => {
     navigator.clipboard?.writeText(`internal://docs/${id}`).catch(()=>{});
-    alert(fa?'لینک کپی شد':'Link copied!');
+    toast('info', fa?'لینک کپی شد':'Link copied!');
   };
 
   return (
@@ -1056,6 +1058,7 @@ function ArchivePage({ apiDocs, createDocument }: { apiDocs: any[]; createDocume
 // ─── Workflows ────────────────────────────────────────────────────────────────
 function WorkflowsPage({ apiWorkflows, createWorkflow, startInstance: startInstanceMut, approveStep: approveStepMut }: { apiWorkflows: any[]; createWorkflow: any; startInstance: any; approveStep: any }) {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const usingApi = apiWorkflows.length > 0;
 
@@ -1117,7 +1120,7 @@ function WorkflowsPage({ apiWorkflows, createWorkflow, startInstance: startInsta
   const removeStep = (i: number) => setNewWfForm(f => ({...f, steps:f.steps.filter((_,idx)=>idx!==i)}));
 
   const handleNewWf = () => {
-    if (!newWfForm.title) { alert(fa?'عنوان الزامی':'Title required'); return; }
+    if (!newWfForm.title) { toast('error', fa?'عنوان الزامی':'Title required'); return; }
     if (usingApi) {
       createWorkflow.mutate(
         { title: newWfForm.title, icon: newWfForm.icon, mode: newWfForm.mode, steps: newWfForm.steps },

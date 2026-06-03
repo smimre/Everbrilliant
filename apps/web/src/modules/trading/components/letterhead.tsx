@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useAuthStore } from '@/store/auth.store';
+import { useUIStore } from '@/store';
 import {
   FileText, Plus, Edit2, Eye, Stamp, PenTool, Trash2, X, Check,
   Upload, Download, RotateCcw, ImagePlus,
@@ -219,6 +220,7 @@ function SignatureCanvas({
 export function LetterheadPage() {
   const { lang } = useLocaleStore();
   const { user } = useAuthStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [tab, setTab] = useState<Tab>('templates');
   const [templates, setTemplates] = useState<LHTemplate[]>(INIT_TEMPLATES);
@@ -258,7 +260,7 @@ export function LetterheadPage() {
   };
 
   const saveTpl = () => {
-    if (!tplForm.name || !tplForm.companyName) return alert(fa ? 'نام قالب و شرکت الزامی' : 'Template name & company required');
+    if (!tplForm.name || !tplForm.companyName) { toast('error', fa ? 'نام قالب و شرکت الزامی' : 'Template name & company required'); return; }
     if (editingTpl) {
       setTemplates(ts => ts.map(t => t.id === editingTpl.id ? { ...t, ...tplForm } : t));
     } else {
@@ -268,7 +270,7 @@ export function LetterheadPage() {
   };
 
   const saveDoc = () => {
-    if (!docForm.templateId || !docForm.title) return alert(fa ? 'قالب و عنوان الزامی' : 'Template & title required');
+    if (!docForm.templateId || !docForm.title) { toast('error', fa ? 'قالب و عنوان الزامی' : 'Template & title required'); return; }
     setDocs(ds => [...ds, { id: 'LHD-' + Date.now(), ...docForm, docNo: 'DOC-' + Date.now().toString().slice(-4), date: new Date().toLocaleDateString('fa-IR') }]);
     setShowNewDoc(false);
     setDocForm({ templateId: '', title: '', content: '', docNo: '' });

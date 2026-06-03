@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useConnections } from '@/hooks/use-trading';
 import { useAuthStore } from '@/store/auth.store';
+import { useUIStore } from '@/store';
 
 const CONN_COLORS = ['#3b82f6','#8b5cf6','#f59e0b','#10b981','#ef4444','#06b6d4'];
 
@@ -18,6 +19,7 @@ function genCode(){ return 'EB-'+Math.random().toString(36).substring(2,8).toUpp
 export function Connections() {
   const { lang } = useLocaleStore();
   const { user } = useAuthStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [tab, setTab] = useState<'my'|'invite'>('my');
   const [myCode] = useState(genCode);
@@ -44,7 +46,13 @@ export function Connections() {
       })
     : MOCK_PARTNERS;
 
-  const copyCode = () => { navigator.clipboard.writeText(myCode).then(()=>{ setCopied(true); setTimeout(()=>setCopied(false),2000); }); };
+  const copyCode = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(myCode).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => {});
+    } else {
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    }
+  };
   const filtered = partners.filter(p=>!filter||p.name.includes(filter)||p.country.includes(filter));
 
   return (
@@ -75,7 +83,7 @@ export function Connections() {
             <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3">{fa?'کد دعوت شریک تجاری خود را وارد کنید.':'Enter the invite code from your partner.'}</p>
             <div className="flex gap-2">
               <input value={inviteCode} onChange={e=>setInviteCode(e.target.value.toUpperCase())} placeholder="EB-XXXXXX" className="flex-1 bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-lg px-4 py-2.5 font-mono text-sm outline-none"/>
-              <button onClick={()=>{ if(inviteCode.length>=6){ alert(fa?'درخواست اتصال ارسال شد ✅':'Connection request sent ✅'); setInviteCode(''); }}} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold">{fa?'اتصال':'Connect'}</button>
+              <button onClick={()=>{ if(inviteCode.length>=6){ toast('success', fa?'درخواست اتصال ارسال شد':'Connection request sent'); setInviteCode(''); }}} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold">{fa?'اتصال':'Connect'}</button>
             </div>
           </div>
         </div>

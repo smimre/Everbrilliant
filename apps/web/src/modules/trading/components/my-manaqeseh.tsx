@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 
 const MNQ_TYPES = [
   { id: 'goods', icon: '📦', label: 'کالا', en: 'Goods' },
@@ -25,6 +26,7 @@ const MOCK_TENDERS: any[] = [
 
 export function MyManaqeseh() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [showNew, setShowNew] = useState(false);
   const [items, setItems] = useState(MOCK_TENDERS);
@@ -181,6 +183,7 @@ export function MyManaqeseh() {
 
 function NewTenderModal({ lang, onClose, onSubmit }: { lang: string; onClose: () => void; onSubmit: (t: any) => void }) {
   const fa = lang === 'fa';
+  const { toast } = useUIStore();
   const [type, setType] = useState('goods');
   const [form, setForm] = useState({ title: '', subject: '', description: '', deadline: '', deadlineTime: '23:59', deliveryPlace: '', deliveryDays: '', paymentTerms: '', budget: '', budgetVisible: false, isPublic: true });
   const [itemRows, setItemRows] = useState([{ name: '', qty: '', unit: 'تن', specs: '' }]);
@@ -196,15 +199,15 @@ function NewTenderModal({ lang, onClose, onSubmit }: { lang: string; onClose: ()
   const totalWeight = criteria.reduce((s, c) => s + Number(c.weight || 0), 0);
 
   const handleSubmit = () => {
-    if (!form.title) { alert(fa ? 'عنوان الزامی است' : 'Title required'); return; }
-    if (!form.deadline) { alert(fa ? 'مهلت الزامی است' : 'Deadline required'); return; }
-    if (totalWeight !== 100) { alert(fa ? 'مجموع وزن معیارها باید ۱۰۰٪ باشد' : 'Criteria weights must total 100%'); return; }
+    if (!form.title) { toast('error', fa ? 'عنوان الزامی است' : 'Title required'); return; }
+    if (!form.deadline) { toast('error', fa ? 'مهلت الزامی است' : 'Deadline required'); return; }
+    if (totalWeight !== 100) { toast('error', fa ? 'مجموع وزن معیارها باید ۱۰۰٪ باشد' : 'Criteria weights must total 100%'); return; }
     onSubmit({
       id: `MNQ-MY-${Date.now()}`, type, title: form.title, status: 'open',
       deadline: form.deadline, proposals: 0, budget: Number(form.budget) || 0, subject: form.subject,
       items: itemRows.filter(r => r.name),
     });
-    alert(fa ? 'مناقصه منتشر شد ✅' : 'Tender published ✅');
+    toast('success', fa ? 'مناقصه منتشر شد' : 'Tender published');
   };
 
   return (

@@ -64,3 +64,11 @@ export function useMarkAllRead() {
     },
   });
 }
+
+export function useDeleteNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: notifKeys.all }),
+  });
+}

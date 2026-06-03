@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 import {
   useShipments, useCreateShipment, useUpdateShipment,
   useAdvanceStage, useIssueWaybill,
@@ -223,6 +224,7 @@ type TabId = typeof TABS[number]['id'];
 export function LogisticsPage() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
+  const { toast } = useUIStore();
 
   // ── API hooks ────────────────────────────────────────────────
   const { data: shipmentsData } = useShipments();
@@ -399,7 +401,7 @@ export function LogisticsPage() {
 
   const handleNewShipment = () => {
     if (!newForm.cargo || !newForm.origin || !newForm.destination) {
-      alert(fa ? 'فیلدهای الزامی را پر کنید' : 'Fill required fields');
+      toast('error', fa ? 'فیلدهای الزامی را پر کنید' : 'Fill required fields');
       return;
     }
     const resetForm = { cargo: '', type: 'domestic' as ShipmentType, origin: '', destination: '', sellerName: '', buyerName: '', weight: '', weightUnit: 'تن', volume: '', cost: '', costPaid: false, notes: '' };

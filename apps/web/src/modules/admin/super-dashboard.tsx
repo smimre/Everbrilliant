@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const MOCK_COMPANIES = [
@@ -53,6 +54,7 @@ function fmtB(n: number) {
 
 export function SuperDashboard() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [companies, setCompanies] = useState(MOCK_COMPANIES);
   const [txFilter, setTxFilter]   = useState('');
@@ -225,7 +227,7 @@ export function SuperDashboard() {
               </div>
               <div className="text-end text-xs font-bold text-green-500">{fmtB(c.txValue)}</div>
               <div className="flex gap-1 shrink-0">
-                <button onClick={()=>alert(fa?'ورود به: '+c.name:'Login: '+c.name)}
+                <button onClick={()=>toast('info', fa?'ورود به: '+c.name:'Login: '+c.name)}
                   className="text-xs px-2 py-1 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.2)]">
                   {fa?'ورود':'Login'}
                 </button>
@@ -251,7 +253,7 @@ export function SuperDashboard() {
             { icon:'📧', label:fa?'ارسال انبوه':'Mass Email',     color:'#f59e0b' },
             { icon:'🔄', label:fa?'پاک‌سازی کش':'Clear Cache',   color:'#ef4444' },
           ].map((a,i) => (
-            <button key={i} onClick={()=>alert(a.label)}
+            <button key={i} onClick={()=>toast('info', a.label)}
               className="flex items-center gap-3 p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] hover:bg-[hsl(var(--muted)/0.4)] transition-colors">
               <span className="text-2xl">{a.icon}</span>
               <span className="text-sm font-medium" style={{color:a.color}}>{a.label}</span>

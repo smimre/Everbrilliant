@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useRequests, useAcceptQuote, useQuotesForRequest } from '@/hooks/use-trading';
+import { useUIStore } from '@/store';
 import { MessageSquare, Search, Package, Building2, Calendar, Check, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 
 const STATUS_MAP: Record<string, { fa: string; en: string; color: string }> = {
@@ -139,6 +140,7 @@ export function MyQuotes() {
 
   const { data: raw, isLoading } = useRequests();
   const allRequests: any[] = (raw as any)?.data ?? [];
+  const { toast } = useUIStore();
   const acceptQuote = useAcceptQuote();
 
   // Show requests that have at least some quotes (quoted status or explicitly have quote count)
@@ -154,8 +156,8 @@ export function MyQuotes() {
   const handleAccept = (quoteId: string) => {
     if (!confirm(fa ? 'این پیشنهاد پذیرفته شود؟' : 'Accept this quote?')) return;
     acceptQuote.mutate(quoteId, {
-      onSuccess: () => alert(fa ? '✅ پیشنهاد پذیرفته شد' : '✅ Quote accepted'),
-      onError: (e: any) => alert(e.message || (fa ? 'خطا' : 'Error')),
+      onSuccess: () => toast('success', fa ? 'پیشنهاد پذیرفته شد' : 'Quote accepted'),
+      onError: (e: any) => toast('error', e.message || (fa ? 'خطا' : 'Error')),
     });
   };
 

@@ -195,7 +195,7 @@ export function TenderBlacklist() {
                   <td className="px-3 py-3">
                     <div className="flex gap-1">
                       {e.status === 'active' && (
-                        <button onClick={() => setEntries(prev => prev.map(x => x.id === e.id ? {...x, status:'appealing'} : x))}
+                        <button onClick={() => setLocalEntries(prev => prev.map(x => x.id === e.id ? {...x, status:'appealing'} : x))}
                           className="text-xs px-2 py-1 rounded-lg bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/20">
                           {fa ? 'اعتراض' : 'Appeal'}
                         </button>

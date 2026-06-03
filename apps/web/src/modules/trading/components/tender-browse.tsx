@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useUIStore } from '@/store';
 
 const INCOTERMS_2020 = ['EXW','FCA','FAS','FOB','CFR','CIF','CPT','CIP','DAP','DPU','DDP'];
 
@@ -42,6 +43,7 @@ function urgencyColor(deadline: string) {
 
 export function TenderBrowse() {
   const { lang } = useLocaleStore();
+  const { toast } = useUIStore();
   const fa = lang === 'fa';
   const [search, setSearch] = useState('');
   const [connOnly, setConnOnly] = useState(false);
@@ -63,9 +65,9 @@ export function TenderBrowse() {
   });
 
   const handleBidSubmit = () => {
-    if (!bidPrice) { alert(fa ? 'قیمت الزامی است' : 'Price required'); return; }
+    if (!bidPrice) { toast('error', fa ? 'قیمت الزامی است' : 'Price required'); return; }
     setTenders(prev => prev.map(t => t.id === bidModal.id ? { ...t, myBid: true, bids: t.bids + 1 } : t));
-    alert(fa ? 'پیشنهاد قیمت با موفقیت ثبت شد ✅' : 'Bid submitted successfully ✅');
+    toast('success', fa ? 'پیشنهاد قیمت با موفقیت ثبت شد' : 'Bid submitted successfully');
     setBidModal(null); setBidPrice(''); setBidNote('');
   };
 
