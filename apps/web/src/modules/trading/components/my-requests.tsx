@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useRequests } from '@/hooks/use-trading';
+import { useRequests, useCreateRequest } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -236,6 +236,7 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
 function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void }) {
   const fa = lang === 'fa';
   const { toast } = useUIStore();
+  const createRequest = useCreateRequest();
   const [form, setForm] = useState({
     productName: '', quantity: '', unit: 'ton', currency: 'IRR',
     priority: 'normal', deadline: '', description: '', hsCode: '',
@@ -309,10 +310,29 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
             {fa ? 'انصراف' : 'Cancel'}
           </button>
           <button
-            onClick={() => { if (!form.productName) { toast('error', fa ? 'نام کالا الزامی است' : 'Product name required'); return; } onClose(); toast('success', fa ? 'درخواست ثبت شد' : 'Request submitted'); }}
-            className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90"
+            disabled={createRequest.isPending}
+            onClick={() => {
+              if (!form.productName) { toast('error', fa ? 'نام کالا الزامی است' : 'Product name required'); return; }
+              createRequest.mutate(
+                {
+                  product: form.productName,
+                  qty: form.quantity ? Number(form.quantity) : undefined,
+                  unit: form.unit,
+                  currency: form.currency,
+                  priority: form.priority,
+                  deadline: form.deadline || undefined,
+                  note: form.description || undefined,
+                  hsCode: form.hsCode || undefined,
+                },
+                {
+                  onSuccess: () => { toast('success', fa ? 'درخواست ثبت شد' : 'Request submitted'); onClose(); },
+                  onError: (err: any) => toast('error', err?.message || (fa ? 'خطا در ثبت درخواست' : 'Failed to submit')),
+                }
+              );
+            }}
+            className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
           >
-            ✅ {fa ? 'ثبت درخواست' : 'Submit'}
+            {createRequest.isPending ? (fa ? 'در حال ثبت...' : 'Submitting...') : `✅ ${fa ? 'ثبت درخواست' : 'Submit'}`}
           </button>
         </div>
       </div>
