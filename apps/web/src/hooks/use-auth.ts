@@ -18,7 +18,7 @@ export function useLogin() {
       router.replace('/dashboard');
     },
     onError: (err: any) => {
-      toast(err?.response?.data?.message || 'Login failed', 'error');
+      toast('error', err?.response?.data?.message || 'Login failed');
     },
   });
 }
@@ -35,7 +35,7 @@ export function useRegister() {
       router.replace('/dashboard');
     },
     onError: (err: any) => {
-      toast(err?.response?.data?.message || 'Registration failed', 'error');
+      toast('error', err?.response?.data?.message || 'Registration failed');
     },
   });
 }
