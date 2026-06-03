@@ -101,6 +101,46 @@ export function useQualityChecks(query?: PaginationQuery) {
   });
 }
 
+export function useCreateBOM() {
+  const qc = useQueryClient();
+  const { toast } = useUIStore();
+  return useMutation({
+    mutationFn: manufacturingService.createBOM,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: mfgKeys.all });
+      toast('success', 'BOM created');
+    },
+    onError: (err: Error) => toast('error', err.message),
+  });
+}
+
+export function useCreateMaterial() {
+  const qc = useQueryClient();
+  const { toast } = useUIStore();
+  return useMutation({
+    mutationFn: manufacturingService.createMaterial,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: mfgKeys.all });
+      toast('success', 'Material saved');
+    },
+    onError: (err: Error) => toast('error', err.message),
+  });
+}
+
+export function useCreateQCInspection() {
+  const qc = useQueryClient();
+  const { toast } = useUIStore();
+  return useMutation({
+    mutationFn: ({ workOrderId, dto }: { workOrderId: string; dto: any }) =>
+      manufacturingService.createQCInspection(workOrderId, dto),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: mfgKeys.all });
+      toast('success', 'Inspection saved');
+    },
+    onError: (err: Error) => toast('error', err.message),
+  });
+}
+
 export function useMfgReports() {
   return useQuery({
     queryKey: mfgKeys.reports(),

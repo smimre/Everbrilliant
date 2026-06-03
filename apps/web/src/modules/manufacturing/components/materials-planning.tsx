@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { useMaterials, useCreateMaterial, useCreateMaterialPO } from '@/hooks/use-manufacturing';
 
 interface Material {
   id: string; code: string; material: string; materialEn: string;
@@ -8,24 +9,36 @@ interface Material {
   supplier: string; unitCost: number; reorderPoint: number;
 }
 
-const INITIAL_MATERIALS: Material[] = [
-  { id:'1', code:'MTL-001', material:'ورق فولادی ۲ میل', materialEn:'Steel Sheet 2mm',   required:250, available:180, unit:'Kg',    dueDate:'۱۴۰۳/۰۶/۱۵', supplier:'فولاد مبارکه', unitCost:85000,  reorderPoint:200 },
-  { id:'2', code:'MTL-002', material:'الکترود جوشکاری',  materialEn:'Welding Rod',         required:25,  available:30,  unit:'Kg',    dueDate:'۱۴۰۳/۰۶/۱۵', supplier:'لینکلن',       unitCost:420000, reorderPoint:15 },
-  { id:'3', code:'MTL-003', material:'رنگ اپوکسی',       materialEn:'Epoxy Paint',          required:10,  available:6,   unit:'Liter', dueDate:'۱۴۰۳/۰۶/۲۰', supplier:'ایران آلکید',  unitCost:380000, reorderPoint:8 },
-  { id:'4', code:'MTL-004', material:'پیچ و مهره M8',    materialEn:'Bolt & Nut M8',        required:500, available:620, unit:'Pcs',   dueDate:'۱۴۰۳/۰۶/۱۸', supplier:'قطعات گلستان',unitCost:4200,   reorderPoint:300 },
-  { id:'5', code:'MTL-005', material:'آلومینیوم ۱۵۰۰',  materialEn:'Aluminium 1500',       required:80,  available:45,  unit:'Kg',    dueDate:'۱۴۰۳/۰۶/۲۲', supplier:'الومتال',      unitCost:195000, reorderPoint:60 },
-  { id:'6', code:'MTL-006', material:'لوله فولادی ۲″',   materialEn:'Steel Pipe 2-inch',   required:120, available:150, unit:'m',     dueDate:'۱۴۰۳/۰۶/۲۵', supplier:'لوله سازی',    unitCost:72000,  reorderPoint:80 },
-];
+function mapMaterial(o: any): Material {
+  return {
+    id: String(o.id),
+    code: o.code ?? '',
+    material: o.materialFa ?? o.material ?? '',
+    materialEn: o.material ?? '',
+    required: Number(o.required) || 0,
+    available: Number(o.available) || 0,
+    unit: o.unit ?? '',
+    dueDate: o.dueDate ? o.dueDate.slice(0, 10) : '',
+    supplier: o.supplier ?? '',
+    unitCost: Number(o.unitCostIRR) || 0,
+    reorderPoint: Number(o.reorderPoint) || 0,
+  };
+}
 
 const inp = 'w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none';
 
 export function MaterialsPlanning() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const [materials, setMaterials] = useState<Material[]>(INITIAL_MATERIALS);
+  const { data: apiData, isLoading } = useMaterials();
+  const createMaterial = useCreateMaterial();
+  const createPOMutation = useCreateMaterialPO();
+
+  const materials: Material[] = ((apiData as any)?.data ?? []).map(mapMaterial);
+
   const [search, setSearch]         = useState('');
   const [showNew, setShowNew]       = useState(false);
-  const [poMaterial, setPoMaterial] = useState<Material|null>(null);
+  const [poMaterial, setPoMaterial] = useState<Material | null>(null);
   const [poQty, setPoQty]           = useState('');
   const [form, setForm]             = useState({ code:'', material:'', required:'', available:'', unit:'Kg', dueDate:'', supplier:'', unitCost:'', reorderPoint:'' });
 
@@ -35,26 +48,33 @@ export function MaterialsPlanning() {
 
   const shortages  = materials.filter(m => m.available < m.required);
   const sufficient = materials.filter(m => m.available >= m.required);
-  const totalShortCost = shortages.reduce((s,m) => s + (m.required - m.available) * m.unitCost, 0);
+  const totalShortCost = shortages.reduce((s, m) => s + (m.required - m.available) * m.unitCost, 0);
 
-  function createPO() {
+  function submitPO() {
     if (!poMaterial || !poQty) return;
-    const qty = parseInt(poQty);
-    setMaterials(prev => prev.map(m => m.id===poMaterial.id ? {...m, available:m.available+qty} : m));
-    alert(fa ? `سفارش خرید ${qty} ${poMaterial.unit} ${poMaterial.material} ثبت شد ✅` : `PO created: ${qty} ${poMaterial.unit} of ${poMaterial.materialEn} ✅`);
+    createPOMutation.mutate({
+      materialId: poMaterial.id,
+      qty: parseInt(poQty),
+      supplier: poMaterial.supplier,
+      unitCost: poMaterial.unitCost,
+    });
     setPoMaterial(null);
     setPoQty('');
   }
 
   function addMaterial() {
     if (!form.code || !form.material || !form.required) { alert(fa?'فیلدهای الزامی':'Required fields'); return; }
-    const nm: Material = {
-      id: Date.now().toString(), code:form.code, material:form.material, materialEn:form.material,
-      required:parseInt(form.required)||0, available:parseInt(form.available)||0,
-      unit:form.unit, dueDate:form.dueDate, supplier:form.supplier,
-      unitCost:parseInt(form.unitCost)||0, reorderPoint:parseInt(form.reorderPoint)||0,
-    };
-    setMaterials(prev => [...prev, nm]);
+    createMaterial.mutate({
+      code: form.code,
+      material: form.material,
+      unit: form.unit,
+      required: parseInt(form.required) || 0,
+      available: parseInt(form.available) || 0,
+      reorderPoint: parseInt(form.reorderPoint) || 0,
+      unitCostIRR: form.unitCost ? String(form.unitCost) : undefined,
+      supplier: form.supplier || undefined,
+      dueDate: form.dueDate || undefined,
+    });
     setForm({ code:'', material:'', required:'', available:'', unit:'Kg', dueDate:'', supplier:'', unitCost:'', reorderPoint:'' });
     setShowNew(false);
   }
@@ -84,7 +104,7 @@ export function MaterialsPlanning() {
         ))}
       </div>
 
-      {/* Shortage alert with cross-module trading link */}
+      {/* Shortage alert */}
       {shortages.length > 0 && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -108,11 +128,6 @@ export function MaterialsPlanning() {
               </div>
             ))}
           </div>
-          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">
-            {fa
-              ? '💡 برای خرید مواد اولیه می‌توانید از ماژول بازرگانی درخواست خرید ثبت کنید'
-              : '💡 Use the Trading module to create purchase requests for shortage materials'}
-          </p>
         </div>
       )}
 
@@ -122,61 +137,65 @@ export function MaterialsPlanning() {
         className="w-full px-4 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] text-sm focus:outline-none"/>
 
       {/* Table */}
-      <div className="rounded-xl border border-[hsl(var(--border))] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-[hsl(var(--muted)/0.5)]">
-            <tr>
-              {[fa?'کد':'Code', fa?'نام ماده':'Material', fa?'نیاز':'Required', fa?'موجود':'Available', fa?'کمبود':'Shortage', fa?'واحد':'Unit', fa?'تاریخ نیاز':'Due', fa?'تأمین‌کننده':'Supplier', fa?'اقدام':'Action'].map(h=>(
-                <th key={h} className="text-start px-3 py-2.5 text-xs font-semibold text-[hsl(var(--muted-foreground))] whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(m => {
-              const shortage = m.required - m.available;
-              const isShort  = shortage > 0;
-              const pct      = Math.min(100, Math.round(m.available/m.required*100));
-              return (
-                <tr key={m.id} className="border-t border-[hsl(var(--border)/0.5)] hover:bg-[hsl(var(--muted)/0.3)]">
-                  <td className="px-3 py-3 font-mono text-xs text-[hsl(var(--primary))]">{m.code}</td>
-                  <td className="px-3 py-3 font-medium">{fa?m.material:m.materialEn}</td>
-                  <td className="px-3 py-3">{m.required}</td>
-                  <td className="px-3 py-3">
-                    <div>
-                      <span className={`font-medium ${isShort?'text-amber-600':'text-green-600'}`}>{m.available}</span>
-                      <div className="h-1.5 rounded-full bg-[hsl(var(--muted))] mt-1 w-16">
-                        <div className="h-full rounded-full" style={{width:`${pct}%`,background:isShort?'#f59e0b':'#10b981'}}/>
+      {isLoading ? (
+        <div className="text-center py-10 text-[hsl(var(--muted-foreground))] text-sm">{fa?'در حال بارگذاری...':'Loading...'}</div>
+      ) : (
+        <div className="rounded-xl border border-[hsl(var(--border))] overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-[hsl(var(--muted)/0.5)]">
+              <tr>
+                {[fa?'کد':'Code', fa?'نام ماده':'Material', fa?'نیاز':'Required', fa?'موجود':'Available', fa?'کمبود':'Shortage', fa?'واحد':'Unit', fa?'تاریخ نیاز':'Due', fa?'تأمین‌کننده':'Supplier', fa?'اقدام':'Action'].map(h=>(
+                  <th key={h} className="text-start px-3 py-2.5 text-xs font-semibold text-[hsl(var(--muted-foreground))] whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(m => {
+                const shortage = m.required - m.available;
+                const isShort  = shortage > 0;
+                const pct      = m.required > 0 ? Math.min(100, Math.round(m.available/m.required*100)) : 100;
+                return (
+                  <tr key={m.id} className="border-t border-[hsl(var(--border)/0.5)] hover:bg-[hsl(var(--muted)/0.3)]">
+                    <td className="px-3 py-3 font-mono text-xs text-[hsl(var(--primary))]">{m.code}</td>
+                    <td className="px-3 py-3 font-medium">{fa?m.material:m.materialEn}</td>
+                    <td className="px-3 py-3">{m.required}</td>
+                    <td className="px-3 py-3">
+                      <div>
+                        <span className={`font-medium ${isShort?'text-amber-600':'text-green-600'}`}>{m.available}</span>
+                        <div className="h-1.5 rounded-full bg-[hsl(var(--muted))] mt-1 w-16">
+                          <div className="h-full rounded-full" style={{width:`${pct}%`,background:isShort?'#f59e0b':'#10b981'}}/>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3">
-                    {isShort
-                      ? <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-bold">-{shortage}</span>
-                      : <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">✅</span>}
-                  </td>
-                  <td className="px-3 py-3 text-[hsl(var(--muted-foreground))]">{m.unit}</td>
-                  <td className="px-3 py-3 text-[hsl(var(--muted-foreground))] text-xs whitespace-nowrap">{m.dueDate}</td>
-                  <td className="px-3 py-3 text-xs text-[hsl(var(--muted-foreground))]">{m.supplier}</td>
-                  <td className="px-3 py-3">
-                    {isShort && (
-                      <button onClick={()=>{setPoMaterial(m);setPoQty(String(shortage));}}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white whitespace-nowrap">
-                        📋 {fa?'سفارش خرید':'Buy'}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length===0 && (
-          <div className="text-center py-8 text-[hsl(var(--muted-foreground))]">
-            <div className="text-3xl mb-2">📦</div>
-            <p className="text-sm">{fa?'موردی یافت نشد':'No items found'}</p>
-          </div>
-        )}
-      </div>
+                    </td>
+                    <td className="px-3 py-3">
+                      {isShort
+                        ? <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600 font-bold">-{shortage}</span>
+                        : <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">✅</span>}
+                    </td>
+                    <td className="px-3 py-3 text-[hsl(var(--muted-foreground))]">{m.unit}</td>
+                    <td className="px-3 py-3 text-[hsl(var(--muted-foreground))] text-xs whitespace-nowrap">{m.dueDate || '—'}</td>
+                    <td className="px-3 py-3 text-xs text-[hsl(var(--muted-foreground))]">{m.supplier || '—'}</td>
+                    <td className="px-3 py-3">
+                      {isShort && (
+                        <button onClick={()=>{setPoMaterial(m);setPoQty(String(shortage));}}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white whitespace-nowrap">
+                          📋 {fa?'سفارش خرید':'Buy'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {filtered.length===0 && (
+            <div className="text-center py-8 text-[hsl(var(--muted-foreground))]">
+              <div className="text-3xl mb-2">📦</div>
+              <p className="text-sm">{fa?'موردی یافت نشد':'No items found'}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Purchase Order modal */}
       {poMaterial && (
@@ -189,22 +208,24 @@ export function MaterialsPlanning() {
             <div className="p-3 rounded-lg bg-[hsl(var(--muted)/0.3)] mb-4 text-sm">
               <div className="font-semibold">{fa?poMaterial.material:poMaterial.materialEn}</div>
               <div className="text-[hsl(var(--muted-foreground))] text-xs mt-1">
-                {fa?'تأمین‌کننده:':'Supplier:'} {poMaterial.supplier}
-                {' · '}{fa?'قیمت واحد:':'Unit cost:'} {poMaterial.unitCost.toLocaleString('fa-IR')} ﷼
+                {fa?'تأمین‌کننده:':'Supplier:'} {poMaterial.supplier || '—'}
+                {poMaterial.unitCost > 0 && ` · ${fa?'قیمت واحد:':'Unit cost:'} ${poMaterial.unitCost.toLocaleString('fa-IR')} ﷼`}
               </div>
             </div>
             <div>
               <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'مقدار سفارش':'Order Quantity'} ({poMaterial.unit})</label>
               <input type="number" value={poQty} onChange={e=>setPoQty(e.target.value)} className={inp}/>
             </div>
-            {poQty && (
+            {poQty && poMaterial.unitCost > 0 && (
               <div className="mt-2 text-xs text-[hsl(var(--muted-foreground))]">
                 {fa?'هزینه تخمینی:':'Estimated cost:'} <span className="font-bold text-[hsl(var(--primary))]">{(parseInt(poQty)*poMaterial.unitCost).toLocaleString('fa-IR')} ﷼</span>
               </div>
             )}
             <div className="flex gap-3 mt-4">
               <button onClick={()=>setPoMaterial(null)} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa?'انصراف':'Cancel'}</button>
-              <button onClick={createPO} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">📋 {fa?'ثبت سفارش':'Create PO'}</button>
+              <button onClick={submitPO} disabled={createPOMutation.isPending} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium disabled:opacity-60">
+                📋 {fa?'ثبت سفارش':'Create PO'}
+              </button>
             </div>
           </div>
         </div>
@@ -241,12 +262,14 @@ export function MaterialsPlanning() {
                 <div><label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'قیمت واحد (ریال)':'Unit Cost'}</label>
                   <input type="number" value={form.unitCost} onChange={e=>setForm(f=>({...f,unitCost:e.target.value}))} className={inp}/></div>
                 <div><label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">{fa?'تاریخ نیاز':'Due Date'}</label>
-                  <input value={form.dueDate} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))} className={inp} placeholder="۱۴۰۳/۰۶/۲۰"/></div>
+                  <input type="date" value={form.dueDate} onChange={e=>setForm(f=>({...f,dueDate:e.target.value}))} className={inp}/></div>
               </div>
             </div>
             <div className="flex gap-3 mt-5">
               <button onClick={()=>setShowNew(false)} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa?'انصراف':'Cancel'}</button>
-              <button onClick={addMaterial} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">📦 {fa?'ثبت':'Save'}</button>
+              <button onClick={addMaterial} disabled={createMaterial.isPending} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium disabled:opacity-60">
+                📦 {fa?'ثبت':'Save'}
+              </button>
             </div>
           </div>
         </div>

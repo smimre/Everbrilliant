@@ -35,6 +35,15 @@ export const manufacturingService = {
   getQualityChecks: (query?: PaginationQuery) =>
     api.get<PaginatedResponse<any>>('/manufacturing/quality-checks', query as Record<string, unknown>),
 
+  createBOM: (dto: any) =>
+    api.post<any>('/manufacturing/boms', dto),
+
+  createMaterial: (dto: any) =>
+    api.post<any>('/manufacturing/materials', dto),
+
+  createQCInspection: (workOrderId: string, dto: any) =>
+    api.post<any>(`/manufacturing/work-orders/${workOrderId}/qc`, dto),
+
   getReports: () =>
     api.get<any>('/manufacturing/reports/summary'),
 };
