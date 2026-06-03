@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useRouter } from 'next/navigation';
 import { useUIStore } from '@/store';
+import { useCreateTender } from '@/hooks/use-trading';
 
 const UNITS = ['تن','کیلوگرم','لیتر','متر','متر مربع','عدد','دست','سری','کارتن','پالت'];
 const CURRENCIES = ['IRR','USD','EUR','AED','CNY','TRY'];
@@ -83,6 +84,8 @@ export function TenderNew() {
   const fa = lang === 'fa';
   const router = useRouter();
 
+  const createTender = useCreateTender();
+
   const [form, setForm] = useState<FormState>({
     title:'', deadline:'', hour:'23:59', type:'sealed', notes:'', isPublic:true, reqDocs:'',
   });
@@ -104,11 +107,32 @@ export function TenderNew() {
     setProducts(p => p.map((r, idx) => idx === pi ? { ...r, enabled: Object.fromEntries(Object.keys(r.enabled).map(k => [k, val])) } : r));
 
   const submit = () => {
-    if (!form.title) { toast('error', fa ? 'عنوان مزایده الزامی است' : 'Title required'); return; }
-    if (!form.deadline) { toast('error', fa ? 'تاریخ مهلت الزامی است' : 'Deadline required'); return; }
+    if (!form.title)    { toast('error', fa ? 'عنوان مزایده الزامی است' : 'Title required');   return; }
+    if (!form.deadline) { toast('error', fa ? 'تاریخ مهلت الزامی است'   : 'Deadline required'); return; }
     if (products.some(p => !p.name)) { toast('error', fa ? 'نام محصول الزامی است' : 'Product name required'); return; }
-    setSubmitted(true);
-    setTimeout(() => router.push('/trading'), 2500);
+
+    const apiType = form.type === 'sealed' ? 'AUCTION' : 'TENDER';
+    createTender.mutate(
+      {
+        type:        apiType,
+        title:       form.title,
+        description: form.notes || undefined,
+        isPublic:    form.isPublic,
+        endDate:     form.deadline,
+        products:    products.filter(p => p.name).map(p => ({
+          name: p.name,
+          qty:  Number(p.qtyMax) || Number(p.qtyMin) || 0,
+          unit: p.unit,
+        })),
+      },
+      {
+        onSuccess: () => {
+          setSubmitted(true);
+          setTimeout(() => router.push('/trading/tender-manage'), 2000);
+        },
+        onError: (err: any) => toast('error', err?.message || (fa ? 'خطا در انتشار مزایده' : 'Failed to publish auction')),
+      }
+    );
   };
 
   const inp = "w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]";
@@ -137,7 +161,7 @@ export function TenderNew() {
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2">
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">📅 {fa ? 'تاریخ مهلت *' : 'Deadline *'}</label>
-            <input value={form.deadline} onChange={setF('deadline')} placeholder="1403/06/15" className={inp} />
+            <input value={form.deadline} onChange={setF('deadline')} type="date" className={inp} />
           </div>
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">⏰ {fa ? 'ساعت' : 'Hour'}</label>
@@ -413,9 +437,9 @@ export function TenderNew() {
           className="px-5 py-2.5 border border-[hsl(var(--border))] rounded-lg text-sm hover:bg-[hsl(var(--muted)/0.5)]">
           {fa ? 'انصراف' : 'Cancel'}
         </button>
-        <button onClick={submit}
-          className="px-6 py-2.5 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold hover:opacity-90">
-          📤 {fa ? 'انتشار مزایده' : 'Publish Auction'}
+        <button onClick={submit} disabled={createTender.isPending}
+          className="px-6 py-2.5 bg-[hsl(var(--primary))] text-white rounded-lg text-sm font-bold hover:opacity-90 disabled:opacity-50">
+          {createTender.isPending ? (fa ? 'در حال انتشار...' : 'Publishing...') : `📤 ${fa ? 'انتشار مزایده' : 'Publish Auction'}`}
         </button>
       </div>
 
