@@ -5,29 +5,35 @@ import { useContracts, useCreateContract } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 
 const STATUS_MAP: Record<string, { label: string; labelFa: string; color: string; icon: string }> = {
-  draft:     { label: 'Needs Signing', labelFa: 'نیاز به امضا',  color: '#f59e0b', icon: '✍️' },
-  signed:    { label: 'Signed',        labelFa: 'امضا شده',      color: '#10b981', icon: '✅' },
-  active:    { label: 'Active',        labelFa: 'فعال',           color: '#3b82f6', icon: '🟢' },
-  completed: { label: 'Completed',     labelFa: 'تکمیل شده',     color: '#8b5cf6', icon: '🏆' },
-  cancelled: { label: 'Cancelled',     labelFa: 'لغو شده',       color: '#ef4444', icon: '❌' },
-  rejected:  { label: 'Rejected',      labelFa: 'رد شده',        color: '#ef4444', icon: '❌' },
+  DRAFT:          { label: 'Draft',          labelFa: 'پیش‌نویس',      color: '#f59e0b', icon: '📝' },
+  UNDER_REVIEW:   { label: 'Under Review',   labelFa: 'در بررسی',       color: '#8b5cf6', icon: '🔍' },
+  READY_TO_SIGN:  { label: 'Needs Signing',  labelFa: 'نیاز به امضا',   color: '#ef4444', icon: '✍️' },
+  ACTIVE:         { label: 'Active',         labelFa: 'فعال',            color: '#3b82f6', icon: '🟢' },
+  COMPLETED:      { label: 'Completed',      labelFa: 'تکمیل شده',      color: '#10b981', icon: '🏆' },
+  EXPIRED:        { label: 'Expired',        labelFa: 'منقضی شده',      color: '#94a3b8', icon: '⏰' },
+  CANCELLED:      { label: 'Cancelled',      labelFa: 'لغو شده',        color: '#ef4444', icon: '❌' },
 };
 
 const INCOTERMS = ['EXW','FCA','FAS','FOB','CFR','CIF','CPT','CIP','DAP','DPU','DDP'];
+
+function fmtDate(iso: string) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('fa-IR'); } catch { return iso; }
+}
 
 export function MyContracts() {
   const { lang } = useLocaleStore();
   const { toast } = useUIStore();
   const fa = lang === 'fa';
-  const { data: rawContracts = [], isLoading } = useContracts();
-  const contracts = rawContracts as any[];
+  const { data: rawContracts, isLoading } = useContracts();
+  const contracts: any[] = (rawContracts as any)?.data ?? [];
   const [selected, setSelected] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
   const [signModal, setSignModal] = useState<any>(null);
   const [signPass, setSignPass] = useState('');
 
-  const pending = contracts.filter((c) => c.status === 'draft');
-  const signed = contracts.filter((c) => c.status === 'signed');
+  const needsSigning = contracts.filter(c => ['DRAFT','READY_TO_SIGN'].includes((c.status || '').toUpperCase()));
+  const active       = contracts.filter(c => (c.status || '').toUpperCase() === 'ACTIVE');
 
   return (
     <div className="space-y-4">
@@ -47,10 +53,10 @@ export function MyContracts() {
       {/* 4-col Stats */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { icon: '📄', val: contracts.length, label: fa ? 'کل قراردادها' : 'All Contracts', color: '#3b82f6' },
-          { icon: '✍️', val: pending.length, label: fa ? 'نیاز به امضا' : 'Needs Signing', color: '#ef4444' },
-          { icon: '✅', val: signed.length, label: fa ? 'امضا شده' : 'Signed', color: '#10b981' },
-          { icon: '📝', val: contracts.filter((c: any) => c.status === 'draft').length, label: fa ? 'پیش‌نویس' : 'Draft', color: '#f59e0b' },
+          { icon: '📄', val: contracts.length,   label: fa ? 'کل قراردادها' : 'All Contracts',  color: '#3b82f6' },
+          { icon: '✍️', val: needsSigning.length, label: fa ? 'نیاز به امضا' : 'Needs Signing',  color: '#ef4444' },
+          { icon: '🟢', val: active.length,       label: fa ? 'فعال' : 'Active',                 color: '#10b981' },
+          { icon: '📝', val: contracts.filter(c => (c.status || '').toUpperCase() === 'DRAFT').length, label: fa ? 'پیش‌نویس' : 'Draft', color: '#f59e0b' },
         ].map((s, i) => (
           <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center">
             <div className="text-xl mb-1">{s.icon}</div>
@@ -61,9 +67,9 @@ export function MyContracts() {
       </div>
 
       {/* Alert */}
-      {pending.length > 0 && (
+      {needsSigning.length > 0 && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400">
-          ✍️ <strong>{pending.length} {fa ? 'قرارداد' : 'contract'}</strong> {fa ? 'منتظر امضای شماست!' : 'awaiting your signature!'}
+          ✍️ <strong>{needsSigning.length} {fa ? 'قرارداد' : 'contract'}</strong> {fa ? 'منتظر امضای شماست!' : 'awaiting your signature!'}
         </div>
       )}
 
@@ -124,42 +130,37 @@ export function MyContracts() {
 
 function ContractCard({ contract: c, lang, onView, onSign }: { contract: any; lang: string; onView: () => void; onSign: () => void }) {
   const fa = lang === 'fa';
-  const st = STATUS_MAP[c.status] || STATUS_MAP.draft;
+  const st = (c.status || '').toUpperCase();
+  const info = STATUS_MAP[st] || STATUS_MAP.DRAFT;
+  const needsSigning = ['DRAFT', 'READY_TO_SIGN'].includes(st);
+
   return (
     <div
       className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 hover:border-[hsl(var(--primary)/0.3)] transition-colors"
-      style={{ borderRight: `4px solid ${st.color}` }}
+      style={{ borderRight: `4px solid ${info.color}` }}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-bold text-sm truncate">{c.title}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full shrink-0" style={{ background: st.color + '20', color: st.color }}>
-              {st.icon} {fa ? st.labelFa : st.label}
+            <span className="text-xs px-2 py-0.5 rounded-full shrink-0" style={{ background: info.color + '20', color: info.color }}>
+              {info.icon} {fa ? info.labelFa : info.label}
             </span>
           </div>
           <div className="flex flex-wrap gap-3 text-xs text-[hsl(var(--muted-foreground))]">
-            {c.product && <span>📦 {c.product}</span>}
-            {c.totalPrice && <span className="text-amber-500 font-semibold">💰 {Number(c.totalPrice).toLocaleString('fa-IR')}</span>}
-            {c.deliveryDate && <span>📅 {c.deliveryDate}</span>}
-            {c.incoterms && <span>🚢 {c.incoterms}</span>}
+            {c.amountIRR && <span className="text-amber-500 font-semibold">💰 {Number(c.amountIRR).toLocaleString('fa-IR')} {c.currency || 'IRR'}</span>}
+            {c.deliveryDate && <span>📅 {fmtDate(c.deliveryDate)}</span>}
+            {c.terms && <span>📋 {c.terms}</span>}
           </div>
           {/* Signature Status */}
           <div className="flex gap-3 mt-2 flex-wrap">
-            <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.buyerSigned ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
-              🏢 {fa ? 'خریدار' : 'Buyer'}: {c.buyerSigned ? (fa ? 'امضا شد ✅' : 'Signed ✅') : (fa ? 'در انتظار ⏳' : 'Pending ⏳')}
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.signedBuyer ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
+              🏢 {fa ? 'خریدار' : 'Buyer'}: {c.signedBuyer ? (fa ? 'امضا شد ✅' : 'Signed ✅') : (fa ? 'در انتظار ⏳' : 'Pending ⏳')}
             </span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.sellerSigned ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
-              🏭 {fa ? 'فروشنده' : 'Seller'}: {c.sellerSigned ? (fa ? 'امضا شد ✅' : 'Signed ✅') : (fa ? 'در انتظار ⏳' : 'Pending ⏳')}
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.signedSeller ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
+              🏭 {fa ? 'فروشنده' : 'Seller'}: {c.signedSeller ? (fa ? 'امضا شد ✅' : 'Signed ✅') : (fa ? 'در انتظار ⏳' : 'Pending ⏳')}
             </span>
-            {/* Cross-module: invoice link */}
-            {c.invoiceId && (
-              <a href="/finance/invoices"
-                className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors">
-                🧾 {fa ? 'فاکتور مالی ↗' : 'Finance Invoice ↗'}
-              </a>
-            )}
-            {c.status === 'signed' && !c.invoiceId && (
+            {st === 'ACTIVE' && !c.invoiceId && (
               <a href="/finance/invoices"
                 className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors">
                 + {fa ? 'ایجاد فاکتور مالی' : 'Create Finance Invoice'}
@@ -171,7 +172,7 @@ function ContractCard({ contract: c, lang, onView, onSign }: { contract: any; la
           <button onClick={onView} className="text-xs px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">
             {fa ? 'مشاهده' : 'View'}
           </button>
-          {c.status === 'draft' && (
+          {needsSigning && (
             <button onClick={onSign} className="text-xs px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90">
               ✍️ {fa ? 'امضا' : 'Sign'}
             </button>
@@ -184,17 +185,16 @@ function ContractCard({ contract: c, lang, onView, onSign }: { contract: any; la
 
 function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract: any; lang: string; onClose: () => void; onSign: () => void }) {
   const fa = lang === 'fa';
-  const st = STATUS_MAP[c.status] || STATUS_MAP.draft;
+  const st = (c.status || '').toUpperCase();
+  const info = STATUS_MAP[st] || STATUS_MAP.DRAFT;
+  const needsSigning = ['DRAFT', 'READY_TO_SIGN'].includes(st);
+
   const rows: [string, any][] = [
-    [fa ? 'کالا/خدمات' : 'Product', c.product],
-    [fa ? 'مقدار' : 'Quantity', c.qty ? `${c.qty} ${c.unit || ''}` : null],
-    [fa ? 'قیمت واحد' : 'Unit Price', c.unitPrice ? `${Number(c.unitPrice).toLocaleString('fa-IR')} IRR` : null],
-    [fa ? 'ارزش کل' : 'Total Value', c.totalPrice ? `${Number(c.totalPrice).toLocaleString('fa-IR')} IRR` : null],
-    [fa ? 'اینکوترمز' : 'Incoterms', c.incoterms],
+    [fa ? 'ارزش قرارداد' : 'Contract Value', c.amountIRR ? `${Number(c.amountIRR).toLocaleString('fa-IR')} ${c.currency || 'IRR'}` : null],
     [fa ? 'ارز' : 'Currency', c.currency],
-    [fa ? 'تاریخ تحویل' : 'Delivery Date', c.deliveryDate],
-    [fa ? 'محل تحویل' : 'Delivery Place', c.deliveryPlace],
-    [fa ? 'شرایط پرداخت' : 'Payment Terms', c.paymentTerms],
+    [fa ? 'تاریخ تحویل' : 'Delivery Date', c.deliveryDate ? fmtDate(c.deliveryDate) : null],
+    [fa ? 'شرایط پرداخت' : 'Payment Terms', c.terms],
+    [fa ? 'تاریخ ایجاد' : 'Created', c.createdAt ? fmtDate(c.createdAt) : null],
   ].filter(([, v]) => v) as [string, any][];
 
   return (
@@ -204,8 +204,8 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
           <h2 className="font-bold">📄 {c.title}</h2>
           <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
         </div>
-        <span className="text-xs px-2 py-1 rounded-full mb-4 inline-block" style={{ background: st.color + '20', color: st.color }}>
-          {st.icon} {fa ? st.labelFa : st.label}
+        <span className="text-xs px-2 py-1 rounded-full mb-4 inline-block" style={{ background: info.color + '20', color: info.color }}>
+          {info.icon} {fa ? info.labelFa : info.label}
         </span>
 
         {rows.length > 0 && (
@@ -222,13 +222,13 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
         {/* Signature blocks */}
         <div className="grid grid-cols-2 gap-3 mt-4">
           {[
-            { role: fa ? '🏢 خریدار' : '🏢 Buyer', signed: c.buyerSigned, name: c.buyerName },
-            { role: fa ? '🏭 فروشنده' : '🏭 Seller', signed: c.sellerSigned, name: c.sellerName },
+            { role: fa ? '🏢 خریدار' : '🏢 Buyer', signed: c.signedBuyer, at: c.signedBuyerAt },
+            { role: fa ? '🏭 فروشنده' : '🏭 Seller', signed: c.signedSeller, at: c.signedSellerAt },
           ].map((s, i) => (
             <div key={i} className={`p-3 rounded-xl border text-sm ${s.signed ? 'border-green-500/30 bg-green-500/5' : 'border-amber-500/30 bg-amber-500/5'}`}>
               <div className="font-medium mb-1">{s.role}</div>
               {s.signed ? (
-                <div className="text-green-500 text-xs">✅ {fa ? 'امضا شده' : 'Signed'}{s.name && ` — ${s.name}`}</div>
+                <div className="text-green-500 text-xs">✅ {fa ? 'امضا شده' : 'Signed'}{s.at ? ` — ${fmtDate(s.at)}` : ''}</div>
               ) : (
                 <div className="text-amber-500 text-xs">⏳ {fa ? 'در انتظار' : 'Pending'}</div>
               )}
@@ -236,13 +236,13 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
           ))}
         </div>
 
-        {c.status === 'draft' && (
+        {needsSigning && (
           <button onClick={onSign} className="w-full mt-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">
             ✍️ {fa ? 'امضای قرارداد' : 'Sign Contract'}
           </button>
         )}
 
-        {/* Cross-module: Finance Invoice link */}
+        {/* Cross-module links */}
         <div className="mt-4 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
           <p className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-2">🔗 {fa ? 'ماژول‌های مرتبط' : 'Related Modules'}</p>
           <div className="flex gap-2 flex-wrap">
@@ -250,12 +250,6 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
               className="text-xs px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors font-medium">
               🧾 {fa ? 'فاکتورهای مالی' : 'Finance Invoices'}
             </a>
-            {c.shipmentId && (
-              <a href="/logistics"
-                className="text-xs px-3 py-1.5 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors font-medium">
-                🚛 {fa ? 'مشاهده حمل' : 'View Shipment'}
-              </a>
-            )}
             <a href="/trading/letterhead"
               className="text-xs px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition-colors font-medium">
               📄 {fa ? 'سربرگ / امضا دیجیتال' : 'Letterhead / Sign'}
