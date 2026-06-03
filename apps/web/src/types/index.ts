@@ -7,7 +7,13 @@ export type Priority = 'low' | 'normal' | 'high' | 'urgent';
 export type InvoiceStatus = 'draft' | 'sent' | 'partial' | 'paid' | 'overdue' | 'cancelled';
 export type InvoiceType = 'type1' | 'type2' | 'type3';
 
-export interface User { id: number; name: string; phone: string; email?: string; avatar?: string; role: string; companyId: number; company?: Company; permissions: string[]; isCompanyAdmin: boolean; }
+export interface Role { id: number; name: string; label: string; labelFa?: string; labelAr?: string; companyId?: number; isSystem?: boolean; isDefault?: boolean; createdAt?: string; permissions?: string[]; }
+export interface User { id: number; name: string; phone: string; email?: string; avatar?: string; role: string | Role; companyId: number; company?: Company; permissions: string[]; isCompanyAdmin: boolean; }
+export function roleLabel(role: string | Role | undefined | null): string {
+  if (!role) return '';
+  if (typeof role === 'string') return role;
+  return role.label || role.name || '';
+}
 export interface Company { id: number; name: string; nationalId?: string; economicCode?: string; regNo?: string; postalCode?: string; address?: string; country: string; vatRegistered: boolean; vatRate: number; plan: string; isActive: boolean; createdAt: string; updatedAt: string; }
 export interface AuthTokens { accessToken: string; refreshToken: string; expiresIn?: number; }
 export interface LoginDto { phone: string; password: string; }

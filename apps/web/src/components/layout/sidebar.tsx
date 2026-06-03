@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useLocaleStore } from '@/store/locale.store';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { roleLabel } from '@/types';
 import {
   LayoutDashboard, Inbox, ClipboardList, FileText, Building2,
   TrendingUp, Gavel, Link2, Settings, LogOut,
@@ -192,7 +193,7 @@ export function Sidebar() {
             <Avatar name={user.name} size="sm" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{user.name}</p>
-              <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{user.role}</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{roleLabel(user.role)}</p>
             </div>
           </div>
           <div className="flex gap-1 mt-1">
