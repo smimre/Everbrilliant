@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useLetters, useCreateLetter, useArchiveLetter, useMeetings, useCreateMeeting, useWorkflowRequests, useApproveRequest, useRejectRequest } from '@/hooks/use-automation';
+import { useLetters, useCreateLetter, useArchiveLetter, useMeetings, useCreateMeeting, useWorkflowRequests, useApproveRequest, useRejectRequest, useTasks, useCreateTask, useUpdateTask, useDocuments, useCreateDocument, useWorkflowTemplates, useCreateWorkflowTemplate, useStartWorkflowInstance, useApproveWorkflowStep } from '@/hooks/use-automation';
 import { useUIStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -110,11 +110,28 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
   const approveMutation = useApproveRequest();
   const rejectMutation = useRejectRequest();
 
-  const letters: any[] = (lettersData as any)?.data ?? lettersData ?? [];
-  const meetings: any[] = (meetingsData as any)?.data ?? meetingsData ?? [];
-  const wfRequests: any[] = (wfRequestsData as any)?.data ?? wfRequestsData ?? [];
+  const { data: tasksData }     = useTasks();
+  const { data: docsData }      = useDocuments();
+  const { data: workflowsData } = useWorkflowTemplates();
+  const createTaskMut           = useCreateTask();
+  const updateTaskMut           = useUpdateTask();
+  const createDocumentMut       = useCreateDocument();
+  const createWorkflowMut       = useCreateWorkflowTemplate();
+  const startInstanceMut        = useStartWorkflowInstance();
+  const approveStepMut          = useApproveWorkflowStep();
 
-  const pendingTasks   = MOCK_TASKS.filter(t => t.status === 'pending').length;
+  const letters: any[]    = (lettersData as any)?.data ?? lettersData ?? [];
+  const meetings: any[]   = (meetingsData as any)?.data ?? meetingsData ?? [];
+  const wfRequests: any[] = (wfRequestsData as any)?.data ?? wfRequestsData ?? [];
+  const apiTasks: any[]     = (tasksData as any)?.data ?? [];
+  const apiDocs: any[]      = (docsData as any)?.data ?? [];
+  const apiWorkflows: any[] = Array.isArray(workflowsData) ? workflowsData : [];
+
+  const useLiveData = apiTasks.length > 0 || apiWorkflows.length > 0;
+  const dashTasks  = useLiveData ? apiTasks : MOCK_TASKS;
+  const dashWfs    = useLiveData ? apiWorkflows : MOCK_WORKFLOWS;
+
+  const pendingTasks = dashTasks.filter((t: any) => t.status === 'pending').length;
   const todayMeetings  = meetings.filter((m: any) => m.status === 'scheduled').length;
 
   if (view !== 'dashboard') {
@@ -126,9 +143,9 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
         {view === 'letters'   && <LettersPage defaultFilter={initialLetterFilter} letters={letters} lettersLoading={lettersLoading} createLetter={createLetter} archiveLetter={archiveLetter} toast={toast} />}
         {view === 'requests'  && <WorkflowPage wfRequests={wfRequests} wfLoading={wfLoading} approveMutation={approveMutation} rejectMutation={rejectMutation} toast={toast} />}
         {view === 'meetings'  && <MeetingsPage meetings={meetings} meetingsLoading={meetingsLoading} createMeeting={createMeeting} toast={toast} />}
-        {view === 'tasks'     && <TasksPage />}
-        {view === 'archive'   && <ArchivePage />}
-        {view === 'workflows' && <WorkflowsPage />}
+        {view === 'tasks'     && <TasksPage apiTasks={apiTasks} createTask={createTaskMut} updateTask={updateTaskMut} />}
+        {view === 'archive'   && <ArchivePage apiDocs={apiDocs} createDocument={createDocumentMut} />}
+        {view === 'workflows' && <WorkflowsPage apiWorkflows={apiWorkflows} createWorkflow={createWorkflowMut} startInstance={startInstanceMut} approveStep={approveStepMut} />}
       </div>
     );
   }
@@ -139,7 +156,7 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
     { icon:<Calendar className="h-6 w-6"/>, label_fa:'جلسات', label_en:'Meetings', view:'meetings' as AutoView, color:'#10b981', count:todayMeetings },
     { icon:<CheckSquare className="h-6 w-6"/>, label_fa:'وظایف', label_en:'Tasks', view:'tasks' as AutoView, color:'#f59e0b', count:pendingTasks },
     { icon:<Archive className="h-6 w-6"/>, label_fa:'آرشیو اسناد', label_en:'Document Archive', view:'archive' as AutoView, color:'#06b6d4', count:MOCK_DOCUMENTS.length },
-    { icon:<GitBranch className="h-6 w-6"/>, label_fa:'گردش‌کارها', label_en:'Workflows', view:'workflows' as AutoView, color:'#ec4899', count:MOCK_WORKFLOWS.filter(w=>w.active).length },
+    { icon:<GitBranch className="h-6 w-6"/>, label_fa:'گردش‌کارها', label_en:'Workflows', view:'workflows' as AutoView, color:'#ec4899', count:dashWfs.filter((w:any)=>w.active).length },
   ];
 
   return (
@@ -154,7 +171,7 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
           { icon:'✅', val:pendingTasks, label:fa?'وظیفه در انتظار':'Pending Tasks', color:'#f59e0b' },
           { icon:'📅', val:todayMeetings, label:fa?'جلسه برنامه‌ریزی شده':'Scheduled Meetings', color:'#10b981' },
           { icon:'✉️', val:2, label:fa?'نامه ورودی':'Incoming Letters', color:'#3b82f6' },
-          { icon:'📋', val:MOCK_WORKFLOWS.filter(w=>w.active).length, label:fa?'گردش‌کار فعال':'Active Workflows', color:'#8b5cf6' },
+          { icon:'📋', val:dashWfs.filter((w:any)=>w.active).length, label:fa?'گردش‌کار فعال':'Active Workflows', color:'#8b5cf6' },
         ].map((s,i) => (
           <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center">
             <div className="text-2xl mb-1">{s.icon}</div>
@@ -187,7 +204,7 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
           <button onClick={() => setView('tasks')} className="text-xs text-[hsl(var(--primary))] hover:underline">{fa?'همه':'All'}</button>
         </div>
         <div className="space-y-2">
-          {MOCK_TASKS.filter(t => t.status !== 'done').slice(0,3).map(t => (
+          {dashTasks.filter((t: any) => t.status !== 'done').slice(0,3).map((t: any) => (
             <div key={t.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-[hsl(var(--muted)/0.3)]">
               <div className="w-2 h-2 rounded-full shrink-0" style={{background:PRIORITY_COLORS[t.priority]}} />
               <div className="flex-1 min-w-0">
@@ -599,10 +616,17 @@ function MeetingsPage({ meetings, meetingsLoading, createMeeting, toast }: Meeti
 }
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
-function TasksPage() {
+function TasksPage({ apiTasks, createTask, updateTask }: { apiTasks: any[]; createTask: any; updateTask: any }) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const usingApi = apiTasks.length > 0;
+  const [localTasks, setLocalTasks] = useState(MOCK_TASKS);
+  const tasks = usingApi ? apiTasks.map((t: any) => ({
+    id: t.id, title: t.title, assignee: t.assigneeName || '', due: t.dueStr || '',
+    priority: t.priority || 'normal', status: t.status || 'pending',
+    tag: t.tag || '', description: t.description || '', progress: t.progress ?? 0,
+  })) : localTasks;
+
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [progressVal, setProgressVal] = useState(0);
@@ -612,17 +636,33 @@ function TasksPage() {
   const columns = ['pending','in_progress','done'] as const;
   const COLUMN_LABELS = { pending:fa?'در انتظار':'Pending', in_progress:fa?'در جریان':'In Progress', done:fa?'انجام شده':'Done' };
 
-  const moveTask = (id: string, newStatus: string) => setTasks(prev => prev.map(t => t.id===id ? {...t, status:newStatus, progress:newStatus==='done'?100:newStatus==='pending'?t.progress:Math.max(t.progress,10)} : t));
+  const moveTask = (id: string, newStatus: string) => {
+    const progress = newStatus==='done' ? 100 : newStatus==='pending' ? 0 : Math.max(tasks.find((t:any)=>t.id===id)?.progress||0, 10);
+    if (usingApi) {
+      updateTask.mutate({ id, dto: { status: newStatus, progress } });
+    } else {
+      setLocalTasks(prev => prev.map(t => t.id===id ? {...t, status:newStatus, progress} : t));
+    }
+  };
 
   const handleSubmit = () => {
     if (!form.title) { alert(fa?'عنوان الزامی است':'Title required'); return; }
-    setTasks(prev => [...prev, { id:`TSK-${Date.now()}`, ...form, status:'pending', progress:0 }]);
-    setForm({ title:'', assignee:'', due:'', priority:'normal', tag:'', description:'' });
-    setShowNew(false);
+    if (usingApi) {
+      createTask.mutate({ ...form }, { onSuccess: () => { setForm({ title:'', assignee:'', due:'', priority:'normal', tag:'', description:'' }); setShowNew(false); } });
+    } else {
+      setLocalTasks(prev => [...prev, { id:`TSK-${Date.now()}`, ...form, status:'pending', progress:0 }]);
+      setForm({ title:'', assignee:'', due:'', priority:'normal', tag:'', description:'' });
+      setShowNew(false);
+    }
   };
 
   const saveProgress = (id: string) => {
-    setTasks(prev => prev.map(t => t.id===id ? {...t, progress:progressVal, status:progressVal===100?'done':progressVal>0?'in_progress':'pending'} : t));
+    const newStatus = progressVal===100?'done':progressVal>0?'in_progress':'pending';
+    if (usingApi) {
+      updateTask.mutate({ id, dto: { progress: progressVal, status: newStatus } });
+    } else {
+      setLocalTasks(prev => prev.map(t => t.id===id ? {...t, progress:progressVal, status:newStatus} : t));
+    }
     setSelected(null);
   };
 
@@ -814,34 +854,50 @@ function TasksPage() {
 }
 
 // ─── Archive ──────────────────────────────────────────────────────────────────
-function ArchivePage() {
+function ArchivePage({ apiDocs, createDocument }: { apiDocs: any[]; createDocument: any }) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const [docs, setDocs] = useState(MOCK_DOCUMENTS);
+  const usingApi = apiDocs.length > 0;
+  const [localDocs, setLocalDocs] = useState(MOCK_DOCUMENTS);
+  const docs = usingApi ? apiDocs.map((d: any) => ({
+    id: d.id, title: d.title, type: d.type || 'pdf',
+    date: d.createdAt ? new Date(d.createdAt).toLocaleDateString('fa-IR') : '',
+    size: d.fileSize || '—', category: d.category || 'سایر',
+    version: d.version || '1.0', confidential: d.confidential || false,
+    tags: d.tags || [], description: d.content || '', uploader: d.uploaderName || '',
+  })) : localDocs;
+
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [selected, setSelected] = useState<any>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [uploadForm, setUploadForm] = useState({ title:'', category:'قراردادها', version:'1.0', description:'', tags:'', confidential:false });
 
-  const cats = [...new Set(docs.map(d => d.category))];
-  const filtered = docs.filter(d => {
-    const matchSearch = !search || (d.title+d.description+d.tags.join('')).includes(search);
+  const cats = [...new Set(docs.map((d: any) => d.category))];
+  const filtered = docs.filter((d: any) => {
+    const matchSearch = !search || (d.title+d.description+(d.tags||[]).join('')).toLowerCase().includes(search.toLowerCase());
     const matchCat = !catFilter || d.category === catFilter;
     return matchSearch && matchCat;
   });
 
   const handleUpload = () => {
     if (!uploadForm.title) { alert(fa?'عنوان الزامی است':'Title required'); return; }
-    const newDoc = {
-      id:`DOC-${Date.now()}`, title:uploadForm.title, type:'pdf', date:'۱۴۰۳/۰۴/۱۵',
-      size:'—', category:uploadForm.category, version:uploadForm.version,
-      confidential:uploadForm.confidential, tags:uploadForm.tags.split(',').map(t=>t.trim()).filter(Boolean),
-      description:uploadForm.description, uploader:'کاربر فعلی',
-    };
-    setDocs(prev => [newDoc, ...prev]);
-    setUploadForm({ title:'', category:'قراردادها', version:'1.0', description:'', tags:'', confidential:false });
-    setShowUpload(false);
+    if (usingApi) {
+      createDocument.mutate(
+        { title: uploadForm.title, type: 'pdf', category: uploadForm.category, version: uploadForm.version, confidential: uploadForm.confidential, tags: uploadForm.tags.split(',').map((t: string)=>t.trim()).filter(Boolean), content: uploadForm.description },
+        { onSuccess: () => { setUploadForm({ title:'', category:'قراردادها', version:'1.0', description:'', tags:'', confidential:false }); setShowUpload(false); } }
+      );
+    } else {
+      const newDoc = {
+        id:`DOC-${Date.now()}`, title:uploadForm.title, type:'pdf', date:'۱۴۰۳/۰۴/۱۵',
+        size:'—', category:uploadForm.category, version:uploadForm.version,
+        confidential:uploadForm.confidential, tags:uploadForm.tags.split(',').map((t: string)=>t.trim()).filter(Boolean),
+        description:uploadForm.description, uploader:'کاربر فعلی',
+      };
+      setLocalDocs(prev => [newDoc, ...prev]);
+      setUploadForm({ title:'', category:'قراردادها', version:'1.0', description:'', tags:'', confidential:false });
+      setShowUpload(false);
+    }
   };
 
   const shareDoc = (id: string) => {
@@ -903,7 +959,7 @@ function ArchivePage() {
                 <div className="font-semibold text-sm truncate">{d.title}</div>
                 <div className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{d.category} · v{d.version}</div>
                 <div className="flex gap-1 mt-1 flex-wrap">
-                  {d.tags.slice(0,2).map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[hsl(var(--muted)/0.5)]">{t}</span>)}
+                  {d.tags.slice(0,2).map((t: string) => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full bg-[hsl(var(--muted)/0.5)]">{t}</span>)}
                   {d.confidential && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500">🔒 {fa?'محرمانه':'Confidential'}</span>}
                 </div>
               </div>
@@ -998,10 +1054,21 @@ function ArchivePage() {
 }
 
 // ─── Workflows ────────────────────────────────────────────────────────────────
-function WorkflowsPage() {
+function WorkflowsPage({ apiWorkflows, createWorkflow, startInstance: startInstanceMut, approveStep: approveStepMut }: { apiWorkflows: any[]; createWorkflow: any; startInstance: any; approveStep: any }) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const [workflows, setWorkflows] = useState(MOCK_WORKFLOWS);
+  const usingApi = apiWorkflows.length > 0;
+
+  // Normalise API data shape to match what the UI expects
+  const apiNormalised = apiWorkflows.map((w: any) => ({
+    id: w.id, title: w.title, icon: w.icon || '⚙️', mode: w.mode || 'sequential', active: w.active,
+    steps: (w.steps || []).map((s: any) => ({ name: s.name, user: s.assigneeName || '', status: 'wait', date: null })),
+    instances: (w.instances || []).map((i: any) => ({ id: i.id, title: i.title, startDate: i.startDate || '', status: i.status, currentStep: i.currentStep })),
+  }));
+
+  const [localWorkflows, setLocalWorkflows] = useState(MOCK_WORKFLOWS);
+  const workflows = usingApi ? apiNormalised : localWorkflows;
+
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [selectedInst, setSelectedInst] = useState<any>(null);
@@ -1009,31 +1076,40 @@ function WorkflowsPage() {
   const [instTitle, setInstTitle] = useState('');
   const [newWfForm, setNewWfForm] = useState({ title:'', icon:'⚙️', mode:'sequential', steps:[{name:'',user:''}] });
 
-  const allInst = workflows.flatMap(w => (w.instances||[]).map(i => ({...i, wf:w})));
-  const inprog = allInst.filter(i => i.status==='inprog').length;
-  const done = allInst.filter(i => i.status==='done').length;
+  const allInst = workflows.flatMap((w: any) => (w.instances||[]).map((i: any) => ({...i, wf:w})));
+  const inprog = allInst.filter((i: any) => i.status==='inprog').length;
+  const done = allInst.filter((i: any) => i.status==='done').length;
 
   const approveStep = (wfId: string, instId: string) => {
-    setWorkflows(prev => prev.map(w => {
-      if (w.id !== wfId) return w;
-      return { ...w, instances: (w.instances||[]).map(inst => {
-        if (inst.id !== instId) return inst;
-        const nextStep = inst.currentStep + 1;
-        const newSteps = w.steps.map((s,i) => i===inst.currentStep ? {...s,status:'done',date:'۱۴۰۳/۰۴/۱۵'} : i===nextStep ? {...s,status:'active'} : s);
-        const isDone = nextStep >= w.steps.length;
-        return { ...inst, currentStep:isDone?inst.currentStep:nextStep, status:isDone?'done':'inprog' };
-      })};
-    }));
+    if (usingApi) {
+      approveStepMut.mutate(instId);
+    } else {
+      setLocalWorkflows(prev => prev.map(w => {
+        if (w.id !== wfId) return w;
+        return { ...w, instances: (w.instances||[]).map((inst: any) => {
+          if (inst.id !== instId) return inst;
+          const nextStep = inst.currentStep + 1;
+          const isDone = nextStep >= w.steps.length;
+          return { ...inst, currentStep:isDone?inst.currentStep:nextStep, status:isDone?'done':'inprog' };
+        })};
+      }));
+    }
   };
 
   const startInstance = () => {
     if (!instTitle || !showStartInst) return;
-    setWorkflows(prev => prev.map(w => w.id===showStartInst.id ? {
-      ...w,
-      instances:[...(w.instances||[]), { id:`WFI-${Date.now()}`, title:instTitle, startDate:'۱۴۰۳/۰۴/۱۵', status:'inprog', currentStep:0 }]
-    } : w));
-    setInstTitle('');
-    setShowStartInst(null);
+    if (usingApi) {
+      startInstanceMut.mutate(
+        { templateId: showStartInst.id, title: instTitle },
+        { onSuccess: () => { setInstTitle(''); setShowStartInst(null); } }
+      );
+    } else {
+      setLocalWorkflows(prev => prev.map((w: any) => w.id===showStartInst.id ? {
+        ...w, instances:[...(w.instances||[]), { id:`WFI-${Date.now()}`, title:instTitle, startDate:'۱۴۰۳/۰۴/۱۵', status:'inprog', currentStep:0 }]
+      } : w));
+      setInstTitle('');
+      setShowStartInst(null);
+    }
   };
 
   const addStep = () => setNewWfForm(f => ({...f, steps:[...f.steps,{name:'',user:''}]}));
@@ -1042,13 +1118,20 @@ function WorkflowsPage() {
 
   const handleNewWf = () => {
     if (!newWfForm.title) { alert(fa?'عنوان الزامی':'Title required'); return; }
-    setWorkflows(prev => [...prev, {
-      id:`WF-${Date.now()}`, title:newWfForm.title, icon:newWfForm.icon, mode:newWfForm.mode, active:true,
-      steps: newWfForm.steps.map((s,i) => ({name:s.name||`مرحله ${i+1}`, user:s.user, status:i===0?'active':'wait', date:null})),
-      instances:[],
-    }]);
-    setNewWfForm({ title:'', icon:'⚙️', mode:'sequential', steps:[{name:'',user:''}] });
-    setShowNew(false);
+    if (usingApi) {
+      createWorkflow.mutate(
+        { title: newWfForm.title, icon: newWfForm.icon, mode: newWfForm.mode, steps: newWfForm.steps },
+        { onSuccess: () => { setNewWfForm({ title:'', icon:'⚙️', mode:'sequential', steps:[{name:'',user:''}] }); setShowNew(false); } }
+      );
+    } else {
+      setLocalWorkflows(prev => [...prev, {
+        id:`WF-${Date.now()}`, title:newWfForm.title, icon:newWfForm.icon, mode:newWfForm.mode, active:true,
+        steps: newWfForm.steps.map((s,i) => ({name:s.name||`مرحله ${i+1}`, user:s.user, status:i===0?'active':'wait', date:null})),
+        instances:[],
+      }]);
+      setNewWfForm({ title:'', icon:'⚙️', mode:'sequential', steps:[{name:'',user:''}] });
+      setShowNew(false);
+    }
   };
 
   const MODE_LABELS: Record<string,{label:string,icon:string,color:string}> = {
@@ -1084,7 +1167,7 @@ function WorkflowsPage() {
       <div className="space-y-4">
         {workflows.map(wf => {
           const mode = MODE_LABELS[wf.mode] || MODE_LABELS.sequential;
-          const activeInst = (wf.instances||[]).filter(i=>i.status==='inprog');
+          const activeInst = (wf.instances||[]).filter((i: any)=>i.status==='inprog');
           return (
             <div key={wf.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
               {/* Header */}
@@ -1115,7 +1198,7 @@ function WorkflowsPage() {
 
               {/* Flow visualization */}
               <div className="flex items-center gap-1 overflow-x-auto pb-1 flex-nowrap mb-3">
-                {wf.steps.map((step, i) => {
+                {wf.steps.map((step: any, i: number) => {
                   const sc = STEP_STATUS_COLORS[step.status||'wait'];
                   const si = STEP_STATUS_ICONS[step.status||'wait'];
                   return (
@@ -1139,7 +1222,7 @@ function WorkflowsPage() {
               {activeInst.length > 0 && (
                 <div className="border-t border-[hsl(var(--border))] pt-3 space-y-2">
                   <div className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">{fa?'موارد فعال':'Active Cases'}</div>
-                  {activeInst.slice(0,2).map(inst => {
+                  {activeInst.slice(0,2).map((inst: any) => {
                     const pct = Math.round((inst.currentStep/wf.steps.length)*100);
                     const curStep = wf.steps[inst.currentStep];
                     return (

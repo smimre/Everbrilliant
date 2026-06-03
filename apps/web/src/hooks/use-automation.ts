@@ -86,3 +86,84 @@ export function useRejectRequest() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['automation', 'requests'] }),
   });
 }
+
+// ── Tasks ─────────────────────────────────────────────────────
+export function useTasks(query?: { status?: string }) {
+  return useQuery({
+    queryKey: ['automation', 'tasks', query],
+    queryFn: () => api.get('/automation/tasks', query as Record<string, unknown>),
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
+export function useCreateTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => api.post('/automation/tasks', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['automation', 'tasks'] }),
+  });
+}
+
+export function useUpdateTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, dto }: { id: string; dto: any }) =>
+      api.patch(`/automation/tasks/${id}`, dto),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['automation', 'tasks'] }),
+  });
+}
+
+// ── Documents ─────────────────────────────────────────────────
+export function useDocuments(query?: { category?: string; search?: string }) {
+  return useQuery({
+    queryKey: ['automation', 'documents', query],
+    queryFn: () => api.get('/automation/documents', query as Record<string, unknown>),
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
+export function useCreateDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => api.post('/automation/documents', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['automation', 'documents'] }),
+  });
+}
+
+// ── Workflow Templates ─────────────────────────────────────────
+export function useWorkflowTemplates() {
+  return useQuery({
+    queryKey: ['automation', 'workflows'],
+    queryFn: () => api.get('/automation/workflows'),
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
+export function useCreateWorkflowTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => api.post('/automation/workflows', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['automation', 'workflows'] }),
+  });
+}
+
+export function useStartWorkflowInstance() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ templateId, title }: { templateId: string; title: string }) =>
+      api.post(`/automation/workflows/${templateId}/start`, { title }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['automation', 'workflows'] }),
+  });
+}
+
+export function useApproveWorkflowStep() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (instanceId: string) =>
+      api.patch(`/automation/workflows/instances/${instanceId}/approve`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['automation', 'workflows'] }),
+  });
+}

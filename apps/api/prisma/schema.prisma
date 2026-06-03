@@ -1281,10 +1281,14 @@ model Task {
   id            String    @id @default(cuid())
   title         String
   description   String?
-  assigneeId    Int
+  assigneeId    Int?
+  assigneeName  String?
   companyId     Int
-  priority      Priority  @default(NORMAL)
-  status        String    @default("todo")
+  priority      String    @default("normal")
+  status        String    @default("pending")
+  progress      Int       @default(0)
+  tag           String?
+  dueStr        String?
   dueDate       DateTime?
   completedAt   DateTime?
   createdById   Int
@@ -1306,6 +1310,11 @@ model Document {
   folderId      Int?
   createdById   Int
   tags          String[]
+  category      String    @default("سایر")
+  version       String    @default("1.0")
+  confidential  Boolean   @default(false)
+  fileSize      String?
+  uploaderName  String?
   isArchived    Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -1314,6 +1323,57 @@ model Document {
 
   @@index([companyId])
   @@map("documents")
+}
+
+// ══════════════════════════════════════════════
+// WORKFLOW TEMPLATES
+// ══════════════════════════════════════════════
+
+model WorkflowTemplate {
+  id          String    @id @default(cuid())
+  companyId   Int
+  title       String
+  icon        String    @default("⚙️")
+  mode        String    @default("sequential")
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  steps       WorkflowTemplateStep[]
+  instances   WorkflowInstance[]
+
+  @@index([companyId])
+  @@map("workflow_templates")
+}
+
+model WorkflowTemplateStep {
+  id           Int      @id @default(autoincrement())
+  templateId   String
+  stepOrder    Int      @default(0)
+  name         String
+  assigneeName String?
+
+  template     WorkflowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@map("workflow_template_steps")
+}
+
+model WorkflowInstance {
+  id          String   @id @default(cuid())
+  templateId  String
+  companyId   Int
+  title       String
+  status      String   @default("inprog")
+  currentStep Int      @default(0)
+  startDate   String?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  template    WorkflowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([companyId])
+  @@map("workflow_instances")
 }
 
 model DocumentFolder {

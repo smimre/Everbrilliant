@@ -145,4 +145,154 @@ export class AutomationService {
     if (!meeting) throw new NotFoundException();
     return this.prisma.meeting.update({ where: { id }, data: { minutes, status: 'COMPLETED' } });
   }
+
+  // ── Tasks ─────────────────────────────────
+  async getTasks(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where: any = {
+      companyId,
+      ...(q.status && { status: q.status }),
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.task.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),
+      this.prisma.task.count({ where }),
+    ]);
+    return this.page(data, total, page, limit);
+  }
+
+  async createTask(companyId: number, userId: number, dto: any) {
+    return this.prisma.task.create({
+      data: {
+        companyId, createdById: userId,
+        title: dto.title,
+        description: dto.description || null,
+        assigneeName: dto.assignee || null,
+        priority: dto.priority || 'normal',
+        status: 'pending',
+        progress: 0,
+        tag: dto.tag || null,
+        dueStr: dto.due || null,
+      },
+    });
+  }
+
+  async updateTask(companyId: number, id: string, dto: any) {
+    const existing = await this.prisma.task.findFirst({ where: { id, companyId } });
+    if (!existing) throw new NotFoundException();
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        ...(dto.status !== undefined && { status: dto.status }),
+        ...(dto.progress !== undefined && { progress: dto.progress }),
+        ...(dto.assigneeName !== undefined && { assigneeName: dto.assigneeName }),
+        ...(dto.priority !== undefined && { priority: dto.priority }),
+        ...(dto.tag !== undefined && { tag: dto.tag }),
+        ...(dto.dueStr !== undefined && { dueStr: dto.dueStr }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.status === 'done' && { completedAt: new Date() }),
+        ...(dto.status === 'pending' && { completedAt: null }),
+      },
+    });
+  }
+
+  // ── Documents ─────────────────────────────
+  async getDocuments(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where: any = {
+      companyId,
+      isArchived: false,
+      ...(q.category && { category: q.category }),
+      ...(q.search && {
+        OR: [
+          { title: { contains: q.search, mode: 'insensitive' } },
+          { category: { contains: q.search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.document.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),
+      this.prisma.document.count({ where }),
+    ]);
+    return this.page(data, total, page, limit);
+  }
+
+  async createDocument(companyId: number, userId: number, dto: any) {
+    return this.prisma.document.create({
+      data: {
+        companyId, createdById: userId,
+        title: dto.title,
+        type: dto.type || 'pdf',
+        category: dto.category || 'سایر',
+        version: dto.version || '1.0',
+        confidential: dto.confidential || false,
+        tags: dto.tags || [],
+        description: dto.description || null,
+        uploaderName: dto.uploaderName || null,
+        fileSize: dto.fileSize || null,
+      },
+    });
+  }
+
+  // ── Workflow Templates ─────────────────────
+  async getWorkflowTemplates(companyId: number) {
+    const data = await this.prisma.workflowTemplate.findMany({
+      where: { companyId },
+      include: {
+        steps: { orderBy: { stepOrder: 'asc' } },
+        instances: { orderBy: { createdAt: 'desc' } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return data;
+  }
+
+  async createWorkflowTemplate(companyId: number, dto: any) {
+    const steps = (dto.steps || []).map((s: any, i: number) => ({
+      name: s.name || `Step ${i + 1}`,
+      assigneeName: s.user || null,
+      stepOrder: i,
+    }));
+    return this.prisma.workflowTemplate.create({
+      data: {
+        companyId, title: dto.title,
+        icon: dto.icon || '⚙️',
+        mode: dto.mode || 'sequential',
+        active: true,
+        steps: { create: steps },
+      },
+      include: { steps: { orderBy: { stepOrder: 'asc' } }, instances: true },
+    });
+  }
+
+  async startWorkflowInstance(companyId: number, templateId: string, dto: any) {
+    const tpl = await this.prisma.workflowTemplate.findFirst({ where: { id: templateId, companyId } });
+    if (!tpl) throw new NotFoundException();
+    return this.prisma.workflowInstance.create({
+      data: {
+        templateId, companyId,
+        title: dto.title,
+        status: 'inprog',
+        currentStep: 0,
+        startDate: new Date().toLocaleDateString('fa-IR'),
+      },
+    });
+  }
+
+  async approveWorkflowStep(companyId: number, instanceId: string) {
+    const inst = await this.prisma.workflowInstance.findFirst({
+      where: { id: instanceId, companyId },
+      include: { template: { include: { steps: true } } },
+    });
+    if (!inst) throw new NotFoundException();
+    const nextStep = inst.currentStep + 1;
+    const isDone = nextStep >= inst.template.steps.length;
+    return this.prisma.workflowInstance.update({
+      where: { id: instanceId },
+      data: {
+        currentStep: isDone ? inst.currentStep : nextStep,
+        status: isDone ? 'done' : 'inprog',
+        ...(isDone && { completedAt: new Date() }),
+      },
+    });
+  }
 }
