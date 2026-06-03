@@ -226,7 +226,7 @@ export class AutomationService {
         version: dto.version || '1.0',
         confidential: dto.confidential || false,
         tags: dto.tags || [],
-        description: dto.description || null,
+        content: dto.description || dto.content || null,
         uploaderName: dto.uploaderName || null,
         fileSize: dto.fileSize || null,
       },
