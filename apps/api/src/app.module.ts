@@ -20,6 +20,7 @@ import { AutomationModule }    from './modules/automation/automation.module';
 import { CrmModule }           from './modules/crm/crm.module';
 import { ManufacturingModule } from './modules/manufacturing/manufacturing.module';
 import { LogisticsModule }     from './modules/logistics/logistics.module';
+import { MessagingModule }     from './modules/messaging/messaging.module';
 
 // Infrastructure
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -51,6 +52,7 @@ import { SaasModule }          from './modules/saas/saas.module';
     CrmModule,
     ManufacturingModule,
     LogisticsModule,
+    MessagingModule,
     NotificationsModule,
     HealthModule,
     GatewayModule,

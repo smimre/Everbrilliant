@@ -277,6 +277,8 @@ model Company {
   budgets          Budget[]
   connectionsA     CompanyConnection[] @relation("CompanyA")
   connectionsB     CompanyConnection[] @relation("CompanyB")
+  sentMessages     Message[]           @relation("SentMessages")
+  receivedMessages Message[]           @relation("ReceivedMessages")
   inviteCodes      InviteCode[]
   apiKeys          ApiKey[]
   notifications    Notification[]
@@ -342,6 +344,7 @@ model User {
   qcInspections     QCInspection[] @relation("QCInspector")
   dealsCreated      Deal[]         @relation("DealCreator")
   blacklistEntries  CompanyBlacklist[] @relation("BlacklistCreator")
+  messagesSent      Message[]      @relation("MessageSender")
 
   @@index([companyId])
   @@index([phone])
@@ -1941,4 +1944,27 @@ model LogisticsRateQuote {
 
   @@index([companyId])
   @@map("logistics_rate_quotes")
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  fromCompanyId Int
+  toCompanyId   Int
+  fromUserId    Int
+  subject       String
+  body          String
+  type          String   @default("message")
+  refId         String?
+  refType       String?
+  isRead        Boolean  @default(false)
+  isStarred     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  fromCompany   Company  @relation("SentMessages",     fields: [fromCompanyId], references: [id])
+  toCompany     Company  @relation("ReceivedMessages", fields: [toCompanyId],   references: [id])
+  fromUser      User     @relation("MessageSender",    fields: [fromUserId],    references: [id])
+
+  @@index([toCompanyId])
+  @@index([fromCompanyId])
+  @@map("messages")
 }
