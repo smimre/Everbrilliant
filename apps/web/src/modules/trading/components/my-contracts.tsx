@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useContracts, useCreateContract, useSignContract } from '@/hooks/use-trading';
+import { useContracts, useCreateContract, useSignContract, useConnections } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
+import { useAuthStore } from '@/store/auth.store';
 
 const STATUS_MAP: Record<string, { label: string; labelFa: string; color: string; icon: string }> = {
   DRAFT:          { label: 'Draft',          labelFa: 'پیش‌نویس',      color: '#f59e0b', icon: '📝' },
@@ -271,9 +272,21 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
 function NewContractModal({ lang, onClose }: { lang: string; onClose: () => void }) {
   const fa = lang === 'fa';
   const { toast } = useUIStore();
+  const { user } = useAuthStore();
   const createContract = useCreateContract();
+  const { data: rawConns } = useConnections();
+  const conns: any[] = (rawConns as any)?.data ?? [];
+  const counterparties = conns
+    .filter((c: any) => (c.status || '').toLowerCase() === 'active')
+    .map((c: any) => {
+      const isA = c.companyAId === user?.companyId;
+      const peer = isA ? c.companyB : c.companyA;
+      return { id: String(peer?.id ?? ''), name: peer?.name ?? '' };
+    })
+    .filter(s => s.id);
+
   const [form, setForm] = useState({
-    title: '', role: 'buyer', product: '', qty: '', unit: 'ton', unitPrice: '',
+    counterpartyId: '', title: '', role: 'buyer', product: '', qty: '', unit: 'ton', unitPrice: '',
     currency: 'IRR', deliveryDate: '', deliveryPlace: '', paymentTerms: '', incoterms: 'EXW', clauses: '',
   });
 
@@ -288,6 +301,13 @@ function NewContractModal({ lang, onClose }: { lang: string; onClose: () => void
           <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
         </div>
         <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'طرف قرارداد *' : 'Counterparty *'}</label>
+            <select value={form.counterpartyId} onChange={e => setForm({...form, counterpartyId: e.target.value})} className={inp}>
+              <option value="">{fa ? '-- انتخاب شریک تجاری --' : '-- Select Partner --'}</option>
+              {counterparties.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'عنوان قرارداد *' : 'Contract Title *'}</label>
             <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className={inp} placeholder={fa ? 'مثال: قرارداد خرید روغن پالم' : 'e.g. Palm Oil Purchase Contract'} />
@@ -365,6 +385,7 @@ function NewContractModal({ lang, onClose }: { lang: string; onClose: () => void
           <button
             disabled={createContract.isPending}
             onClick={() => {
+              if (!form.counterpartyId) { toast('error', fa ? 'انتخاب طرف قرارداد الزامی است' : 'Counterparty required'); return; }
               if (!form.title) { toast('error', fa ? 'عنوان الزامی است' : 'Title required'); return; }
               createContract.mutate(
                 { ...form, totalPrice },

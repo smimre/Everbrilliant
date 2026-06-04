@@ -129,7 +129,7 @@ export function CRMPage() {
                         onClick={() => setShowActivity(r)}
                         className="w-full text-start p-2 rounded-lg text-xs bg-[hsl(var(--background))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] transition-colors"
                       >
-                        <div className="font-medium truncate">{r.productName || r.title}</div>
+                        <div className="font-medium truncate">{r.product}</div>
                         {r.amountIRR && <div style={{ color: stage.color }} className="font-semibold mt-0.5">{(r.amountIRR/1e6).toFixed(0)}M</div>}
                       </button>
                     ))
@@ -216,7 +216,7 @@ export function CRMPage() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{r.productName || r.title}</div>
+                          <div className="text-sm font-medium truncate">{r.product}</div>
                           <div className="flex gap-3 text-xs text-[hsl(var(--muted-foreground))] mt-0.5 flex-wrap">
                             {r.createdAt && <span>📅 {r.createdAt}</span>}
                             {r.amountIRR && <span style={{ color }} className="font-semibold">💰 {(r.amountIRR/1e6).toFixed(0)}M IRR</span>}
@@ -250,7 +250,7 @@ export function CRMPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-lg p-6 shadow-2xl my-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold">🎯 {showActivity.productName || showActivity.title}</h2>
+              <h2 className="font-bold">🎯 {showActivity.product}</h2>
               <button onClick={() => setShowActivity(null)} className="text-xl text-[hsl(var(--muted-foreground))]">✕</button>
             </div>
 

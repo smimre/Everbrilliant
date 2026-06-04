@@ -31,8 +31,8 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
   const filtered = display.filter((r: any) => {
     const matchFilter = filter === 'all' || r.status === filter;
     const matchSearch = !search ||
-      (r.productName || r.title || '').toLowerCase().includes(search.toLowerCase()) ||
-      (r.buyerName || '').toLowerCase().includes(search.toLowerCase());
+      (r.product || '').toLowerCase().includes(search.toLowerCase()) ||
+      (r.buyerCompany?.name || '').toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
   });
 
@@ -136,14 +136,14 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-semibold text-sm">{r.productName || r.title}</span>
+                      <span className="font-semibold text-sm">{r.product}</span>
                       <span className="text-xs px-2 py-0.5 rounded-full shrink-0" style={{ background: color + '20', color }}>
                         {statusLabelMap[r.status] || r.status}
                       </span>
                     </div>
                     <div className="flex gap-3 text-xs text-[hsl(var(--muted-foreground))] flex-wrap">
-                      {r.buyerName && <span>🏢 {r.buyerName}</span>}
-                      {r.quantity && <span>📦 {r.quantity} {r.unit}</span>}
+                      {r.buyerCompany?.name && <span>🏢 {r.buyerCompany.name}</span>}
+                      {r.qty && <span>📦 {r.qty} {r.unit}</span>}
                       {r.createdAt && <span>📅 {r.createdAt}</span>}
                       {r.amountIRR && <span className="text-amber-500 font-semibold">💰 {Number(r.amountIRR).toLocaleString('fa-IR')} IRR</span>}
                     </div>
@@ -168,20 +168,20 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-md p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold">📋 {selected.productName || selected.title}</h2>
+              <h2 className="font-bold">📋 {selected.product}</h2>
               <button onClick={() => setSelected(null)} className="text-xl text-[hsl(var(--muted-foreground))]">✕</button>
             </div>
             <div className="space-y-1 text-sm mb-4">
-              {selected.buyerName && (
+              {selected.buyerCompany?.name && (
                 <div className="flex justify-between py-2 border-b border-[hsl(var(--border)/0.5)]">
                   <span className="text-[hsl(var(--muted-foreground))]">{fa ? 'خریدار' : 'Buyer'}</span>
-                  <span className="font-medium">🏢 {selected.buyerName}</span>
+                  <span className="font-medium">🏢 {selected.buyerCompany.name}</span>
                 </div>
               )}
-              {selected.quantity && (
+              {selected.qty && (
                 <div className="flex justify-between py-2 border-b border-[hsl(var(--border)/0.5)]">
                   <span className="text-[hsl(var(--muted-foreground))]">{fa ? 'مقدار' : 'Quantity'}</span>
-                  <span className="font-medium">{selected.quantity} {selected.unit}</span>
+                  <span className="font-medium">{selected.qty} {selected.unit}</span>
                 </div>
               )}
               {selected.deadline && (
@@ -190,8 +190,8 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
                   <span className="font-medium">⏰ {selected.deadline}</span>
                 </div>
               )}
-              {selected.description && (
-                <p className="text-xs text-[hsl(var(--muted-foreground))] p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg mt-2">{selected.description}</p>
+              {selected.note && (
+                <p className="text-xs text-[hsl(var(--muted-foreground))] p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg mt-2">{selected.note}</p>
               )}
             </div>
             {selected.status === 'pending' && (

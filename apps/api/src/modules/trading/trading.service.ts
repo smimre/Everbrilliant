@@ -62,10 +62,17 @@ export class TradingService {
   }
 
   async createContractDirect(companyId: number, userId: number, dto: any) {
+    if (!dto.counterpartyId) throw new BadRequestException('counterpartyId is required');
+    const counterpartyId = Number(dto.counterpartyId);
+    const isBuyer = dto.role !== 'seller';
+    const buyerCompanyId  = isBuyer ? companyId : counterpartyId;
+    const sellerCompanyId = isBuyer ? counterpartyId : companyId;
+
     return this.prisma.$transaction(async (tx) => {
       const req = await tx.tradeRequest.create({
         data: {
-          buyerCompanyId: companyId,
+          buyerCompanyId,
+          sellerCompanyId,
           product: dto.product || dto.title,
           qty: dto.qty ? Number(dto.qty) : 0,
           unit: dto.unit || 'unit',
@@ -79,8 +86,8 @@ export class TradingService {
       return tx.contract.create({
         data: {
           requestId: req.id,
-          buyerCompanyId: companyId,
-          sellerCompanyId: companyId,
+          buyerCompanyId,
+          sellerCompanyId,
           title: dto.title,
           amountIRR: dto.totalPrice ? BigInt(Math.round(Number(dto.totalPrice))) : BigInt(0),
           currency: dto.currency || 'IRR',

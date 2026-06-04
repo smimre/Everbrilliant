@@ -77,7 +77,7 @@ function RequestWithQuotes({ req, fa, onAccept }: { req: any; fa: boolean; onAcc
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <Package className="w-4 h-4 text-[hsl(var(--muted-foreground))] shrink-0"/>
-            <span className="font-semibold text-sm">{req.productName || req.title || fa ? 'محصول بدون نام' : 'Unnamed product'}</span>
+            <span className="font-semibold text-sm">{req.product || (fa ? 'محصول بدون نام' : 'Unnamed product')}</span>
             <span className="text-[10px] font-mono text-[hsl(var(--muted-foreground))]">#{req.id?.slice(-6)}</span>
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-[hsl(var(--muted-foreground))] flex-wrap">
@@ -150,7 +150,7 @@ export function MyQuotes() {
 
   const filtered = requestsWithQuotes.filter((r: any) => {
     if (!search) return true;
-    return (r.productName || r.title || '').toLowerCase().includes(search.toLowerCase());
+    return (r.product || '').toLowerCase().includes(search.toLowerCase());
   });
 
   const handleAccept = (quoteId: string) => {
