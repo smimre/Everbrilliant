@@ -36,7 +36,7 @@ export function usePayInvoice() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...dto }: { id: string; amount: number; paymentMethod?: string; referenceNo?: string }) =>
-      financeService.payInvoice(id, dto),
+      financeService.markPaid(id, dto),
     onSuccess: () => qc.invalidateQueries({ queryKey: financeKeys.all }),
   });
 }

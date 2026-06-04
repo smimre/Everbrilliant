@@ -17,7 +17,7 @@ export const financeService = {
     api.get<PaginatedResponse<Invoice>>('/finance/invoices', query as Record<string, unknown>),
   getInvoice: (id: string) => api.get<Invoice>(`/finance/invoices/${id}`),
   createInvoice: (dto: CreateInvoiceDto) => api.post<Invoice>('/finance/invoices', dto),
-  markPaid: (id: string, dto: { amount: number; paymentMethod: string; referenceNo?: string }) =>
+  markPaid: (id: string, dto: { amount: number; paymentMethod?: string; referenceNo?: string }) =>
     api.patch(`/finance/invoices/${id}/pay`, dto),
   getInvoicePdf: (id: string) => api.get<Blob>(`/finance/invoices/${id}/pdf`),
 
