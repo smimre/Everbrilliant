@@ -421,9 +421,14 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
           <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4">
             {fa ? 'برای ثبت درخواست خرید باید یک اتصال فعال داشته باشید.' : 'You need an active connection to submit a purchase request.'}
           </p>
-          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">
-            {fa ? 'بستن' : 'Close'}
-          </button>
+          <div className="flex gap-2 justify-center">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+              {fa ? 'بستن' : 'Close'}
+            </button>
+            <a href="/connections" onClick={onClose} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+              🔗 {fa ? 'کد دعوت' : 'Invite Code'}
+            </a>
+          </div>
         </div>
       </div>
     );

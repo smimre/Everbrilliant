@@ -269,10 +269,20 @@ function NewAuctionModal({ lang, onClose }: { lang: string; onClose: () => void 
               placeholder={fa ? 'مناقصه فروش...' : 'e.g. Motor Oil 1000L'} />
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
+            <div>
               <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">📅 {fa ? 'تاریخ مهلت *' : 'Deadline *'}</label>
               <input value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })}
                 className={inp} placeholder="2026-09-01" type="date" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">⏰ {fa ? 'ساعت مهلت' : 'Time'}</label>
+              <select value={form.deadlineTime} onChange={e => setForm({ ...form, deadlineTime: e.target.value })} className={inp}>
+                {['00:00','01:00','02:00','03:00','04:00','05:00','06:00','07:00','08:00','09:00',
+                  '10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00',
+                  '20:00','21:00','22:00','23:00','23:59'].map(h => (
+                  <option key={h} value={h}>{h}{h === '23:59' ? ` (${fa ? 'پایان روز' : 'EOD'})` : ''}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">{fa ? 'نوع' : 'Type'}</label>
@@ -281,6 +291,18 @@ function NewAuctionModal({ lang, onClose }: { lang: string; onClose: () => void 
                 <option value="TENDER">{fa ? '📖 باز' : '📖 Open'}</option>
               </select>
             </div>
+          </div>
+          {form.deadline && (
+            <div className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(59,130,246,.08)', border: '1px solid rgba(59,130,246,.3)', color: '#2563eb' }}>
+              ⏰ {fa ? 'مهلت نهایی:' : 'Final deadline:'} <strong>{form.deadline} — {form.deadlineTime}</strong>
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">{fa ? 'توضیحات' : 'Notes'}</label>
+            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
+              rows={3} className={inp + ' resize-none'}
+              placeholder={fa ? 'شرایط تحویل...' : 'Delivery conditions...'} />
           </div>
 
           {/* Products */}
@@ -319,12 +341,6 @@ function NewAuctionModal({ lang, onClose }: { lang: string; onClose: () => void 
             ))}
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">{fa ? 'توضیحات' : 'Notes'}</label>
-            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-              rows={3} className={inp + ' resize-none'}
-              placeholder={fa ? 'شرایط تحویل...' : 'Delivery conditions...'} />
-          </div>
         </div>
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
