@@ -112,6 +112,40 @@ export class TradingService {
     return this.prisma.tradeRequest.update({ where: { id }, data: { status: 'CANCELLED' } });
   }
 
+  async issueHavaleh(companyId: number, id: string) {
+    const req = await this.prisma.tradeRequest.findFirst({
+      where: { id, sellerCompanyId: companyId },
+    });
+    if (!req) throw new NotFoundException('Request not found');
+    if (req.status !== 'PAID' as any) throw new BadRequestException('Request must be PAID before issuing havaleh');
+
+    const seq = await this.prisma.tradeRequest.count({ where: { sellerCompanyId: companyId, havNo: { not: null } } });
+    const havNo = `HAV-${String(seq + 1).padStart(4, '0')}-${id.slice(-4).toUpperCase()}`;
+
+    return this.prisma.tradeRequest.update({
+      where: { id },
+      data: { status: 'ISSUED' as any, havNo, issuedAt: new Date() },
+    });
+  }
+
+  async confirmReceipt(companyId: number, id: string) {
+    const req = await this.prisma.tradeRequest.findFirst({
+      where: { id, buyerCompanyId: companyId },
+    });
+    if (!req) throw new NotFoundException('Request not found');
+    if (req.status !== 'ISSUED' as any) throw new BadRequestException('Request must be ISSUED to confirm receipt');
+    return this.prisma.tradeRequest.update({ where: { id }, data: { status: 'COMPLETED' as any } });
+  }
+
+  async markPaid(companyId: number, id: string) {
+    const req = await this.prisma.tradeRequest.findFirst({
+      where: { id, buyerCompanyId: companyId },
+    });
+    if (!req) throw new NotFoundException('Request not found');
+    if (req.status !== 'APPROVED' as any) throw new BadRequestException('Request must be APPROVED before marking paid');
+    return this.prisma.tradeRequest.update({ where: { id }, data: { status: 'PAID' as any } });
+  }
+
   // ── Quotes ────────────────────────────────
   async getQuotes(companyId: number, requestId: string) {
     return this.prisma.quote.findMany({

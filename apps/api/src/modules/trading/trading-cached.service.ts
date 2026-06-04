@@ -56,6 +56,35 @@ export class TradingCachedService extends TradingService {
     return result;
   }
 
+  private async invalidateBothParties(id: string, companyId: number) {
+    const req = await this.prisma.tradeRequest.findUnique({
+      where: { id }, select: { buyerCompanyId: true, sellerCompanyId: true },
+    });
+    await this.cache.invalidateRequests(companyId);
+    if (req?.buyerCompanyId && req.buyerCompanyId !== companyId)
+      await this.cache.invalidateRequests(req.buyerCompanyId);
+    if (req?.sellerCompanyId && req.sellerCompanyId !== companyId)
+      await this.cache.invalidateRequests(req.sellerCompanyId);
+  }
+
+  override async markPaid(companyId: number, id: string) {
+    const result = await super.markPaid(companyId, id);
+    await this.invalidateBothParties(id, companyId);
+    return result;
+  }
+
+  override async issueHavaleh(companyId: number, id: string) {
+    const result = await super.issueHavaleh(companyId, id);
+    await this.invalidateBothParties(id, companyId);
+    return result;
+  }
+
+  override async confirmReceipt(companyId: number, id: string) {
+    const result = await super.confirmReceipt(companyId, id);
+    await this.invalidateBothParties(id, companyId);
+    return result;
+  }
+
   override async signContract(companyId: number, id: string) {
     const contract = await this.prisma.contract.findUnique({
       where: { id },

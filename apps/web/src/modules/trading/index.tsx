@@ -23,6 +23,7 @@ import { ApprovalWorkflowsPage } from './components/approval-workflows';
 import { PartnerProfilePage } from './components/partner-profile';
 import { MyPayments } from './components/my-payments';
 import { MyInvoices } from './components/my-invoices';
+import { MyHavaleh } from './components/my-havaleh';
 import { MyQuotes } from './components/my-quotes';
 import { RequestTemplates } from './components/request-templates';
 import { LetterheadPage } from './components/letterhead';
@@ -35,7 +36,7 @@ type TradingView =
   | 'manaqeseh' | 'my-manaqeseh' | 'quality-checks'
   | 'disputes' | 'inventory'
   | 'logistics' | 'exchange-rates' | 'approval-workflows' | 'partner-profile'
-  | 'my-payments' | 'my-invoices' | 'req-templates' | 'letterhead' | 'blacklist';
+  | 'my-payments' | 'my-invoices' | 'my-havaleh' | 'req-templates' | 'letterhead' | 'blacklist';
 
 interface NavItem {
   id: TradingView;

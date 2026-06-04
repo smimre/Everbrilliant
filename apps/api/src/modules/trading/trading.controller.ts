@@ -11,7 +11,10 @@ export class TradingController {
   @Post('requests')      createRequest(@Req() r: any, @Body() dto: any)                    { return this.trading.createRequest(r.user.companyId, r.user.id, dto); }
   @Get('requests/:id')   getRequest(@Req() r: any, @Param('id') id: string)                { return this.trading.getRequest(r.user.companyId, id); }
   @Patch('requests/:id') updateRequest(@Req() r: any, @Param('id') id: string, @Body() d: any) { return this.trading.updateRequest(r.user.companyId, id, d); }
-  @Patch('requests/:id/cancel') cancelRequest(@Req() r: any, @Param('id') id: string)     { return this.trading.cancelRequest(r.user.companyId, id); }
+  @Patch('requests/:id/cancel')   cancelRequest(@Req() r: any, @Param('id') id: string)   { return this.trading.cancelRequest(r.user.companyId, id); }
+  @Patch('requests/:id/paid')     markPaid(@Req() r: any, @Param('id') id: string)         { return this.trading.markPaid(r.user.companyId, id); }
+  @Patch('requests/:id/issue')    issueHavaleh(@Req() r: any, @Param('id') id: string)     { return this.trading.issueHavaleh(r.user.companyId, id); }
+  @Patch('requests/:id/complete') confirmReceipt(@Req() r: any, @Param('id') id: string)   { return this.trading.confirmReceipt(r.user.companyId, id); }
 
   @Get('requests/:id/quotes') getQuotes(@Req() r: any, @Param('id') id: string)            { return this.trading.getQuotes(r.user.companyId, id); }
   @Post('quotes')             createQuote(@Req() r: any, @Body() dto: any)                 { return this.trading.createQuote(r.user.companyId, r.user.id, dto); }

@@ -115,6 +115,31 @@ export function useSignContract() {
   });
 }
 
+// ── Havaleh flow ──────────────────────────────────────────────
+export function useMarkPaid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/requests/${id}/paid`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'requests'] }),
+  });
+}
+
+export function useIssueHavaleh() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/requests/${id}/issue`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'requests'] }),
+  });
+}
+
+export function useConfirmReceipt() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/requests/${id}/complete`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'requests'] }),
+  });
+}
+
 // ── Company Blacklist ─────────────────────────────────────
 export function useBlacklist(query?: { status?: string; severity?: string; search?: string }) {
   return useQuery({

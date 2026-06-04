@@ -30,6 +30,8 @@ enum RequestStatus {
   PENDING
   QUOTED
   APPROVED
+  PAID
+  ISSUED
   REJECTED
   COMPLETED
   CANCELLED
@@ -512,6 +514,8 @@ model TradeRequest {
   paymentTerms    String?
   qualitySpec     String?
   sampleRequired  Boolean       @default(false)
+  havNo           String?
+  issuedAt        DateTime?
   createdById     Int
   assignedToId    Int?
   createdAt       DateTime      @default(now())
