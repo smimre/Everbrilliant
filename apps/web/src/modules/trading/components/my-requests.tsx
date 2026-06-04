@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useRequests, useCreateRequest, useConnections } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
@@ -252,30 +252,36 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
   const { data: rawConns } = useConnections();
   const conns: any[] = (rawConns as any)?.data ?? [];
 
-  const sellers = conns
-    .filter((c: any) => (c.status || '').toLowerCase() === 'active')
-    .map((c: any) => {
-      const isA = c.companyAId === user?.companyId;
-      const peer = isA ? c.companyB : c.companyA;
-      return { id: String(peer?.id ?? ''), name: peer?.name ?? '' };
-    })
-    .filter(s => s.id);
+  const sellers = conns.map((c: any) => {
+    const isA = c.companyAId === user?.companyId;
+    const peer = isA ? c.companyB : c.companyA;
+    return { id: String(peer?.id ?? ''), name: peer?.name ?? '' };
+  }).filter(s => s.id && s.name);
 
-  const [form, setForm] = useState({
-    sellerId: '', productName: '', quantity: '', unit: 'ton', currency: 'IRR',
-    priority: 'normal', deadline: '', description: '', hsCode: '',
-  });
+  const [sellerId, setSellerId] = useState('');
+  const [product, setProduct] = useState('');
+  const [qty, setQty] = useState('');
+  const [unit, setUnit] = useState('تن');
+  const [note, setNote] = useState('');
+
+  // Auto-select first seller once connections load
+  useEffect(() => {
+    if (sellers.length && !sellerId) setSellerId(sellers[0].id);
+  }, [sellers.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const inp = "w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]";
 
-  if (!sellers.length) {
+  // Show empty state only after connections have loaded (rawConns is defined)
+  if (rawConns !== undefined && !sellers.length) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-sm p-6 shadow-2xl text-center">
           <div className="text-4xl mb-3">🔌</div>
-          <h2 className="font-bold mb-2">{fa ? 'اتصالی یافت نشد' : 'No Connections'}</h2>
+          <h2 className="font-bold mb-2">
+            {fa ? 'ابتدا باید به یک تامین‌کننده متصل شوید' : 'First connect to a supplier'}
+          </h2>
           <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4">
-            {fa ? 'ابتدا باید به یک تامین‌کننده متصل شوید.' : 'You must connect to a supplier first.'}
+            {fa ? 'برای ثبت درخواست خرید باید یک اتصال فعال داشته باشید.' : 'You need an active connection to submit a purchase request.'}
           </p>
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">
             {fa ? 'بستن' : 'Close'}
@@ -285,104 +291,108 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
     );
   }
 
+  function handleSubmit() {
+    if (!product.trim()) { toast('error', fa ? 'نام کالا الزامی است' : 'Product name required'); return; }
+    if (!qty) { toast('error', fa ? 'مقدار الزامی است' : 'Quantity required'); return; }
+    createRequest.mutate(
+      {
+        sellerCompanyId: sellerId ? Number(sellerId) : undefined,
+        product: product.trim(),
+        qty: Number(qty),
+        unit,
+        note: note.trim() || undefined,
+      },
+      {
+        onSuccess: () => { toast('success', fa ? 'درخواست ثبت شد' : 'Request submitted'); onClose(); },
+        onError: (err: any) => toast('error', err?.message || (fa ? 'خطا در ثبت درخواست' : 'Failed to submit')),
+      }
+    );
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-lg p-6 shadow-2xl my-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-[580px] p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="font-bold text-lg">➕ {fa ? 'درخواست جدید' : 'New Request'}</h2>
-          <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
+          <h2 className="font-bold text-lg">📋 {fa ? 'درخواست جدید' : 'New Request'}</h2>
+          <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl leading-none">✕</button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Supplier */}
           <div>
-            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'تامین‌کننده *' : 'Supplier *'}</label>
-            <select value={form.sellerId} onChange={e => setForm({ ...form, sellerId: e.target.value })} className={inp}>
-              <option value="">{fa ? '-- انتخاب تامین‌کننده --' : '-- Select Supplier --'}</option>
+            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">
+              {fa ? 'تامین‌کننده' : 'Supplier'}
+            </label>
+            <select value={sellerId} onChange={e => setSellerId(e.target.value)} className={inp}>
               {sellers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
+          {/* Product Name */}
           <div>
-            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'نام کالا / خدمات *' : 'Product / Service *'}</label>
-            <input value={form.productName} onChange={e => setForm({ ...form, productName: e.target.value })} className={inp}
-              placeholder={fa ? 'مثال: فولاد ساختمانی' : 'e.g. Construction Steel'} />
+            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">
+              {fa ? 'نام کالا' : 'Product Name'}
+            </label>
+            <input
+              value={product}
+              onChange={e => setProduct(e.target.value)}
+              className={inp}
+              placeholder={fa ? 'مثال: روغن پالم، شکر' : 'e.g. Palm oil, Sugar'}
+            />
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'مقدار' : 'Quantity'}</label>
-              <input value={form.quantity} onChange={e => setForm({ ...form, quantity: e.target.value })} type="number" className={inp} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'واحد' : 'Unit'}</label>
-              <select value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} className={inp}>
-                <option value="ton">{fa ? 'تن' : 'Ton'}</option>
-                <option value="kg">Kg</option>
-                <option value="unit">{fa ? 'عدد' : 'Unit'}</option>
-                <option value="m">{fa ? 'متر' : 'Meter'}</option>
-                <option value="liter">{fa ? 'لیتر' : 'Liter'}</option>
-                <option value="m2">{fa ? 'متر مربع' : 'Sq.m'}</option>
-              </select>
-            </div>
-          </div>
+          {/* Quantity + Unit */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'ارز' : 'Currency'}</label>
-              <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} className={inp}>
-                <option>IRR</option><option>USD</option><option>EUR</option><option>AED</option><option>CNY</option>
-              </select>
+              <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">
+                {fa ? 'مقدار' : 'Quantity'}
+              </label>
+              <input
+                type="number"
+                value={qty}
+                onChange={e => setQty(e.target.value)}
+                className={inp}
+                placeholder={fa ? 'عدد' : 'Number'}
+              />
             </div>
             <div>
-              <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'اولویت' : 'Priority'}</label>
-              <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} className={inp}>
-                <option value="low">{fa ? 'پایین' : 'Low'}</option>
-                <option value="normal">{fa ? 'معمولی' : 'Normal'}</option>
-                <option value="high">{fa ? 'بالا' : 'High'}</option>
-                <option value="urgent">{fa ? 'فوری' : 'Urgent'}</option>
+              <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">
+                {fa ? 'واحد' : 'Unit'}
+              </label>
+              <select value={unit} onChange={e => setUnit(e.target.value)} className={inp}>
+                <option value="تن">{fa ? 'تن' : 'Ton'}</option>
+                <option value="کیلوگرم">{fa ? 'کیلوگرم' : 'Kilogram'}</option>
+                <option value="عدد">{fa ? 'عدد' : 'Unit'}</option>
+                <option value="لیتر">{fa ? 'لیتر' : 'Liter'}</option>
               </select>
             </div>
           </div>
+          {/* Notes */}
           <div>
-            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'تاریخ مهلت' : 'Deadline'}</label>
-            <input value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} className={inp} placeholder="1403/06/15" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'کد HS (اختیاری)' : 'HS Code (optional)'}</label>
-            <input value={form.hsCode} onChange={e => setForm({ ...form, hsCode: e.target.value })} className={inp} placeholder="1511.90" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'توضیحات' : 'Description'}</label>
-            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
-              className={inp + " resize-none"} placeholder={fa ? 'مشخصات فنی، شرایط تحویل...' : 'Technical specs, delivery terms...'} />
+            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1.5 block">
+              {fa ? 'توضیحات' : 'Description'}
+            </label>
+            <textarea
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              rows={3}
+              className={inp + ' resize-none'}
+              placeholder={fa ? 'مشخصات فنی...' : 'Technical specs...'}
+            />
           </div>
         </div>
-        <div className="flex gap-3 mt-5">
-          <button onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+        <div className="flex gap-3 mt-5 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)] transition-colors"
+          >
             {fa ? 'انصراف' : 'Cancel'}
           </button>
           <button
             disabled={createRequest.isPending}
-            onClick={() => {
-              if (!form.sellerId) { toast('error', fa ? 'انتخاب تامین‌کننده الزامی است' : 'Supplier selection required'); return; }
-              if (!form.productName) { toast('error', fa ? 'نام کالا الزامی است' : 'Product name required'); return; }
-              createRequest.mutate(
-                {
-                  sellerCompanyId: Number(form.sellerId),
-                  product: form.productName,
-                  qty: form.quantity ? Number(form.quantity) : undefined,
-                  unit: form.unit,
-                  currency: form.currency,
-                  priority: form.priority,
-                  deadline: form.deadline || undefined,
-                  note: form.description || undefined,
-                  hsCode: form.hsCode || undefined,
-                },
-                {
-                  onSuccess: () => { toast('success', fa ? 'درخواست ثبت شد' : 'Request submitted'); onClose(); },
-                  onError: (err: any) => toast('error', err?.message || (fa ? 'خطا در ثبت درخواست' : 'Failed to submit')),
-                }
-              );
-            }}
-            className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            onClick={handleSubmit}
+            className="px-6 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
-            {createRequest.isPending ? (fa ? 'در حال ثبت...' : 'Submitting...') : `✅ ${fa ? 'ثبت درخواست' : 'Submit'}`}
+            {createRequest.isPending
+              ? (fa ? 'در حال ثبت...' : 'Submitting...')
+              : `📤 ${fa ? 'ارسال' : 'Submit'}`}
           </button>
         </div>
       </div>
