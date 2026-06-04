@@ -12,7 +12,7 @@ import { Invoices } from './components/invoices';
 import { Treasury } from './components/treasury';
 import { Checks } from './components/checks';
 import { Cashflow } from './components/cashflow';
-import { Staff } from './components/staff';
+import { HRPage } from './components/hr';
 import { Payroll } from './components/payroll';
 import { FinanceInventory } from './components/finance-inventory';
 import { BalanceSheet } from './components/balance-sheet';
@@ -96,7 +96,7 @@ export function FinanceModule({ initialView }: { initialView?: FinanceView } = {
       case 'treasury':          return <Treasury />;
       case 'checks':            return <Checks />;
       case 'cashflow':          return <Cashflow />;
-      case 'staff':             return <Staff />;
+      case 'staff':             return <HRPage />;
       case 'payroll':           return <Payroll />;
       case 'inventory':         return <FinanceInventory />;
       case 'balance-sheet':     return <BalanceSheet />;

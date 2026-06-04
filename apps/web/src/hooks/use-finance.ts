@@ -63,6 +63,33 @@ export function useInventory(query?: PaginationQuery) {
   });
 }
 
+export function useAddInventory() {
+  const qc = useQueryClient();
+  const { toast } = useUIStore();
+  return useMutation({
+    mutationFn: (dto: any) => financeService.addInventory(dto),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: financeKeys.inventory() });
+      toast('success', 'Item added');
+    },
+    onError: (err: Error) => toast('error', err.message),
+  });
+}
+
+export function useStockMove() {
+  const qc = useQueryClient();
+  const { toast } = useUIStore();
+  return useMutation({
+    mutationFn: ({ id, type, qty, ref }: { id: string; type: 'in' | 'out'; qty: number; ref?: string }) =>
+      type === 'in' ? financeService.stockIn(id, qty, ref) : financeService.stockOut(id, qty, ref),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: financeKeys.inventory() });
+      toast('success', 'Stock updated');
+    },
+    onError: (err: Error) => toast('error', err.message),
+  });
+}
+
 export function useBalanceSheet() {
   return useQuery({
     queryKey: financeKeys.balanceSheet(),
