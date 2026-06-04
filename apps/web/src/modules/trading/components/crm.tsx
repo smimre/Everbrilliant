@@ -25,8 +25,8 @@ export function CRMPage() {
   const { lang } = useLocaleStore();
   const { toast } = useUIStore();
   const fa = lang === 'fa';
-  const { data: rawRequests = [] } = useRequests();
-  const requests = (rawRequests as any[]) || [];
+  const { data: rawRequests } = useRequests();
+  const requests: any[] = (rawRequests as any)?.data ?? [];
 
   const [tab, setTab] = useState<'pipeline'|'schedule'|'list'>('pipeline');
   const [reqFilter, setReqFilter] = useState('all');

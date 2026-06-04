@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useRequests } from '@/hooks/use-trading';
+import { useRequests, useCreateQuote } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 
 interface Props { showQuotes?: boolean; }
@@ -12,6 +12,7 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
   const fa = lang === 'fa';
   const { data: rawRequests } = useRequests();
   const requests: any[] = rawRequests?.data ?? [];
+  const createQuote = useCreateQuote();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<any>(null);
@@ -39,10 +40,16 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
 
   const handleQuote = () => {
     if (!quoteAmount) { toast('error', fa ? 'مبلغ قیمت الزامی است' : 'Quote amount required'); return; }
-    toast('success', fa ? `قیمت ${Number(quoteAmount).toLocaleString('fa-IR')} IRR ارسال شد` : `Quote ${Number(quoteAmount).toLocaleString()} IRR sent`);
-    setSelected(null);
-    setQuoteAmount('');
-    setQuoteNote('');
+    createQuote.mutate(
+      { requestId: selected.id, unitPrice: Number(quoteAmount), currency: 'IRR', note: quoteNote || undefined },
+      {
+        onSuccess: () => {
+          toast('success', fa ? `قیمت ${Number(quoteAmount).toLocaleString('fa-IR')} IRR ارسال شد` : `Quote ${Number(quoteAmount).toLocaleString()} IRR sent`);
+          setSelected(null); setQuoteAmount(''); setQuoteNote('');
+        },
+        onError: (err: any) => toast('error', err?.message || (fa ? 'خطا در ارسال قیمت' : 'Failed to send quote')),
+      }
+    );
   };
 
   return (
@@ -216,8 +223,8 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
                   <button onClick={() => setSelected(null)} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">
                     {fa ? 'انصراف' : 'Cancel'}
                   </button>
-                  <button onClick={handleQuote} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">
-                    💬 {fa ? 'ارسال قیمت' : 'Send Quote'}
+                  <button onClick={handleQuote} disabled={createQuote.isPending} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium disabled:opacity-50">
+                    {createQuote.isPending ? (fa ? 'در حال ارسال...' : 'Sending...') : `💬 ${fa ? 'ارسال قیمت' : 'Send Quote'}`}
                   </button>
                 </div>
               </div>

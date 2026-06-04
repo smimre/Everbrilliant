@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useContracts, useCreateContract } from '@/hooks/use-trading';
+import { useContracts, useCreateContract, useSignContract } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 
 const STATUS_MAP: Record<string, { label: string; labelFa: string; color: string; icon: string }> = {
@@ -27,6 +27,7 @@ export function MyContracts() {
   const fa = lang === 'fa';
   const { data: rawContracts, isLoading } = useContracts();
   const contracts: any[] = (rawContracts as any)?.data ?? [];
+  const signContract = useSignContract();
   const [selected, setSelected] = useState<any>(null);
   const [showNew, setShowNew] = useState(false);
   const [signModal, setSignModal] = useState<any>(null);
@@ -111,12 +112,18 @@ export function MyContracts() {
             <div className="flex gap-3">
               <button onClick={() => { setSignModal(null); setSignPass(''); }} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
               <button
+                disabled={signContract.isPending}
                 onClick={() => {
                   if (!signPass) return;
-                  toast('success', fa ? 'قرارداد با موفقیت امضا شد' : 'Contract signed successfully');
-                  setSignModal(null); setSignPass('');
+                  signContract.mutate(signModal.id, {
+                    onSuccess: () => {
+                      toast('success', fa ? 'قرارداد با موفقیت امضا شد' : 'Contract signed successfully');
+                      setSignModal(null); setSignPass('');
+                    },
+                    onError: (err: any) => toast('error', err?.message || (fa ? 'خطا در امضا' : 'Failed to sign')),
+                  });
                 }}
-                className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium"
+                className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium disabled:opacity-50"
               >
                 ✍️ {fa ? 'تایید امضا' : 'Confirm'}
               </button>
