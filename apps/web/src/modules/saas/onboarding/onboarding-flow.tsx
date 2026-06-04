@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useLocaleStore } from '@/store/locale.store';
 import { useAuthStore } from '@/store/auth.store';
+import { useUpdateMyCompany } from '@/hooks/use-company';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -37,6 +38,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const isFa = lang === 'fa';
 
   const stepIndex = steps.indexOf(step);
+
+  const updateCompany = useUpdateMyCompany();
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<CompanyForm>({
     resolver: zodResolver(companySchema),
@@ -88,7 +91,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 {isFa ? 'اطلاعات پایه شرکت خود را وارد کنید' : 'Enter your company details'}
               </p>
             </div>
-            <form onSubmit={handleSubmit(() => setStep('team'))} className="space-y-4">
+            <form onSubmit={handleSubmit(async (data) => { await updateCompany.mutateAsync(data); setStep('team'); })} className="space-y-4">
               <Input label={isFa ? 'نام شرکت *' : 'Company Name *'} {...register('name')} error={errors.name?.message} />
               <div className="grid grid-cols-2 gap-4">
                 <Input label={isFa ? 'شناسه ملی' : 'National ID'} {...register('nationalId')} placeholder="10XXXXXXXXX" />
