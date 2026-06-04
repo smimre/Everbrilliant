@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useRequests, useCreateQuote } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
+import { useAuthStore } from '@/store/auth.store';
 
 interface Props { showQuotes?: boolean; }
 
@@ -10,6 +11,7 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
   const { lang } = useLocaleStore();
   const { toast } = useUIStore();
   const fa = lang === 'fa';
+  const { user } = useAuthStore();
   const { data: rawRequests } = useRequests();
   const requests: any[] = rawRequests?.data ?? [];
   const createQuote = useCreateQuote();
@@ -19,7 +21,7 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
   const [quoteAmount, setQuoteAmount] = useState('');
   const [quoteNote, setQuoteNote] = useState('');
 
-  const incoming = requests.filter((r: any) => r.type === 'incoming' || r.sellerAcc !== undefined);
+  const incoming = requests.filter((r: any) => r.sellerCompanyId === user?.companyId);
   const pending = incoming.filter((r: any) => r.status === 'pending');
   const quoted = incoming.filter((r: any) => r.status === 'quoted');
   const won = incoming.filter((r: any) => ['paid','completed','issued'].includes(r.status));

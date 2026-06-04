@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useRequests, useCreateRequest } from '@/hooks/use-trading';
+import { useRequests, useCreateRequest, useConnections } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
+import { useAuthStore } from '@/store/auth.store';
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: '#f59e0b', QUOTED: '#3b82f6', APPROVED: '#10b981',
@@ -246,13 +247,43 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
 function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void }) {
   const fa = lang === 'fa';
   const { toast } = useUIStore();
+  const { user } = useAuthStore();
   const createRequest = useCreateRequest();
+  const { data: rawConns } = useConnections();
+  const conns: any[] = (rawConns as any)?.data ?? [];
+
+  const sellers = conns
+    .filter((c: any) => (c.status || '').toLowerCase() === 'active')
+    .map((c: any) => {
+      const isA = c.companyAId === user?.companyId;
+      const peer = isA ? c.companyB : c.companyA;
+      return { id: String(peer?.id ?? ''), name: peer?.name ?? '' };
+    })
+    .filter(s => s.id);
+
   const [form, setForm] = useState({
-    productName: '', quantity: '', unit: 'ton', currency: 'IRR',
+    sellerId: '', productName: '', quantity: '', unit: 'ton', currency: 'IRR',
     priority: 'normal', deadline: '', description: '', hsCode: '',
   });
 
   const inp = "w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]";
+
+  if (!sellers.length) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-sm p-6 shadow-2xl text-center">
+          <div className="text-4xl mb-3">🔌</div>
+          <h2 className="font-bold mb-2">{fa ? 'اتصالی یافت نشد' : 'No Connections'}</h2>
+          <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4">
+            {fa ? 'ابتدا باید به یک تامین‌کننده متصل شوید.' : 'You must connect to a supplier first.'}
+          </p>
+          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">
+            {fa ? 'بستن' : 'Close'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
@@ -262,6 +293,13 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
           <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
         </div>
         <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'تامین‌کننده *' : 'Supplier *'}</label>
+            <select value={form.sellerId} onChange={e => setForm({ ...form, sellerId: e.target.value })} className={inp}>
+              <option value="">{fa ? '-- انتخاب تامین‌کننده --' : '-- Select Supplier --'}</option>
+              {sellers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
           <div>
             <label className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'نام کالا / خدمات *' : 'Product / Service *'}</label>
             <input value={form.productName} onChange={e => setForm({ ...form, productName: e.target.value })} className={inp}
@@ -322,9 +360,11 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
           <button
             disabled={createRequest.isPending}
             onClick={() => {
+              if (!form.sellerId) { toast('error', fa ? 'انتخاب تامین‌کننده الزامی است' : 'Supplier selection required'); return; }
               if (!form.productName) { toast('error', fa ? 'نام کالا الزامی است' : 'Product name required'); return; }
               createRequest.mutate(
                 {
+                  sellerCompanyId: Number(form.sellerId),
                   product: form.productName,
                   qty: form.quantity ? Number(form.quantity) : undefined,
                   unit: form.unit,

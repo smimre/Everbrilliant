@@ -47,6 +47,7 @@ export class TradingService {
     return this.prisma.tradeRequest.create({
       data: {
         buyerCompanyId: companyId,
+        sellerCompanyId: dto.sellerCompanyId ? Number(dto.sellerCompanyId) : undefined,
         product: dto.product,
         qty: dto.qty ?? 0,
         unit: dto.unit || 'unit',
