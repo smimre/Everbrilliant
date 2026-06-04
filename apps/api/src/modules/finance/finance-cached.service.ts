@@ -51,6 +51,12 @@ export class FinanceCachedService extends FinanceService {
     return this.cache.getOrSet(key, () => super.getInventory(companyId, q), this.cache.TTL.SHORT);
   }
 
+  override async addInventory(companyId: number, dto: any) {
+    const result = await super.addInventory(companyId, dto);
+    await this.cache.invalidateInventory(companyId);
+    return result;
+  }
+
   override async stockMove(companyId: number, itemId: string, type: 'in'|'out', qty: number, userId: number, ref?: string) {
     const result = await super.stockMove(companyId, itemId, type, qty, userId, ref);
     await this.cache.invalidateInventory(companyId);

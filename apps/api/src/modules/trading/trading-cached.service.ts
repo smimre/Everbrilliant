@@ -43,6 +43,9 @@ export class TradingCachedService extends TradingService {
   override async createRequest(companyId: number, userId: number, dto: any) {
     const result = await super.createRequest(companyId, userId, dto);
     await this.cache.invalidateRequests(companyId);
+    if (dto.sellerCompanyId) {
+      await this.cache.invalidateRequests(Number(dto.sellerCompanyId));
+    }
     return result;
   }
 
@@ -54,8 +57,20 @@ export class TradingCachedService extends TradingService {
   }
 
   override async signContract(companyId: number, id: string) {
+    const contract = await this.prisma.contract.findUnique({
+      where: { id },
+      select: { buyerCompanyId: true, sellerCompanyId: true },
+    });
     const result = await super.signContract(companyId, id);
     await this.cache.del(this.cache.KEYS.contracts(companyId));
+    if (contract) {
+      const otherId = contract.buyerCompanyId === companyId
+        ? contract.sellerCompanyId
+        : contract.buyerCompanyId;
+      if (otherId && otherId !== companyId) {
+        await this.cache.del(this.cache.KEYS.contracts(otherId));
+      }
+    }
     return result;
   }
 
