@@ -26,7 +26,10 @@ export class TradingController {
 
   @Get('tenders')            getTenders(@Req() r: any, @Query() q: any)                    { return this.trading.getTenders(q, q.mine === 'true' ? r.user.companyId : undefined); }
   @Post('tenders')           createTender(@Req() r: any, @Body() dto: any)                 { return this.trading.createTender(r.user.companyId, r.user.id, dto); }
-  @Post('tenders/:id/bids')  placeBid(@Req() r: any, @Param('id') id: string, @Body() d: any) { return this.trading.placeBid(r.user.companyId, r.user.id, id, d); }
+  @Post('tenders/:id/bids')   placeBid(@Req() r: any, @Param('id') id: string, @Body() d: any)    { return this.trading.placeBid(r.user.companyId, r.user.id, id, d); }
+  @Get('tenders/:id/bids')    getTenderBids(@Req() r: any, @Param('id') id: string)               { return this.trading.getTenderBids(r.user.companyId, id); }
+  @Patch('tenders/:id/close') closeTender(@Req() r: any, @Param('id') id: string)                 { return this.trading.closeTender(r.user.companyId, id); }
+  @Patch('tenders/:id/award') awardTender(@Req() r: any, @Param('id') id: string)                 { return this.trading.awardTender(r.user.companyId, id); }
 
   @Get('connections')        getConnections(@Req() r: any, @Query() q: any)                { return this.trading.getConnections(r.user.companyId, q); }
 

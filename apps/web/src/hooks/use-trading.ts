@@ -79,6 +79,31 @@ export function usePlaceBid() {
   });
 }
 
+export function useTenderBids(tenderId: string) {
+  return useQuery({
+    queryKey: ['trading', 'tenders', tenderId, 'bids'],
+    queryFn: () => api.get(`/trading/tenders/${tenderId}/bids`),
+    enabled: !!tenderId,
+    staleTime: 30_000,
+  });
+}
+
+export function useCloseTender() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/tenders/${id}/close`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'tenders'] }),
+  });
+}
+
+export function useAwardTender() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/tenders/${id}/award`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'tenders'] }),
+  });
+}
+
 // ── Connections ───────────────────────────────────────────────
 export function useConnections() {
   return useQuery({

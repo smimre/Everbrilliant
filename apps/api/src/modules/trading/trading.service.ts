@@ -269,6 +269,30 @@ export class TradingService {
     });
   }
 
+  async getTenderBids(companyId: number, tenderId: string) {
+    const tender = await this.prisma.tender.findFirst({ where: { id: tenderId, companyId } });
+    if (!tender) throw new NotFoundException('Tender not found');
+    return this.prisma.bid.findMany({
+      where: { tenderId },
+      orderBy: { totalPrice: 'asc' },
+      include: { tender: { select: { id: true, title: true } } },
+    });
+  }
+
+  async closeTender(companyId: number, id: string) {
+    const t = await this.prisma.tender.findFirst({ where: { id, companyId } });
+    if (!t) throw new NotFoundException('Tender not found');
+    if (t.status !== 'OPEN') throw new BadRequestException('Tender is not open');
+    return this.prisma.tender.update({ where: { id }, data: { status: 'CLOSED' } });
+  }
+
+  async awardTender(companyId: number, id: string) {
+    const t = await this.prisma.tender.findFirst({ where: { id, companyId } });
+    if (!t) throw new NotFoundException('Tender not found');
+    if (t.status !== 'CLOSED') throw new BadRequestException('Tender must be closed first');
+    return this.prisma.tender.update({ where: { id }, data: { status: 'AWARDED', awardDate: new Date() } });
+  }
+
   async getConnections(companyId: number, q: any) {
     const { skip, take, page, limit } = this.paginate(q);
     const where = { OR: [{ companyAId: companyId }, { companyBId: companyId }] };
