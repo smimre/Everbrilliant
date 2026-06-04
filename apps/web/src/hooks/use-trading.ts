@@ -21,6 +21,14 @@ export function useCreateRequest() {
   });
 }
 
+export function useCancelRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/requests/${id}/cancel`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading', 'requests'] }),
+  });
+}
+
 // ── Contracts ─────────────────────────────────────────────────
 export function useContracts() {
   return useQuery({

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useRequests, useCreateRequest, useConnections } from '@/hooks/use-trading';
+import { useRequests, useCreateRequest, useConnections, useAcceptQuote, useCancelRequest, useQuotesForRequest } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -15,8 +15,8 @@ const STATUS_ICONS: Record<string, string> = {
   ISSUED: '📜', COMPLETED: '✔️', CANCELLED: '🚫', REJECTED: '❌',
 };
 const STATUS_LABELS: Record<string, { fa: string; en: string }> = {
-  PENDING:   { fa: '⏳ در انتظار',    en: '⏳ Pending' },
-  QUOTED:    { fa: '💬 قیمت داده',   en: '💬 Quoted' },
+  PENDING:   { fa: '⏳ در انتظار',   en: '⏳ Pending' },
+  QUOTED:    { fa: '💬 قیمت آمد',    en: '💬 Quoted' },
   APPROVED:  { fa: '✅ تایید شده',   en: '✅ Approved' },
   PAID:      { fa: '💳 پرداخت شده', en: '💳 Paid' },
   ISSUED:    { fa: '📜 صادر شده',    en: '📜 Issued' },
@@ -33,19 +33,24 @@ function fmtDate(iso: string) {
 export function MyRequests() {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
+  const { user } = useAuthStore();
   const { data: rawRequests, isLoading } = useRequests();
-  const requests: any[] = rawRequests?.data ?? [];
+  const allRequests: any[] = rawRequests?.data ?? [];
   const [filter, setFilter] = useState('ALL');
   const [search, setSearch] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [selected, setSelected] = useState<any>(null);
+  const [confirmTarget, setConfirmTarget] = useState<any>(null);
+
+  // Buyer-side only — spec: r.buyerAcc===curAcc.id
+  const requests = allRequests.filter((r: any) => r.buyerCompanyId === user?.companyId);
 
   const tabLabel: Record<string, { fa: string; en: string }> = {
-    ALL:      { fa: 'همه',         en: 'All' },
-    PENDING:  { fa: 'در انتظار',   en: 'Pending' },
-    QUOTED:   { fa: 'قیمت داده',  en: 'Quoted' },
-    APPROVED: { fa: 'تایید شده',  en: 'Approved' },
-    REJECTED: { fa: 'رد شده',     en: 'Rejected' },
+    ALL:      { fa: 'همه',        en: 'All' },
+    PENDING:  { fa: 'در انتظار',  en: 'Pending' },
+    QUOTED:   { fa: 'قیمت آمد',  en: 'Quoted' },
+    APPROVED: { fa: 'تایید شده', en: 'Approved' },
+    REJECTED: { fa: 'رد شده',    en: 'Rejected' },
   };
 
   const filtered = requests.filter((r: any) => {
@@ -62,7 +67,7 @@ export function MyRequests() {
     PENDING:  requests.filter(r => (r.status || '').toUpperCase() === 'PENDING').length,
     QUOTED:   requests.filter(r => (r.status || '').toUpperCase() === 'QUOTED').length,
     APPROVED: requests.filter(r => ['APPROVED','PAID','ISSUED','COMPLETED'].includes((r.status || '').toUpperCase())).length,
-    REJECTED: requests.filter(r => (r.status || '').toUpperCase() === 'REJECTED').length,
+    REJECTED: requests.filter(r => ['REJECTED','CANCELLED'].includes((r.status || '').toUpperCase())).length,
   };
 
   return (
@@ -117,89 +122,139 @@ export function MyRequests() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-[hsl(var(--muted-foreground))]">
-          <div className="text-4xl mb-3">📭</div>
-          <p className="font-medium">{fa ? 'درخواستی یافت نشد' : 'No requests found'}</p>
-          <p className="text-sm mt-1">{fa ? 'درخواست جدید ثبت کنید' : 'Create a new request'}</p>
+          <div className="text-4xl mb-3">📋</div>
+          <p className="font-medium">{fa ? 'درخواستی ثبت نشده' : 'No requests yet'}</p>
+          <button
+            onClick={() => setShowNew(true)}
+            className="mt-3 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            + {fa ? 'درخواست جدید' : 'New Request'}
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((r: any) => (
-            <RequestCard key={r.id} request={r} lang={lang} onSelect={() => setSelected(r)} />
+            <RequestCard
+              key={r.id}
+              request={r}
+              lang={lang}
+              onSelect={() => setSelected(r)}
+              onConfirm={() => setConfirmTarget(r)}
+              onReject={() => setConfirmTarget({ ...r, _rejecting: true })}
+            />
           ))}
         </div>
       )}
 
       {showNew && <NewRequestModal lang={lang} onClose={() => setShowNew(false)} />}
-      {selected && <RequestDetailModal request={selected} lang={lang} onClose={() => setSelected(null)} />}
+      {selected && (
+        <RequestDetailModal
+          request={selected}
+          lang={lang}
+          onClose={() => setSelected(null)}
+          onConfirm={() => { setSelected(null); setConfirmTarget(selected); }}
+          onReject={() => { setSelected(null); setConfirmTarget({ ...selected, _rejecting: true }); }}
+        />
+      )}
+      {confirmTarget && (
+        <QuoteActionModal
+          request={confirmTarget}
+          lang={lang}
+          onClose={() => setConfirmTarget(null)}
+        />
+      )}
     </div>
   );
 }
 
-function RequestCard({ request: r, lang, onSelect }: { request: any; lang: string; onSelect: () => void }) {
+function RequestCard({
+  request: r, lang, onSelect, onConfirm, onReject,
+}: {
+  request: any; lang: string;
+  onSelect: () => void; onConfirm: () => void; onReject: () => void;
+}) {
   const fa = lang === 'fa';
   const st = (r.status || '').toUpperCase();
   const color = STATUS_COLORS[st] || '#64748b';
   const label = STATUS_LABELS[st] ? (fa ? STATUS_LABELS[st].fa : STATUS_LABELS[st].en) : r.status;
+  const isQuoted = st === 'QUOTED';
 
   return (
     <div
       className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 hover:border-[hsl(var(--primary)/0.3)] transition-colors cursor-pointer"
-      style={{ borderRight: `4px solid ${color}` }}
+      style={{ borderRight: `4px solid ${isQuoted ? '#3b82f6' : st === 'APPROVED' ? '#10b981' : st === 'REJECTED' || st === 'CANCELLED' ? '#ef4444' : color}` }}
       onClick={onSelect}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span className="font-semibold text-sm truncate">{r.product || r.title || (fa ? 'درخواست' : 'Request')}</span>
             <span className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0" style={{ background: `${color}20`, color }}>
               {label}
             </span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-[hsl(var(--muted-foreground))] flex-wrap">
-            {r.qty && <span>📦 {Number(r.qty)} {r.unit || ''}</span>}
-            {r.amountIRR && <span className="font-semibold" style={{ color: '#f59e0b' }}>💰 {Number(r.amountIRR).toLocaleString('fa-IR')} IRR</span>}
+          {/* Meta row: seller / id / date / qty — matches spec */}
+          <div className="flex items-center gap-3 text-xs text-[hsl(var(--muted-foreground))] flex-wrap">
+            {r.sellerCompany?.name && <span>🏭 {r.sellerCompany.name}</span>}
+            <span>📋 {r.id}</span>
             {r.createdAt && <span>📅 {fmtDate(r.createdAt)}</span>}
+            {r.qty && <span>📦 {Number(r.qty)} {r.unit || ''}</span>}
           </div>
           {r.note && (
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-2 line-clamp-2">{r.note}</p>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1.5 line-clamp-1">💬 {r.note}</p>
           )}
         </div>
-        {/* Quoted: show Confirm/Reject actions */}
-        {st === 'QUOTED' && (
-          <div className="flex gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+        <div className="flex flex-col items-end gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+          {r.amountIRR && (
+            <span className="text-sm font-bold" style={{ color: '#f59e0b' }}>
+              {Number(r.amountIRR).toLocaleString('fa-IR')} IRR
+            </span>
+          )}
+          {isQuoted ? (
+            <div className="flex gap-1.5">
+              <button
+                onClick={onConfirm}
+                className="px-2.5 py-1 rounded-lg bg-green-500/10 border border-green-500/30 text-green-600 text-xs font-bold hover:bg-green-500/20 transition-colors"
+              >
+                ✅ {fa ? 'تایید' : 'Confirm'}
+              </button>
+              <button
+                onClick={onReject}
+                className="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold hover:bg-red-500/20 transition-colors"
+              >
+                ❌
+              </button>
+            </div>
+          ) : (
             <button
-              className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-500 text-xs font-bold hover:bg-green-500/20 transition-colors"
+              onClick={onSelect}
+              className="text-xs px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors"
             >
-              ✅ {fa ? 'تایید' : 'Confirm'}
+              {fa ? 'جزئیات' : 'Details'}
             </button>
-            <button
-              className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold hover:bg-red-500/20 transition-colors"
-            >
-              ❌ {fa ? 'رد' : 'Reject'}
-            </button>
-          </div>
-        )}
-        {st !== 'QUOTED' && (
-          <button className="text-xs px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)] transition-colors shrink-0">
-            {fa ? 'جزئیات' : 'Details'}
-          </button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang: string; onClose: () => void }) {
+function RequestDetailModal({
+  request: r, lang, onClose, onConfirm, onReject,
+}: {
+  request: any; lang: string; onClose: () => void; onConfirm: () => void; onReject: () => void;
+}) {
   const fa = lang === 'fa';
   const st = (r.status || '').toUpperCase();
   const color = STATUS_COLORS[st] || '#64748b';
   const label = STATUS_LABELS[st] ? (fa ? STATUS_LABELS[st].fa : STATUS_LABELS[st].en) : r.status;
   const fields: [string, any][] = [
-    [fa ? 'نام کالا' : 'Product', r.product || r.title],
-    [fa ? 'مقدار' : 'Quantity', r.qty ? `${Number(r.qty)} ${r.unit || ''}` : null],
-    [fa ? 'مبلغ' : 'Amount', r.amountIRR ? `${Number(r.amountIRR).toLocaleString('fa-IR')} IRR` : null],
-    [fa ? 'تاریخ' : 'Date', r.createdAt ? fmtDate(r.createdAt) : null],
-    [fa ? 'وضعیت' : 'Status', label],
+    [fa ? 'نام کالا' : 'Product',   r.product || r.title],
+    [fa ? 'فروشنده' : 'Seller',     r.sellerCompany?.name],
+    [fa ? 'مقدار' : 'Quantity',     r.qty ? `${Number(r.qty)} ${r.unit || ''}` : null],
+    [fa ? 'مبلغ' : 'Amount',        r.amountIRR ? `${Number(r.amountIRR).toLocaleString('fa-IR')} IRR` : null],
+    [fa ? 'تاریخ' : 'Date',         r.createdAt ? fmtDate(r.createdAt) : null],
+    [fa ? 'وضعیت' : 'Status',       label],
   ].filter(([, v]) => v) as [string, any][];
 
   return (
@@ -207,7 +262,7 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
       <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-md p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold">📋 {r.product || r.title || (fa ? 'درخواست' : 'Request')}</h2>
-          <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
+          <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl leading-none">✕</button>
         </div>
         <span className="text-xs px-2 py-1 rounded-full mb-4 inline-block" style={{ background: color + '20', color }}>
           {STATUS_ICONS[st]} {label}
@@ -221,24 +276,107 @@ function RequestDetailModal({ request: r, lang, onClose }: { request: any; lang:
           ))}
         </div>
         {r.note && (
-          <p className="mt-3 text-xs text-[hsl(var(--muted-foreground))] p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg">{r.note}</p>
+          <p className="mt-3 text-xs text-[hsl(var(--muted-foreground))] p-3 bg-[hsl(var(--muted)/0.3)] rounded-lg">💬 {r.note}</p>
         )}
-        {st === 'QUOTED' && (
+        {st === 'QUOTED' ? (
           <div className="flex gap-3 mt-5">
-            <button
-              onClick={onClose}
-              className="flex-1 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-500 text-sm font-bold"
-            >
+            <button onClick={onConfirm} className="flex-1 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-600 text-sm font-bold hover:bg-green-500/20 transition-colors">
               ✅ {fa ? 'تایید قیمت' : 'Confirm Quote'}
             </button>
-            <button
-              onClick={onClose}
-              className="flex-1 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm font-bold"
-            >
+            <button onClick={onReject} className="flex-1 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-sm font-bold hover:bg-red-500/20 transition-colors">
               ❌ {fa ? 'رد قیمت' : 'Reject Quote'}
             </button>
           </div>
+        ) : (
+          <div className="mt-5 flex justify-end">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+              {fa ? 'بستن' : 'Close'}
+            </button>
+          </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function QuoteActionModal({ request: r, lang, onClose }: { request: any; lang: string; onClose: () => void }) {
+  const fa = lang === 'fa';
+  const { toast } = useUIStore();
+  const isRejecting = r._rejecting === true;
+  const acceptQuote = useAcceptQuote();
+  const cancelRequest = useCancelRequest();
+  const { data: quotesRaw } = useQuotesForRequest(r.id);
+  const quotes: any[] = Array.isArray(quotesRaw) ? quotesRaw : (quotesRaw as any)?.data ?? [];
+  // Pick the first PENDING quote (the seller's offer)
+  const pendingQuote = quotes.find((q: any) => (q.status || '').toUpperCase() === 'PENDING');
+
+  if (isRejecting) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-sm p-6 shadow-2xl text-center">
+          <div className="text-3xl mb-3">❌</div>
+          <p className="font-medium mb-1">{fa ? 'رد قیمت' : 'Reject Quote'}</p>
+          <p className="text-sm text-[hsl(var(--muted-foreground))] mb-5">{r.product}</p>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+              {fa ? 'انصراف' : 'Cancel'}
+            </button>
+            <button
+              disabled={cancelRequest.isPending}
+              onClick={() => cancelRequest.mutate(r.id, {
+                onSuccess: () => { toast('success', fa ? 'درخواست لغو شد' : 'Request cancelled'); onClose(); },
+                onError: (e: any) => toast('error', e?.message || 'Error'),
+              })}
+              className="flex-1 py-2 rounded-lg bg-red-500 text-white text-sm font-bold hover:bg-red-600 disabled:opacity-50 transition-colors"
+            >
+              {cancelRequest.isPending ? '...' : (fa ? 'بله، رد کن' : 'Yes, Reject')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-sm p-6 shadow-2xl">
+        <h2 className="font-bold mb-4">✅ {fa ? 'تایید قیمت' : 'Confirm Quote'}</h2>
+        <div className="rounded-xl bg-[hsl(var(--muted)/0.4)] p-4 mb-5 space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-[hsl(var(--muted-foreground))]">{fa ? 'کالا:' : 'Product:'}</span>
+            <strong>{r.product}</strong>
+          </div>
+          {r.amountIRR && (
+            <div className="flex justify-between">
+              <span className="text-[hsl(var(--muted-foreground))]">{fa ? 'مبلغ:' : 'Amount:'}</span>
+              <strong style={{ color: '#f59e0b' }}>{Number(r.amountIRR).toLocaleString('fa-IR')} IRR</strong>
+            </div>
+          )}
+          {pendingQuote?.deliveryDays && (
+            <div className="flex justify-between">
+              <span className="text-[hsl(var(--muted-foreground))]">{fa ? 'زمان تحویل:' : 'Delivery:'}</span>
+              <span>{pendingQuote.deliveryDays} {fa ? 'روز' : 'days'}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+            {fa ? 'انصراف' : 'Cancel'}
+          </button>
+          <button
+            disabled={acceptQuote.isPending || !pendingQuote}
+            onClick={() => {
+              if (!pendingQuote) { toast('error', fa ? 'قیمتی یافت نشد' : 'No quote found'); return; }
+              acceptQuote.mutate(pendingQuote.id, {
+                onSuccess: () => { toast('success', fa ? '✅ قیمت تایید شد' : '✅ Quote confirmed'); onClose(); },
+                onError: (e: any) => toast('error', e?.message || 'Error'),
+              });
+            }}
+            className="flex-1 py-2 rounded-lg bg-green-500 text-white text-sm font-bold hover:bg-green-600 disabled:opacity-50 transition-colors"
+          >
+            {acceptQuote.isPending ? '...' : `✅ ${fa ? 'تایید' : 'Confirm'}`}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -155,17 +155,26 @@ export class TradingService {
   }
 
   async createQuote(companyId: number, userId: number, dto: any) {
-    return this.prisma.quote.create({
+    const quote = await this.prisma.quote.create({
       data: {
         requestId: dto.requestId,
         sellerCompanyId: companyId,
         unitPrice: dto.unitPrice, currency: dto.currency || 'IRR',
-        totalPrice: dto.totalPrice,
+        totalPrice: dto.totalPrice ?? dto.unitPrice,
         validUntil: dto.validUntil ? new Date(dto.validUntil) : undefined,
         deliveryDays: dto.deliveryDays,
         note: dto.note, status: 'PENDING', createdById: userId,
       },
     });
+    // Notify buyer by moving request to QUOTED and stamping the offered amount
+    await this.prisma.tradeRequest.update({
+      where: { id: dto.requestId },
+      data: {
+        status: 'QUOTED',
+        amountIRR: dto.unitPrice ? BigInt(Math.round(Number(dto.unitPrice))) : undefined,
+      },
+    });
+    return quote;
   }
 
   async acceptQuote(companyId: number, id: string) {
@@ -173,7 +182,7 @@ export class TradingService {
     if (!quote || quote.request.buyerCompanyId !== companyId) throw new ForbiddenException();
     await this.prisma.quote.updateMany({ where: { requestId: quote.requestId }, data: { status: 'REJECTED' } });
     const updated = await this.prisma.quote.update({ where: { id }, data: { status: 'ACCEPTED' } });
-    await this.prisma.tradeRequest.update({ where: { id: quote.requestId }, data: { status: 'QUOTED', sellerCompanyId: quote.sellerCompanyId } });
+    await this.prisma.tradeRequest.update({ where: { id: quote.requestId }, data: { status: 'APPROVED', sellerCompanyId: quote.sellerCompanyId } });
     return updated;
   }
 
