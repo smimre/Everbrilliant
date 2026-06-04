@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
-import { useRequests } from '@/hooks/use-trading';
+import { useRequests, useCRMStats, useCreateFollowUp, useFollowUps, useMarkFollowUpDone } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 
 const FOLLOWUP_TYPES = [
@@ -27,19 +27,23 @@ export function CRMPage() {
   const fa = lang === 'fa';
   const { data: rawRequests } = useRequests();
   const requests: any[] = (rawRequests as any)?.data ?? [];
+  const { data: crmStats } = useCRMStats();
+  const createFollowUp = useCreateFollowUp();
+  const markDone = useMarkFollowUpDone();
 
   const [tab, setTab] = useState<'pipeline'|'schedule'|'list'>('pipeline');
   const [reqFilter, setReqFilter] = useState('all');
   const [showActivity, setShowActivity] = useState<any>(null);
   const [actType, setActType] = useState('call');
   const [actNote, setActNote] = useState('');
+  const [actNextDate, setActNextDate] = useState('');
 
-  const open = requests.filter((r: any) => !['completed','rejected','cancelled'].includes(r.status));
-  const won = requests.filter((r: any) => ['completed','paid'].includes(r.status));
-  const convRate = requests.length ? Math.round(won.length / requests.length * 100) : 0;
+  const open = requests.filter((r: any) => !['completed','rejected','cancelled'].includes((r.status || '').toUpperCase().toLowerCase()));
+  const won = requests.filter((r: any) => ['completed','paid'].includes((r.status || '').toLowerCase()));
   const pipeline = open.reduce((s: number, r: any) => s + (r.amountIRR || 0), 0);
-  const overdueFollowups = 0;
-  const todayFollowups = 0;
+  const overdueFollowups: number = (crmStats as any)?.overdue ?? 0;
+  const todayFollowups: number = (crmStats as any)?.today ?? 0;
+  const convRate: number = (crmStats as any)?.convRate ?? (requests.length ? Math.round(won.length / requests.length * 100) : 0);
 
   const tabs = [
     { id: 'pipeline', icon: '📊', label: fa ? 'پایپ‌لاین' : 'Pipeline' },
@@ -309,11 +313,33 @@ export function CRMPage() {
                   placeholder={fa ? 'خلاصه مکالمه یا اقدام...' : 'Summary of call or action...'}
                 />
               </div>
+              <div>
+                <label className="text-xs text-[hsl(var(--muted-foreground))] mb-1 block">⏰ {fa ? 'تاریخ پیگیری بعدی' : 'Next Follow-up Date'}</label>
+                <input
+                  type="date"
+                  value={actNextDate}
+                  onChange={e => setActNextDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none"
+                />
+              </div>
               <button
-                onClick={() => { toast('success', fa ? 'فعالیت ثبت شد' : 'Activity logged'); setActNote(''); setShowActivity(null); }}
-                className="w-full py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium"
+                disabled={createFollowUp.isPending}
+                onClick={() => {
+                  if (!actNote.trim()) { toast('error', fa ? 'یادداشت الزامی است' : 'Note is required'); return; }
+                  createFollowUp.mutate(
+                    { requestId: showActivity.id, dto: { note: `[${actType}] ${actNote}`, nextDate: actNextDate || undefined } },
+                    {
+                      onSuccess: () => {
+                        toast('success', fa ? '✅ فعالیت ثبت شد' : '✅ Activity logged');
+                        setActNote(''); setActNextDate(''); setShowActivity(null);
+                      },
+                      onError: (e: any) => toast('error', e?.message || 'Error'),
+                    }
+                  );
+                }}
+                className="w-full py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium disabled:opacity-50"
               >
-                ✅ {fa ? 'ثبت فعالیت' : 'Log Activity'}
+                {createFollowUp.isPending ? '...' : `✅ ${fa ? 'ثبت فعالیت' : 'Log Activity'}`}
               </button>
             </div>
           </div>

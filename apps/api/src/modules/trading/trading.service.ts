@@ -293,6 +293,55 @@ export class TradingService {
     return this.prisma.tender.update({ where: { id }, data: { status: 'AWARDED', awardDate: new Date() } });
   }
 
+  async getFollowUps(companyId: number, requestId: string) {
+    const req = await this.prisma.tradeRequest.findFirst({ where: { id: requestId, OR: [{ buyerCompanyId: companyId }, { sellerCompanyId: companyId }] } });
+    if (!req) throw new NotFoundException('Request not found');
+    return this.prisma.followUp.findMany({ where: { requestId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createFollowUp(companyId: number, userId: number, requestId: string, dto: any) {
+    const req = await this.prisma.tradeRequest.findFirst({ where: { id: requestId, OR: [{ buyerCompanyId: companyId }, { sellerCompanyId: companyId }] } });
+    if (!req) throw new NotFoundException('Request not found');
+    return this.prisma.followUp.create({
+      data: { requestId, userId, note: dto.note || '', nextDate: dto.nextDate ? new Date(dto.nextDate) : null },
+    });
+  }
+
+  async markFollowUpDone(companyId: number, id: string) {
+    const fu = await this.prisma.followUp.findUnique({
+      where: { id },
+      include: { request: { select: { buyerCompanyId: true, sellerCompanyId: true } } },
+    });
+    if (!fu || (fu.request.buyerCompanyId !== companyId && fu.request.sellerCompanyId !== companyId))
+      throw new NotFoundException('Follow-up not found');
+    return this.prisma.followUp.update({ where: { id }, data: { isDone: true } });
+  }
+
+  async getCRMStats(companyId: number) {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd   = new Date(todayStart.getTime() + 86400_000);
+
+    const [overdue, todayCount, openCount, wonCount, totalCount] = await Promise.all([
+      this.prisma.followUp.count({
+        where: { isDone: false, nextDate: { lt: todayStart }, request: { OR: [{ buyerCompanyId: companyId }, { sellerCompanyId: companyId }] } },
+      }),
+      this.prisma.followUp.count({
+        where: { isDone: false, nextDate: { gte: todayStart, lt: todayEnd }, request: { OR: [{ buyerCompanyId: companyId }, { sellerCompanyId: companyId }] } },
+      }),
+      this.prisma.tradeRequest.count({
+        where: { OR: [{ buyerCompanyId: companyId }, { sellerCompanyId: companyId }], status: { notIn: ['COMPLETED', 'REJECTED', 'CANCELLED'] } },
+      }),
+      this.prisma.tradeRequest.count({
+        where: { OR: [{ buyerCompanyId: companyId }, { sellerCompanyId: companyId }], status: { in: ['COMPLETED', 'PAID'] } },
+      }),
+      this.prisma.tradeRequest.count({
+        where: { OR: [{ buyerCompanyId: companyId }, { sellerCompanyId: companyId }] },
+      }),
+    ]);
+    return { overdue, today: todayCount, open: openCount, won: wonCount, total: totalCount, convRate: totalCount ? Math.round(wonCount / totalCount * 100) : 0 };
+  }
+
   async getConnections(companyId: number, q: any) {
     const { skip, take, page, limit } = this.paginate(q);
     const where = { OR: [{ companyAId: companyId }, { companyBId: companyId }] };

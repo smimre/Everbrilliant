@@ -53,4 +53,26 @@ export class TradingController {
   removeFromBlacklist(@Req() r: any, @Param('id') id: string) {
     return this.trading.removeFromBlacklist(r.user.companyId, Number(id));
   }
+
+  // ── Follow-ups ─────────────────────────────────────────────
+  @Get('requests/:id/followups')
+  getFollowUps(@Req() r: any, @Param('id') id: string) {
+    return this.trading.getFollowUps(r.user.companyId, id);
+  }
+
+  @Post('requests/:id/followups')
+  createFollowUp(@Req() r: any, @Param('id') id: string, @Body() dto: any) {
+    return this.trading.createFollowUp(r.user.companyId, r.user.id, id, dto);
+  }
+
+  @Patch('followups/:id/done')
+  markFollowUpDone(@Req() r: any, @Param('id') id: string) {
+    return this.trading.markFollowUpDone(r.user.companyId, id);
+  }
+
+  // ── CRM stats ──────────────────────────────────────────────
+  @Get('crm/stats')
+  getCRMStats(@Req() r: any) {
+    return this.trading.getCRMStats(r.user.companyId);
+  }
 }

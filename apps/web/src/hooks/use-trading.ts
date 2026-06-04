@@ -104,6 +104,45 @@ export function useAwardTender() {
   });
 }
 
+// ── Follow-ups ────────────────────────────────────────────────
+export function useFollowUps(requestId: string) {
+  return useQuery({
+    queryKey: ['trading', 'followups', requestId],
+    queryFn: () => api.get(`/trading/requests/${requestId}/followups`),
+    enabled: !!requestId,
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateFollowUp() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ requestId, dto }: { requestId: string; dto: any }) =>
+      api.post(`/trading/requests/${requestId}/followups`, dto),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['trading', 'followups', vars.requestId] });
+      qc.invalidateQueries({ queryKey: ['trading', 'crm'] });
+    },
+  });
+}
+
+export function useMarkFollowUpDone() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.patch(`/trading/followups/${id}/done`, {}),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['trading'] }),
+  });
+}
+
+export function useCRMStats() {
+  return useQuery({
+    queryKey: ['trading', 'crm', 'stats'],
+    queryFn: () => api.get('/trading/crm/stats'),
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
 // ── Connections ───────────────────────────────────────────────
 export function useConnections() {
   return useQuery({
