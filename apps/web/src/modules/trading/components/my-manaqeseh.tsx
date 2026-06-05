@@ -89,7 +89,7 @@ function MnqKeyConfigModal({ tender, config, onSave, onClose, fa }: {
           <div className="flex gap-2 flex-wrap">
             {[2,3,4,5,6,7,8,9,10].map(n => (
               <button key={n} onClick={() => setKeyCount(n)}
-                className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${keyCount === n ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--background))] border border-[hsl(var(--border))]'}`}>
+                className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${keyCount === n ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--background))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'}`}>
                 {n}
               </button>
             ))}
@@ -106,13 +106,18 @@ function MnqKeyConfigModal({ tender, config, onSave, onClose, fa }: {
                   {MNQ_STAFF.map(s => <option key={s.id} value={s.id}>{s.name} — {s.role}</option>)}
                 </select>
                 {slots[slot] && (existing?.holder === slots[slot] && existing?.passwordHash
-                  ? <div className="text-xs text-green-500 mt-1.5">✅ {fa ? 'رمز تنظیم شده' : 'Password set'}</div>
+                  ? <div className="text-xs text-green-500 mt-1.5">✅ {fa ? 'رمز تنظیم شده' : 'Password set'} {existing.passwordSetAt ? `— ${existing.passwordSetAt}` : ''}</div>
                   : slots[slot] ? <div className="text-xs text-amber-500 mt-1.5">⏳ {fa ? 'هنوز رمز تنظیم نشده' : 'Password not set yet'}</div> : null
                 )}
               </div>
             );
           })}
         </div>
+        {config.keys.some(k => k.passwordHash) && (
+          <div className="rounded-xl p-3 mb-4 text-xs" style={{ background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.3)' }}>
+            ⚠️ {fa ? 'تغییر دارنده کلید، رمز قبلی آن کلید را پاک می‌کند.' : 'Changing a key holder will clear their existing password.'}
+          </div>
+        )}
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
           <button onClick={handleSave} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold">
@@ -130,10 +135,21 @@ function MnqSetPasswordModal({ tenderTitle, keySlot, keyLabel, onSave, onClose, 
 }) {
   const [p1, setP1] = useState('');
   const [p2, setP2] = useState('');
-  const inp = "w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none tracking-widest text-center";
+  const inp = "w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] tracking-widest text-center";
+
+  const strength = (p: string) => {
+    if (!p) return null;
+    let s = 0;
+    if (p.length >= 6) s++; if (p.length >= 10) s++;
+    if (/[A-Z]/.test(p)) s++; if (/[0-9]/.test(p)) s++; if (/[^a-zA-Z0-9]/.test(p)) s++;
+    if (s <= 1) return { label: fa ? 'ضعیف' : 'Weak', color: '#ef4444' };
+    if (s <= 3) return { label: fa ? 'متوسط' : 'Medium', color: '#f59e0b' };
+    return { label: fa ? 'قوی' : 'Strong', color: '#10b981' };
+  };
+  const str = strength(p1);
 
   const handleSave = () => {
-    if (!p1 || p1.length < 6) { alert(fa ? 'رمز باید حداقل ۶ کاراکتر باشد' : 'Minimum 6 characters'); return; }
+    if (!p1 || p1.length < 6) { alert(fa ? 'رمز باید حداقل ۶ کاراکتر باشد' : 'Password must be at least 6 characters'); return; }
     if (p1 !== p2) { alert(fa ? 'رمزها مطابقت ندارند' : 'Passwords do not match'); return; }
     onSave(keySlot, mnqHashPass(p1), mnqNowStr());
   };
@@ -143,23 +159,27 @@ function MnqSetPasswordModal({ tenderTitle, keySlot, keyLabel, onSave, onClose, 
       <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-sm p-6 shadow-2xl">
         <h2 className="font-bold mb-1">🔑 {fa ? `تنظیم رمز — ${keyLabel}` : `Set Password — ${keyLabel}`}</h2>
         <p className="text-xs text-[hsl(var(--muted-foreground))] mb-4">{tenderTitle}</p>
+        <div className="rounded-xl p-3 mb-4 text-xs" style={{ background: 'rgba(59,130,246,.08)', border: '1px solid rgba(59,130,246,.25)' }}>
+          🔐 {fa ? 'رمزی که اینجا تنظیم می‌کنید فقط برای شماست. هیچ‌کس دیگری آن را نمی‌بیند — حتی ادمین.' : 'This password is private. No one else can see it — not even admin.'}
+        </div>
         <div className="space-y-3 mb-4">
           <div>
             <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'رمز جدید (حداقل ۶ کاراکتر)' : 'New Password (min 6 chars)'}</label>
             <input type="password" value={p1} onChange={e => setP1(e.target.value)} className={inp} placeholder="••••••••" />
+            {str && <div className="text-xs mt-1 font-medium" style={{ color: str.color }}>{fa ? 'قدرت رمز: ' : 'Strength: '}{str.label}</div>}
           </div>
           <div>
-            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'تکرار رمز' : 'Confirm'}</label>
+            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'تکرار رمز' : 'Confirm Password'}</label>
             <input type="password" value={p2} onChange={e => setP2(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSave()} className={inp} placeholder="••••••••" />
-            {p2 && p1 !== p2 && <div className="text-xs mt-1 text-red-500">❌ {fa ? 'رمزها مطابقت ندارند' : 'Do not match'}</div>}
+            {p2 && p1 !== p2 && <div className="text-xs mt-1 text-red-500">❌ {fa ? 'رمزها مطابقت ندارند' : 'Passwords do not match'}</div>}
           </div>
         </div>
         <div className="rounded-xl p-3 mb-4 text-xs" style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.3)' }}>
-          ⚠️ {fa ? 'این رمز توسط ادمین قابل بازیابی نیست.' : 'Admin cannot recover this password.'}
+          ⚠️ {fa ? 'این رمز قابل بازیابی توسط ادمین نیست. فقط ریست (حذف) می‌شود.' : 'Admin cannot recover this password — only reset it.'}
         </div>
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
-          <button onClick={handleSave} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold">🔑 {fa ? 'ذخیره رمز' : 'Save'}</button>
+          <button onClick={handleSave} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold">🔑 {fa ? 'ذخیره رمز' : 'Save Password'}</button>
         </div>
       </div>
     </div>
@@ -180,7 +200,7 @@ function MnqKeyCeremonyModal({ tender, config, onUpdate, onConfirm, onClose, onS
   const cols = Math.min(total <= 4 ? total : Math.ceil(total / 2), 4);
 
   const submitKey = () => {
-    if (!password) return;
+    if (!password) { alert(fa ? 'رمز را وارد کنید' : 'Enter password'); return; }
     if (!myKey) return;
     if (mnqHashPass(password) !== myKey.passwordHash) {
       alert(fa ? '❌ رمز اشتباه است!' : '❌ Wrong password!');
@@ -218,6 +238,9 @@ function MnqKeyCeremonyModal({ tender, config, onUpdate, onConfirm, onClose, onS
                 <div className="text-xl mb-0.5">{k.entered ? '🔓' : !k.passwordHash ? '⚠️' : '🔒'}</div>
                 <div className="font-bold truncate" style={{ color: k.entered ? '#10b981' : 'hsl(var(--foreground))' }}>{k.label}</div>
                 <div className="text-[hsl(var(--muted-foreground))] truncate">{k.holderName}</div>
+                {k.entered ? <div className="text-[9px] text-green-500 mt-0.5">✅ {k.enteredAt?.slice(-5)}</div>
+                  : !k.passwordHash ? <div className="text-[9px] text-amber-500 mt-0.5">{fa ? 'رمز نشده' : 'No password'}</div>
+                  : <div className="text-[9px] text-[hsl(var(--muted-foreground))] mt-0.5">⏳ {fa ? 'منتظر' : 'Waiting'}</div>}
               </div>
             );
           })}
