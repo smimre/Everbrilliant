@@ -33,3 +33,8 @@ export class RegisterDto {
   @IsOptional() @IsString()
   inviteCode?: string;
 }
+
+export class RefreshDto {
+  @IsString() @IsNotEmpty()
+  refreshToken: string;
+}
