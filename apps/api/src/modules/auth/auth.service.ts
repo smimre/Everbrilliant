@@ -69,9 +69,9 @@ export class AuthService {
     if (!role) throw new BadRequestException('System roles not initialized');
 
     const hashed = await bcrypt.hash(dto.password, 12);
-    const company = await this.prisma.company.create({ data: { name: dto.companyName || dto.name } });
+    const company = await this.prisma.company.create({ data: { name: dto.companyName || dto.name, country: dto.country } });
     const user = await this.prisma.user.create({
-      data: { name: dto.name, phone: dto.phone, password: hashed, companyId: company.id, roleId: role.id, isCompanyAdmin: true },
+      data: { name: dto.name, phone: dto.phone, email: dto.email ?? null, password: hashed, companyId: company.id, roleId: role.id, isCompanyAdmin: true },
       include: { role: { include: { permissions: { include: { permission: true } } } } },
     });
 
