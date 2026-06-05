@@ -62,8 +62,17 @@ function createApiClient(): AxiosInstance {
     async (error: AxiosError<ApiError>) => {
       const config = error.config as AxiosRequestConfig & { _retryCount?: number };
 
-      // Handle 401 — session expired
+      // Handle 401 — distinguish bad credentials (auth routes) from expired session
       if (error.response?.status === 401) {
+        const url = error.config?.url ?? '';
+        const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register');
+        if (isAuthRoute) {
+          const message =
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            'Invalid phone number or password';
+          return Promise.reject(new Error(Array.isArray(message) ? message[0] : message));
+        }
         clearAuth();
         return Promise.reject(new Error('Session expired. Please log in again.'));
       }
