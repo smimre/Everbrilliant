@@ -11,4 +11,8 @@ export const authService = {
   me: () => api.get<User>('/auth/me'),
   changePassword: (dto: { currentPassword: string; newPassword: string }) =>
     api.patch('/auth/change-password', dto),
+  forgotPassword: (identifier: string) =>
+    api.post<{ message: string }>('/auth/forgot-password', { identifier }),
+  resetPassword: (token: string, password: string) =>
+    api.post<{ message: string }>('/auth/reset-password', { token, password }),
 };

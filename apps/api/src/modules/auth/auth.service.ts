@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, BadRequestException, ForbiddenExcept
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { LoginDto, RegisterDto, RefreshDto } from './auth.dto';
+import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -110,6 +110,54 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.prisma.user.findFirst({
+      where: { OR: [{ phone: dto.identifier }, { email: dto.identifier }] },
+    });
+
+    // Always respond the same way to prevent account enumeration
+    if (!user) return { message: 'If an account exists, a reset code has been sent.' };
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken: code, resetTokenExpiry: expiry },
+    });
+
+    // TODO: replace with SMS/email delivery when provider is configured
+    console.log(`[PASSWORD RESET] Code for ${dto.identifier}: ${code}`);
+
+    return { message: 'If an account exists, a reset code has been sent.' };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        resetToken: dto.token,
+        resetTokenExpiry: { gt: new Date() },
+      },
+    });
+
+    if (!user) throw new BadRequestException('Invalid or expired reset code');
+
+    const hashed = await bcrypt.hash(dto.password, 12);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashed,
+        resetToken: null,
+        resetTokenExpiry: null,
+        passwordChangedAt: new Date(),
+      },
+    });
+
+    await this.prisma.session.deleteMany({ where: { userId: user.id } });
+
+    return { message: 'Password reset successfully' };
   }
 
   async logout(token: string) {

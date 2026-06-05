@@ -38,3 +38,16 @@ export class RefreshDto {
   @IsString() @IsNotEmpty()
   refreshToken: string;
 }
+
+export class ForgotPasswordDto {
+  @IsString() @IsNotEmpty()
+  identifier: string; // phone or email
+}
+
+export class ResetPasswordDto {
+  @IsString() @IsNotEmpty()
+  token: string;
+
+  @IsString() @MinLength(6)
+  password: string;
+}

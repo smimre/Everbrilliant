@@ -30,6 +30,7 @@ const TRANSLATIONS = {
     password: 'Password',
     passPh: '••••••••',
     submit: 'Sign In',
+    forgot: 'Forgot password?',
     noAcc: "Don't have an account?",
     register: 'Register',
   },
@@ -41,6 +42,7 @@ const TRANSLATIONS = {
     password: 'رمز عبور',
     passPh: '••••••••',
     submit: 'ورود به سیستم',
+    forgot: 'رمز عبور را فراموش کردید؟',
     noAcc: 'حساب ندارید؟',
     register: 'ثبت‌نام',
   },
@@ -52,6 +54,7 @@ const TRANSLATIONS = {
     password: 'كلمة المرور',
     passPh: '••••••••',
     submit: 'تسجيل الدخول',
+    forgot: 'نسيت كلمة المرور؟',
     noAcc: 'ليس لديك حساب؟',
     register: 'التسجيل',
   },
@@ -63,6 +66,7 @@ const TRANSLATIONS = {
     password: 'पासवर्ड',
     passPh: '••••••••',
     submit: 'साइन इन',
+    forgot: 'पासवर्ड भूल गए?',
     noAcc: "खाता नहीं है?",
     register: 'रजिस्टर',
   },
@@ -145,6 +149,12 @@ export default function LoginPage() {
             }
             {...register('password')}
           />
+
+          <div className="flex justify-end -mt-1">
+            <a href="/forgot-password" className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:underline">
+              {t.forgot}
+            </a>
+          </div>
 
           <Button type="submit" className="w-full" loading={isSubmitting} size="lg">
             {!isSubmitting && <span className="me-1">🔑</span>}
