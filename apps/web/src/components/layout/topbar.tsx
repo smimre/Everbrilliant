@@ -73,7 +73,7 @@ export function Topbar() {
         <NotificationBell />
 
         {user && (
-          <button onClick={() => router.push('/dashboard/settings')}
+          <button onClick={() => router.push('/settings')}
             className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
             <Avatar name={user.name} size="xs" />
             <span className="text-sm font-medium hidden md:inline truncate max-w-24">{user.name}</span>

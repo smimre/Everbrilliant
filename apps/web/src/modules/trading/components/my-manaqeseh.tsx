@@ -3,6 +3,351 @@ import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useUIStore } from '@/store';
 
+// ─── KEY SYSTEM (reused from tender logic) ───────────────────────
+type MnqKeyHolder = {
+  slot: number; holder: string; holderName: string; label: string;
+  entered: boolean; enteredBy: string | null; enteredAt: string | null;
+  passwordHash: string; passwordSetAt: string | null;
+};
+type MnqKeyConfig = { enabled: boolean; keyCount: number; keys: MnqKeyHolder[] };
+
+const MNQ_STAFF = [
+  { id: 'u1', name: 'احمد رضایی', role: 'مدیرعامل' },
+  { id: 'u2', name: 'سارا کریمی', role: 'کارشناس خرید' },
+  { id: 'u3', name: 'محمد حسینی', role: 'مدیر مالی' },
+  { id: 'u4', name: 'فاطمه احمدی', role: 'مدیر خرید' },
+  { id: 'u5', name: 'علی محمدی', role: 'ادمین سیستم' },
+];
+const MNQ_CURRENT_USER = { id: 'u1', name: 'احمد رضایی' };
+
+function mnqHashPass(p: string): string {
+  let h = 0;
+  for (const c of p) { h = (h << 5) - h + c.charCodeAt(0); h |= 0; }
+  return 'H' + Math.abs(h).toString(16).padStart(8, '0');
+}
+function mnqNowStr(): string { return new Date().toLocaleString('fa-IR'); }
+const emptyMnqConfig = (): MnqKeyConfig => ({ enabled: false, keyCount: 2, keys: [] });
+
+function MnqKeyConfigModal({ tender, config, onSave, onClose, fa }: {
+  tender: any; config: MnqKeyConfig; onSave: (cfg: MnqKeyConfig) => void; onClose: () => void; fa: boolean;
+}) {
+  const [enabled, setEnabled] = useState(config.enabled);
+  const [keyCount, setKeyCount] = useState(config.keyCount || 2);
+  const [slots, setSlots] = useState<Record<number, string>>(() => {
+    const s: Record<number, string> = {};
+    config.keys.forEach(k => { s[k.slot] = k.holder; });
+    return s;
+  });
+  const inp = "w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none";
+
+  const handleSave = () => {
+    if (enabled) {
+      for (let i = 1; i <= keyCount; i++) {
+        if (!slots[i]) { alert(fa ? `لطفاً دارنده کلید ${i} را انتخاب کنید` : `Select key holder ${i}`); return; }
+      }
+    }
+    const newKeys: MnqKeyHolder[] = [];
+    for (let i = 1; i <= keyCount; i++) {
+      const holderId = slots[i] || '';
+      const holderName = MNQ_STAFF.find(s => s.id === holderId)?.name || holderId;
+      const exist = config.keys.find(k => k.slot === i && k.holder === holderId);
+      newKeys.push({
+        slot: i, holder: holderId, holderName, label: fa ? `کلید ${i}` : `Key ${i}`,
+        entered: false, enteredBy: null, enteredAt: null,
+        passwordHash: exist?.holder === holderId ? (exist.passwordHash || '') : '',
+        passwordSetAt: exist?.holder === holderId ? (exist.passwordSetAt || null) : null,
+      });
+    }
+    onSave({ enabled, keyCount, keys: newKeys });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-lg p-6 shadow-2xl my-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-sm">⚙️ {fa ? `قفل چند کلیده — ${tender.title}` : `Multi-Key Lock — ${tender.title}`}</h2>
+          <button onClick={onClose} className="text-xl leading-none text-[hsl(var(--muted-foreground))]">✕</button>
+        </div>
+        <div className="rounded-xl p-3 mb-4 text-xs" style={{ background: 'rgba(59,130,246,.08)', border: '1px solid rgba(59,130,246,.25)' }}>
+          🔐 {fa ? 'ادمین تعداد کلیددار و اشخاص را تعیین می‌کند. هر نفر رمز خودش را خودش تنظیم می‌کند.' : 'Admin assigns key holders. Each person sets their own private password.'}
+        </div>
+        <div className="flex items-center gap-3 bg-[hsl(var(--background))] rounded-xl p-3 mb-4 cursor-pointer select-none" onClick={() => setEnabled(!enabled)}>
+          <div className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 ${enabled ? 'bg-green-500' : 'bg-[hsl(var(--muted))]'}`}>
+            <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all shadow ${enabled ? 'left-5' : 'left-0.5'}`} />
+          </div>
+          <div>
+            <div className="font-semibold text-sm">{fa ? 'فعال‌سازی قفل چند کلیده' : 'Enable Multi-Key Lock'}</div>
+            <div className="text-xs" style={{ color: enabled ? '#10b981' : 'hsl(var(--muted-foreground))' }}>
+              {fa ? (enabled ? 'فعال' : 'غیرفعال') : (enabled ? 'Active' : 'Inactive')}
+            </div>
+          </div>
+        </div>
+        <div className="mb-4">
+          <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-2 block">
+            {fa ? 'تعداد کلیدداران مورد نیاز (۲ تا ۱۰ نفر)' : 'Required key holders (2–10)'}
+          </label>
+          <div className="flex gap-2 flex-wrap">
+            {[2,3,4,5,6,7,8,9,10].map(n => (
+              <button key={n} onClick={() => setKeyCount(n)}
+                className={`w-10 h-10 rounded-lg font-bold text-sm transition-all ${keyCount === n ? 'bg-[hsl(var(--primary))] text-white' : 'bg-[hsl(var(--background))] border border-[hsl(var(--border))]'}`}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-3 mb-4">
+          {Array.from({ length: keyCount }, (_, i) => i + 1).map(slot => {
+            const existing = config.keys.find(k => k.slot === slot);
+            return (
+              <div key={slot} className="bg-[hsl(var(--background))] rounded-xl p-3">
+                <div className="text-xs font-bold text-amber-500 mb-2">🗝️ {fa ? `کلید ${slot}` : `Key ${slot}`}</div>
+                <select value={slots[slot] || ''} onChange={e => setSlots(prev => ({ ...prev, [slot]: e.target.value }))} className={inp}>
+                  <option value="">{fa ? `انتخاب دارنده کلید ${slot}...` : `Select key holder ${slot}...`}</option>
+                  {MNQ_STAFF.map(s => <option key={s.id} value={s.id}>{s.name} — {s.role}</option>)}
+                </select>
+                {slots[slot] && (existing?.holder === slots[slot] && existing?.passwordHash
+                  ? <div className="text-xs text-green-500 mt-1.5">✅ {fa ? 'رمز تنظیم شده' : 'Password set'}</div>
+                  : slots[slot] ? <div className="text-xs text-amber-500 mt-1.5">⏳ {fa ? 'هنوز رمز تنظیم نشده' : 'Password not set yet'}</div> : null
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
+          <button onClick={handleSave} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold">
+            💾 {fa ? 'ذخیره تنظیمات' : 'Save Settings'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MnqSetPasswordModal({ tenderTitle, keySlot, keyLabel, onSave, onClose, fa }: {
+  tenderTitle: string; keySlot: number; keyLabel: string;
+  onSave: (slot: number, hash: string, setAt: string) => void; onClose: () => void; fa: boolean;
+}) {
+  const [p1, setP1] = useState('');
+  const [p2, setP2] = useState('');
+  const inp = "w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none tracking-widest text-center";
+
+  const handleSave = () => {
+    if (!p1 || p1.length < 6) { alert(fa ? 'رمز باید حداقل ۶ کاراکتر باشد' : 'Minimum 6 characters'); return; }
+    if (p1 !== p2) { alert(fa ? 'رمزها مطابقت ندارند' : 'Passwords do not match'); return; }
+    onSave(keySlot, mnqHashPass(p1), mnqNowStr());
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-sm p-6 shadow-2xl">
+        <h2 className="font-bold mb-1">🔑 {fa ? `تنظیم رمز — ${keyLabel}` : `Set Password — ${keyLabel}`}</h2>
+        <p className="text-xs text-[hsl(var(--muted-foreground))] mb-4">{tenderTitle}</p>
+        <div className="space-y-3 mb-4">
+          <div>
+            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'رمز جدید (حداقل ۶ کاراکتر)' : 'New Password (min 6 chars)'}</label>
+            <input type="password" value={p1} onChange={e => setP1(e.target.value)} className={inp} placeholder="••••••••" />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-[hsl(var(--muted-foreground))] mb-1 block">{fa ? 'تکرار رمز' : 'Confirm'}</label>
+            <input type="password" value={p2} onChange={e => setP2(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSave()} className={inp} placeholder="••••••••" />
+            {p2 && p1 !== p2 && <div className="text-xs mt-1 text-red-500">❌ {fa ? 'رمزها مطابقت ندارند' : 'Do not match'}</div>}
+          </div>
+        </div>
+        <div className="rounded-xl p-3 mb-4 text-xs" style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.3)' }}>
+          ⚠️ {fa ? 'این رمز توسط ادمین قابل بازیابی نیست.' : 'Admin cannot recover this password.'}
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'انصراف' : 'Cancel'}</button>
+          <button onClick={handleSave} className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold">🔑 {fa ? 'ذخیره رمز' : 'Save'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MnqKeyCeremonyModal({ tender, config, onUpdate, onConfirm, onClose, onSetPassword, fa }: {
+  tender: any; config: MnqKeyConfig; onUpdate: (cfg: MnqKeyConfig) => void;
+  onConfirm: () => void; onClose: () => void; onSetPassword: (slot: number) => void; fa: boolean;
+}) {
+  const [password, setPassword] = useState('');
+  const total = config.keys.length;
+  const entered = config.keys.filter(k => k.entered).length;
+  const allDone = entered === total;
+  const myKey = config.keys.find(k => k.holder === MNQ_CURRENT_USER.id);
+  const myKeyEntered = myKey?.entered || false;
+  const myKeyHasPassword = !!(myKey?.passwordHash);
+  const cols = Math.min(total <= 4 ? total : Math.ceil(total / 2), 4);
+
+  const submitKey = () => {
+    if (!password) return;
+    if (!myKey) return;
+    if (mnqHashPass(password) !== myKey.passwordHash) {
+      alert(fa ? '❌ رمز اشتباه است!' : '❌ Wrong password!');
+      setPassword('');
+      return;
+    }
+    onUpdate({ ...config, keys: config.keys.map(k => k.slot === myKey.slot ? { ...k, entered: true, enteredBy: MNQ_CURRENT_USER.name, enteredAt: mnqNowStr() } : k) });
+    setPassword('');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-md p-6 shadow-2xl">
+        <div className="text-center mb-4">
+          <div className="text-4xl mb-2">🔐</div>
+          <h2 className="font-bold">{fa ? 'باز کردن پاکت مناقصه' : 'Open Tender Envelope'}</h2>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{tender.title}</p>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+            {fa ? `برای باز شدن باید همه ${total} نفر رمز خود را وارد کنند` : `All ${total} key holders must enter their passwords`}
+          </p>
+        </div>
+        <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+          {config.keys.map(k => {
+            const isMe = k.holder === MNQ_CURRENT_USER.id;
+            return (
+              <div key={k.slot} className="rounded-xl p-2 text-center text-xs relative" style={{
+                background: k.entered ? 'rgba(16,185,129,.12)' : 'hsl(var(--background))',
+                border: `2px solid ${k.entered ? '#10b981' : isMe && !k.entered ? '#f59e0b' : 'hsl(var(--border))'}`,
+              }}>
+                {isMe && !k.entered && (
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-amber-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                    {fa ? 'شما' : 'You'}
+                  </div>
+                )}
+                <div className="text-xl mb-0.5">{k.entered ? '🔓' : !k.passwordHash ? '⚠️' : '🔒'}</div>
+                <div className="font-bold truncate" style={{ color: k.entered ? '#10b981' : 'hsl(var(--foreground))' }}>{k.label}</div>
+                <div className="text-[hsl(var(--muted-foreground))] truncate">{k.holderName}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mb-4">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-[hsl(var(--muted-foreground))]">{fa ? 'پیشرفت' : 'Progress'}</span>
+            <span className="font-bold" style={{ color: allDone ? '#10b981' : '#f59e0b' }}>{entered} / {total}</span>
+          </div>
+          <div className="h-2 bg-[hsl(var(--muted)/0.4)] rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all" style={{ width: `${Math.round(entered/total*100)}%`, background: allDone ? '#10b981' : '#f59e0b' }} />
+          </div>
+        </div>
+        {allDone ? (
+          <>
+            <div className="rounded-xl p-3 mb-4 text-sm text-center" style={{ background: 'rgba(16,185,129,.1)', border: '1px solid rgba(16,185,129,.3)', color: '#10b981' }}>
+              ✅ {fa ? `همه ${total} رمز تایید شد! پاکت قابل بررسی است.` : `All ${total} passwords confirmed! Ready to review.`}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'بعداً' : 'Later'}</button>
+              <button onClick={onConfirm} className="flex-1 py-2 rounded-lg font-bold text-white text-sm" style={{ background: '#10b981' }}>
+                🔓 {fa ? 'بررسی پیشنهادها' : 'Review Proposals'}
+              </button>
+            </div>
+          </>
+        ) : myKey && !myKeyEntered && myKeyHasPassword ? (
+          <>
+            <div className="rounded-xl p-4 mb-3" style={{ background: 'rgba(245,158,11,.07)', border: '1px solid #f59e0b' }}>
+              <div className="text-xs font-bold text-amber-500 mb-2">🗝️ {myKey.label} — {fa ? 'ورود رمز شما' : 'Your key password'}</div>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submitKey()}
+                className="w-full px-3 py-2.5 rounded-lg border-2 text-center tracking-widest bg-[hsl(var(--background))] focus:outline-none"
+                style={{ borderColor: '#f59e0b' }} placeholder="••••••••" />
+              <button onClick={submitKey} className="w-full mt-2 py-2 rounded-lg font-bold text-sm" style={{ background: '#f59e0b', color: '#000' }}>
+                🗝️ {fa ? 'تایید رمز' : 'Confirm Password'}
+              </button>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={onClose} className="py-1.5 px-4 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'بعداً' : 'Later'}</button>
+            </div>
+          </>
+        ) : myKey && !myKeyEntered && !myKeyHasPassword ? (
+          <>
+            <div className="rounded-xl p-3 mb-3 text-sm" style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.4)' }}>
+              ⚠️ {fa ? 'شما هنوز رمز کلید خود را تنظیم نکرده‌اید!' : 'You have not set your key password yet!'}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'بعداً' : 'Later'}</button>
+              <button onClick={() => { onClose(); onSetPassword(myKey.slot); }} className="flex-1 py-2 rounded-lg text-sm font-bold" style={{ background: '#f59e0b', color: '#000' }}>
+                🔑 {fa ? 'تنظیم رمز الان' : 'Set Now'}
+              </button>
+            </div>
+          </>
+        ) : myKeyEntered ? (
+          <>
+            <div className="rounded-xl p-3 mb-4 text-sm" style={{ background: 'rgba(16,185,129,.1)', color: '#10b981' }}>
+              ✅ {fa ? `رمز شما ثبت شده. منتظر ${total - entered} نفر دیگر هستیم.` : `Your password confirmed. Waiting for ${total - entered} more.`}
+            </div>
+            <div className="flex justify-end">
+              <button onClick={onClose} className="py-2 px-4 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'بستن' : 'Close'}</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="rounded-xl p-3 mb-4 text-sm text-[hsl(var(--muted-foreground))]" style={{ background: 'hsl(var(--muted)/0.3)' }}>
+              ℹ️ {fa ? 'شما دارنده کلید این مناقصه نیستید.' : 'You are not a key holder for this tender.'}
+            </div>
+            <div className="flex justify-end">
+              <button onClick={onClose} className="py-2 px-4 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'بستن' : 'Close'}</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MnqMyKeysModal({ keyConfigsByTender, tendersMap, onSetPassword, onClose, fa }: {
+  keyConfigsByTender: Record<string, MnqKeyConfig>; tendersMap: Record<string, any>;
+  onSetPassword: (tid: string, slot: number) => void; onClose: () => void; fa: boolean;
+}) {
+  const myKeys = Object.entries(keyConfigsByTender).flatMap(([tid, cfg]) => {
+    if (!cfg.enabled) return [];
+    return cfg.keys.filter(k => k.holder === MNQ_CURRENT_USER.id).map(k => ({ tid, tender: tendersMap[tid], key: k }));
+  });
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-md p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold">🗝️ {fa ? 'کلیدهای مناقصه‌های من' : 'My Tender Keys'}</h2>
+          <button onClick={onClose} className="text-xl leading-none text-[hsl(var(--muted-foreground))]">✕</button>
+        </div>
+        {myKeys.length === 0 ? (
+          <div className="text-center py-10 text-[hsl(var(--muted-foreground))]">
+            <div className="text-4xl mb-3">🔑</div>
+            <p className="text-sm">{fa ? 'شما در هیچ مناقصه‌ای به عنوان دارنده کلید تعیین نشده‌اید.' : 'You are not a key holder in any tender.'}</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {myKeys.map(({ tid, tender, key }) => (
+              <div key={`${tid}-${key.slot}`} className="flex items-center justify-between rounded-xl p-3 gap-3"
+                style={{ border: `1px solid ${key.passwordHash ? 'rgba(16,185,129,.4)' : 'rgba(245,158,11,.4)'}`, background: key.passwordHash ? 'rgba(16,185,129,.05)' : 'rgba(245,158,11,.05)' }}>
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm truncate">{tender?.title || tid}</div>
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">{key.label}</div>
+                  <div className="text-xs mt-0.5" style={{ color: key.passwordHash ? '#10b981' : '#f59e0b' }}>
+                    {key.passwordHash ? (fa ? '✅ رمز تنظیم شده' : '✅ Password set') : (fa ? '⚠️ رمز تنظیم نشده' : '⚠️ No password')}
+                  </div>
+                </div>
+                {key.passwordHash
+                  ? <span className="text-xs px-2 py-1 rounded-full shrink-0" style={{ background: 'rgba(16,185,129,.1)', color: '#10b981' }}>✅</span>
+                  : <button onClick={() => { onClose(); onSetPassword(tid, key.slot); }}
+                      className="text-xs px-3 py-1.5 rounded-lg font-medium shrink-0"
+                      style={{ background: 'rgba(245,158,11,.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,.3)' }}>
+                      🔑 {fa ? 'تنظیم رمز' : 'Set Password'}
+                    </button>
+                }
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex justify-end mt-4">
+          <button onClick={onClose} className="py-2 px-4 rounded-lg border border-[hsl(var(--border))] text-sm">{fa ? 'بستن' : 'Close'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ────────────────────────────────────────────────────────────────
+
 const MNQ_TYPES = [
   { id: 'goods', icon: '📦', label: 'کالا', en: 'Goods' },
   { id: 'service', icon: '🛠️', label: 'خدمات', en: 'Services' },
@@ -33,6 +378,36 @@ export function MyManaqeseh() {
   const [selected, setSelected] = useState<any>(null);
   const [showProposals, setShowProposals] = useState<any>(null);
 
+  // ── Key system state ──
+  const [keyConfigs, setKeyConfigs]                     = useState<Record<string, MnqKeyConfig>>({});
+  const [keyConfigTid, setKeyConfigTid]                 = useState<string | null>(null);
+  const [keyCeremonyTid, setKeyCeremonyTid]             = useState<string | null>(null);
+  const [setPasswordKey, setSetPasswordKey]             = useState<{ tid: string; slot: number } | null>(null);
+  const [showMyKeys, setShowMyKeys]                     = useState(false);
+
+  const getConfig = (tid: string): MnqKeyConfig => keyConfigs[tid] || emptyMnqConfig();
+  const saveKeyConfig = (tid: string, cfg: MnqKeyConfig) => {
+    setKeyConfigs(prev => ({ ...prev, [tid]: { ...cfg, enabled: true } }));
+    setKeyConfigTid(null);
+    toast('success', fa ? '✅ تنظیمات کلید ذخیره شد' : '✅ Key settings saved');
+  };
+  const setKeyPassword = (tid: string, slot: number, hash: string, setAt: string) => {
+    setKeyConfigs(prev => {
+      const cfg = prev[tid] || emptyMnqConfig();
+      return { ...prev, [tid]: { ...cfg, keys: cfg.keys.map(k => k.slot === slot ? { ...k, passwordHash: hash, passwordSetAt: setAt } : k) } };
+    });
+    setSetPasswordKey(null);
+    toast('success', fa ? '🔑 رمز کلید تنظیم شد' : '🔑 Key password saved');
+  };
+  const handleOpenProposals = (item: any) => {
+    const cfg = getConfig(item.id);
+    if (cfg.enabled && !cfg.keys.every(k => k.entered)) {
+      setKeyCeremonyTid(item.id);
+      return;
+    }
+    setShowProposals(item);
+  };
+
   const open = items.filter(i => i.status === 'open');
   const totalProposals = items.reduce((s: number, i: any) => s + i.proposals, 0);
   const awarded = items.filter(i => i.status === 'awarded');
@@ -54,8 +429,17 @@ export function MyManaqeseh() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">{fa ? '📝 مناقصه‌های من' : '📝 My Tenders'}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold">{fa ? '📝 مناقصه‌های من' : '📝 My Tenders'}</h1>
+          <button
+            onClick={() => setShowMyKeys(true)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+            style={{ borderColor: 'rgba(245,158,11,.35)', background: 'rgba(245,158,11,.08)', color: '#f59e0b' }}
+          >
+            🗝️ {fa ? 'کلیدهای من' : 'My Keys'}
+          </button>
+        </div>
         <button
           onClick={() => setShowNew(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity"
@@ -106,13 +490,22 @@ export function MyManaqeseh() {
                       </div>
                       {item.subject && <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1.5 line-clamp-1">{item.subject}</p>}
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+                      {/* Key config button */}
+                      {item.status !== 'awarded' && (
+                        <button onClick={() => setKeyConfigTid(item.id)}
+                          className="text-xs px-3 py-1.5 rounded-lg font-medium border transition-colors"
+                          style={{ borderColor: 'rgba(245,158,11,.35)', background: 'rgba(245,158,11,.08)', color: '#f59e0b' }}>
+                          🗝️ {fa ? 'کلید' : 'Keys'}
+                          {getConfig(item.id).enabled && <span className="ms-1 text-[9px] font-bold">●</span>}
+                        </button>
+                      )}
                       <button onClick={() => setSelected(item)} className="text-xs px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">
                         {fa ? 'مشاهده' : 'View'}
                       </button>
-                      {item.proposals > 0 && (
+                      {item.proposals > 0 && item.status !== 'open' && (
                         <button
-                          onClick={() => setShowProposals(item)}
+                          onClick={() => handleOpenProposals(item)}
                           className="text-xs px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90"
                         >
                           📋 {fa ? `${item.proposals} پیشنهاد` : `${item.proposals} Proposals`}
@@ -140,6 +533,68 @@ export function MyManaqeseh() {
 
       {/* New Tender Modal */}
       {showNew && <NewTenderModal lang={lang} onClose={() => setShowNew(false)} onSubmit={(t: any) => { setItems(prev => [...prev, t]); setShowNew(false); }} />}
+
+      {/* Key config modal */}
+      {keyConfigTid && (() => {
+        const t = items.find((x: any) => x.id === keyConfigTid);
+        if (!t) return null;
+        return (
+          <MnqKeyConfigModal
+            tender={t}
+            config={getConfig(keyConfigTid)}
+            onSave={cfg => saveKeyConfig(keyConfigTid, cfg)}
+            onClose={() => setKeyConfigTid(null)}
+            fa={fa}
+          />
+        );
+      })()}
+
+      {/* Key ceremony modal */}
+      {keyCeremonyTid && (() => {
+        const t = items.find((x: any) => x.id === keyCeremonyTid);
+        if (!t) return null;
+        const cfg = getConfig(keyCeremonyTid);
+        return (
+          <MnqKeyCeremonyModal
+            tender={t}
+            config={cfg}
+            onUpdate={newCfg => setKeyConfigs(prev => ({ ...prev, [keyCeremonyTid]: newCfg }))}
+            onConfirm={() => { setKeyCeremonyTid(null); setShowProposals(t); }}
+            onClose={() => setKeyCeremonyTid(null)}
+            onSetPassword={slot => setSetPasswordKey({ tid: keyCeremonyTid, slot })}
+            fa={fa}
+          />
+        );
+      })()}
+
+      {/* Set password modal */}
+      {setPasswordKey && (() => {
+        const cfg = getConfig(setPasswordKey.tid);
+        const key = cfg.keys.find(k => k.slot === setPasswordKey.slot);
+        const t = items.find((x: any) => x.id === setPasswordKey.tid);
+        if (!key) return null;
+        return (
+          <MnqSetPasswordModal
+            tenderTitle={t?.title || setPasswordKey.tid}
+            keySlot={key.slot}
+            keyLabel={key.label}
+            onSave={(slot, hash, setAt) => setKeyPassword(setPasswordKey.tid, slot, hash, setAt)}
+            onClose={() => setSetPasswordKey(null)}
+            fa={fa}
+          />
+        );
+      })()}
+
+      {/* My keys modal */}
+      {showMyKeys && (
+        <MnqMyKeysModal
+          keyConfigsByTender={keyConfigs}
+          tendersMap={Object.fromEntries(items.map((t: any) => [t.id, t]))}
+          onSetPassword={(tid, slot) => setSetPasswordKey({ tid, slot })}
+          onClose={() => setShowMyKeys(false)}
+          fa={fa}
+        />
+      )}
 
       {/* Proposals Modal */}
       {showProposals && (

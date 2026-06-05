@@ -31,7 +31,7 @@ import { TenderBlacklist } from './components/blacklist';
 
 type TradingView =
   | 'dashboard' | 'my-requests' | 'incoming-req' | 'my-quotes'
-  | 'my-contracts' | 'tender-browse' | 'tender-manage' | 'tender-new'
+  | 'my-contracts' | 'tender-browse' | 'tender-manage' | 'tender-new' | 'my-tender-keys'
   | 'connections' | 'crm' | 'reports' | 'sales-report'
   | 'manaqeseh' | 'my-manaqeseh' | 'quality-checks'
   | 'disputes' | 'inventory'
@@ -63,6 +63,7 @@ const NAV_ITEMS: NavItem[] = [
   // مناقصات
   { id: 'tender-browse', label: 'Browse Tenders',    labelFa: 'مزایده‌های فعال',    icon: '🏷️', section: 'tenders' },
   { id: 'tender-manage', label: 'My Tenders',        labelFa: 'مزایده‌های من',      icon: '🏆', section: 'tenders' },
+  { id: 'my-tender-keys',label: 'My Tender Keys',    labelFa: 'کلیدهای مزایده‌ها',  icon: '🗝️', section: 'tenders' },
   { id: 'manaqeseh',     label: 'Manaqeseh',         labelFa: 'مناقصه‌ها',          icon: '📋', section: 'tenders' },
   { id: 'my-manaqeseh',  label: 'My Manaqeseh',      labelFa: 'مناقصه‌های من',      icon: '📝', section: 'tenders' },
   // ارتباطات
@@ -108,9 +109,10 @@ export function TradingModule({ initialView }: { initialView?: string } = {}) {
       case 'my-quotes':      return <MyQuotes />;
       case 'my-contracts':   return <MyContracts />;
       case 'inventory':      return <InventoryPage />;
-      case 'tender-browse':  return <TenderBrowse />;
-      case 'tender-manage':  return <TenderManage />;
-    case 'tender-new':      return <TenderNew />;
+      case 'tender-browse':   return <TenderBrowse />;
+      case 'tender-manage':   return <TenderManage />;
+      case 'tender-new':      return <TenderNew />;
+      case 'my-tender-keys':  return <TenderKeysHub lang={lang} onNavigate={setView} />;
       case 'manaqeseh':      return <ManaqesehBrowse />;
       case 'my-manaqeseh':   return <MyManaqeseh />;
       case 'connections':    return <Connections />;
@@ -197,5 +199,70 @@ function NavBtn({ item, active, lang, onClick }: {
         </span>
       ) : null}
     </button>
+  );
+}
+
+function TenderKeysHub({ lang, onNavigate }: { lang: string; onNavigate: (v: TradingView) => void }) {
+  const fa = lang === 'fa';
+  const sections = [
+    {
+      icon: '🏆', title: fa ? 'کلیدهای مزایده (Auction)' : 'Auction Keys',
+      desc: fa ? 'کلیدهای پاکت مزایده‌های شما. هر نفر رمز اختصاصی خود را تنظیم می‌کند.' : 'Your auction envelope keys. Each holder sets their own private password.',
+      btn: fa ? 'رفتن به مزایده‌های من' : 'Go to My Auctions',
+      view: 'tender-manage' as TradingView,
+      color: '#f59e0b',
+    },
+    {
+      icon: '📝', title: fa ? 'کلیدهای مناقصه (Tender)' : 'Tender Keys',
+      desc: fa ? 'کلیدهای پاکت مناقصه‌های شما. برای باز کردن پیشنهادها نیاز به تایید همه کلیدداران است.' : 'Your tender proposal keys. All key holders must confirm before opening proposals.',
+      btn: fa ? 'رفتن به مناقصه‌های من' : 'Go to My Tenders',
+      view: 'my-manaqeseh' as TradingView,
+      color: '#8b5cf6',
+    },
+  ];
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-bold mb-1">🗝️ {fa ? 'کلیدهای مزایده و مناقصه' : 'Auction & Tender Keys'}</h1>
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+          {fa ? 'سیستم چند کلیده: پاکت تنها با تایید همزمان همه دارندگان کلید باز می‌شود.' : 'Multi-key system: the envelope opens only when all key holders confirm simultaneously.'}
+        </p>
+      </div>
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-5">
+        <h2 className="font-bold text-sm mb-3">🔐 {fa ? 'چگونه کار می‌کند؟' : 'How it works'}</h2>
+        <div className="space-y-2 text-sm text-[hsl(var(--muted-foreground))]">
+          {(fa ? [
+            '۱. ادمین تعداد کلیدداران (۲ تا ۱۰ نفر) و اشخاص را تعیین می‌کند',
+            '۲. هر نفر رمز اختصاصی خود را (فقط یک بار) تنظیم می‌کند',
+            '۳. برای باز کردن پاکت، همه کلیدداران باید رمز خود را همزمان وارد کنند',
+            '۴. پس از تایید همه رمزها، پاکت باز و نتایج نمایش داده می‌شود',
+          ] : [
+            '1. Admin sets the number of key holders (2–10) and assigns them',
+            '2. Each key holder sets their own private password (only once)',
+            '3. To open the envelope, all key holders must enter their passwords',
+            '4. Once all confirmed, the envelope opens and results are revealed',
+          ]).map((step, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <span className="text-amber-500 font-bold shrink-0">🗝️</span>
+              <span>{step}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {sections.map((s, i) => (
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-5">
+            <div className="text-3xl mb-3">{s.icon}</div>
+            <h3 className="font-bold mb-2">{s.title}</h3>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] mb-4">{s.desc}</p>
+            <button onClick={() => onNavigate(s.view)}
+              className="w-full py-2 rounded-lg text-white text-sm font-medium hover:opacity-90 transition-opacity"
+              style={{ background: s.color }}>
+              {s.btn} →
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
