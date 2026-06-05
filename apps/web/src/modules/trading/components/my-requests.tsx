@@ -181,8 +181,8 @@ function RequestCard({
 
   return (
     <div
-      className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 hover:border-[hsl(var(--primary)/0.3)] transition-colors cursor-pointer"
-      style={{ borderRight: `4px solid ${isQuoted ? '#3b82f6' : st === 'APPROVED' ? '#10b981' : st === 'REJECTED' || st === 'CANCELLED' ? '#ef4444' : color}` }}
+      className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 hover:border-[hsl(var(--primary)/0.3)] transition-colors cursor-pointer border-l-2"
+      style={{ borderRight: `4px solid ${isQuoted ? '#3b82f6' : st === 'APPROVED' ? '#10b981' : st === 'REJECTED' || st === 'CANCELLED' ? '#ef4444' : color}`, borderLeftColor: isQuoted ? '#3b82f6' : st === 'APPROVED' ? '#10b981' : st === 'REJECTED' || st === 'CANCELLED' ? '#ef4444' : color }}
       onClick={onSelect}
     >
       <div className="flex items-start justify-between gap-4">

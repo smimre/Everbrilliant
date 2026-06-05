@@ -122,10 +122,11 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
           { icon: '💬', val: quoted.length,   label: fa ? 'قیمت‌دهی شده'    : 'Quoted',         color: '#8b5cf6' },
           { icon: '🏆', val: won.length,      label: fa ? 'برنده شده'        : 'Won',            color: '#10b981' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center">
-            <div className="text-xl mb-1">{s.icon}</div>
-            <div className="text-xl font-bold" style={{ color: s.color }}>{s.val}</div>
-            <div className="text-xs text-[hsl(var(--muted-foreground))]">{s.label}</div>
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center relative overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: s.color }} />
+            <div className="text-2xl mb-2">{s.icon}</div>
+            <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>
           </div>
         ))}
       </div>
@@ -174,8 +175,8 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
               <div
                 key={r.id}
                 onClick={() => setSelected(r)}
-                className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 cursor-pointer hover:border-[hsl(var(--primary)/0.3)] transition-colors"
-                style={{ borderRight: `4px solid ${borderColor}` }}
+                className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 cursor-pointer hover:border-[hsl(var(--primary)/0.3)] transition-colors border-l-2"
+                style={{ borderRight: `4px solid ${borderColor}`, borderLeftColor: borderColor }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
