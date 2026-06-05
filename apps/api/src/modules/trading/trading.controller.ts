@@ -16,6 +16,7 @@ export class TradingController {
   @Patch('requests/:id/issue')    issueHavaleh(@Req() r: any, @Param('id') id: string)     { return this.trading.issueHavaleh(r.user.companyId, id); }
   @Patch('requests/:id/complete') confirmReceipt(@Req() r: any, @Param('id') id: string)   { return this.trading.confirmReceipt(r.user.companyId, id); }
 
+  @Get('quotes')              getAllQuotes(@Req() r: any, @Query() q: any)                  { return this.trading.getAllQuotes(r.user.companyId, q); }
   @Get('requests/:id/quotes') getQuotes(@Req() r: any, @Param('id') id: string)            { return this.trading.getQuotes(r.user.companyId, id); }
   @Post('quotes')             createQuote(@Req() r: any, @Body() dto: any)                 { return this.trading.createQuote(r.user.companyId, r.user.id, dto); }
   @Patch('quotes/:id/accept') acceptQuote(@Req() r: any, @Param('id') id: string)          { return this.trading.acceptQuote(r.user.companyId, id); }
@@ -55,6 +56,11 @@ export class TradingController {
   }
 
   // ── Follow-ups ─────────────────────────────────────────────
+  @Get('followups')
+  getAllFollowUps(@Req() r: any, @Query() q: any) {
+    return this.trading.getAllFollowUps(r.user.companyId, q);
+  }
+
   @Get('requests/:id/followups')
   getFollowUps(@Req() r: any, @Param('id') id: string) {
     return this.trading.getFollowUps(r.user.companyId, id);

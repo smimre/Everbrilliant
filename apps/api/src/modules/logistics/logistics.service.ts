@@ -194,6 +194,42 @@ export class LogisticsService {
     return this.serialize(result);
   }
 
+  // ── Waybills ──────────────────────────────────────────────────
+
+  async getWaybills(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where: any = { companyId, waybillNo: { not: null } };
+    const [data, total] = await Promise.all([
+      this.prisma.logisticsShipment.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, include: { stages: { orderBy: { stageOrder: 'asc' } } } }),
+      this.prisma.logisticsShipment.count({ where }),
+    ]);
+    return this.serialize(this.page(data, total, page, limit));
+  }
+
+  // ── Customs ───────────────────────────────────────────────────
+
+  async getCustoms(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where: any = { companyId, customsStatus: { not: null } };
+    const [data, total] = await Promise.all([
+      this.prisma.logisticsShipment.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, include: { stages: { orderBy: { stageOrder: 'asc' } } } }),
+      this.prisma.logisticsShipment.count({ where }),
+    ]);
+    return this.serialize(this.page(data, total, page, limit));
+  }
+
+  // ── Insurance ─────────────────────────────────────────────────
+
+  async getInsurance(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where: any = { companyId, insurer: { not: null } };
+    const [data, total] = await Promise.all([
+      this.prisma.logisticsShipment.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, include: { stages: { orderBy: { stageOrder: 'asc' } } } }),
+      this.prisma.logisticsShipment.count({ where }),
+    ]);
+    return this.serialize(this.page(data, total, page, limit));
+  }
+
   // ── Reports ───────────────────────────────────────────────────
 
   async getReports(companyId: number) {

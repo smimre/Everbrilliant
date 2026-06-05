@@ -147,6 +147,21 @@ export class TradingService {
   }
 
   // ── Quotes ────────────────────────────────
+  async getAllQuotes(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where = {
+      OR: [
+        { sellerCompanyId: companyId },
+        { request: { buyerCompanyId: companyId } },
+      ],
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.quote.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, include: { request: { select: { id: true, product: true, status: true } } } }),
+      this.prisma.quote.count({ where }),
+    ]);
+    return this.page(data, total, page, limit);
+  }
+
   async getQuotes(companyId: number, requestId: string) {
     return this.prisma.quote.findMany({
       where: { requestId },
@@ -291,6 +306,19 @@ export class TradingService {
     if (!t) throw new NotFoundException('Tender not found');
     if (t.status !== 'CLOSED') throw new BadRequestException('Tender must be closed first');
     return this.prisma.tender.update({ where: { id }, data: { status: 'AWARDED', awardDate: new Date() } });
+  }
+
+  async getAllFollowUps(companyId: number, q: any) {
+    const { skip, take, page, limit } = this.paginate(q);
+    const where = {
+      request: { OR: [{ buyerCompanyId: companyId }, { sellerCompanyId: companyId }] },
+      ...(q.done !== undefined && { isDone: q.done === 'true' }),
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.followUp.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, include: { request: { select: { id: true, product: true } } } }),
+      this.prisma.followUp.count({ where }),
+    ]);
+    return this.page(data, total, page, limit);
   }
 
   async getFollowUps(companyId: number, requestId: string) {

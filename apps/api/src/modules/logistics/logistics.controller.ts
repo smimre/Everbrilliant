@@ -34,6 +34,23 @@ export class LogisticsController {
     return this.logistics.issueWaybill(r.user.companyId, id);
   }
 
+  // ── Waybills / Customs / Insurance ───────────────────────────
+
+  @Get('waybills')
+  getWaybills(@Req() r: any, @Query() q: any) {
+    return this.logistics.getWaybills(r.user.companyId, q);
+  }
+
+  @Get('customs')
+  getCustoms(@Req() r: any, @Query() q: any) {
+    return this.logistics.getCustoms(r.user.companyId, q);
+  }
+
+  @Get('insurance')
+  getInsurance(@Req() r: any, @Query() q: any) {
+    return this.logistics.getInsurance(r.user.companyId, q);
+  }
+
   // ── Rate Quotes ───────────────────────────────────────────────
 
   @Get('quotes')

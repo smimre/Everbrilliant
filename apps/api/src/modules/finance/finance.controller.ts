@@ -60,6 +60,28 @@ export class FinanceController {
     return this.finance.stockMove(req.user.companyId, id, 'out', dto.qty, req.user.id, dto.ref);
   }
 
+  // Accounts
+  @Get('accounts')
+  getAccounts(@Req() req: any, @Query() q: any) {
+    return this.finance.getAccounts(req.user.companyId, q);
+  }
+
+  @Post('accounts')
+  createAccount(@Req() req: any, @Body() dto: any) {
+    return this.finance.createAccount(req.user.companyId, dto);
+  }
+
+  // Journal Entries
+  @Get('journal-entries')
+  getJournalEntries(@Req() req: any, @Query() q: any) {
+    return this.finance.getJournalEntries(req.user.companyId, q);
+  }
+
+  @Post('journal-entries')
+  createJournalEntry(@Req() req: any, @Body() dto: any) {
+    return this.finance.createJournalEntry(req.user.companyId, req.user.id, dto);
+  }
+
   // Reports
   @Get('reports/balance-sheet')
   getBalanceSheet(@Req() req: any) {

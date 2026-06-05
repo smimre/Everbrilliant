@@ -28,6 +28,11 @@ export class CrmController {
     return this.crm.getDeals(r.user.companyId, q);
   }
 
+  @Get('stats')
+  getStats(@Req() r: any) {
+    return this.crm.getDealStats(r.user.companyId);
+  }
+
   @Get('deals/stats')
   getDealStats(@Req() r: any) {
     return this.crm.getDealStats(r.user.companyId);

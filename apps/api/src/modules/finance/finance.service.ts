@@ -184,6 +184,70 @@ export class FinanceService {
     return JSON.parse(JSON.stringify(v, (_, x) => (typeof x === 'bigint' ? x.toString() : x)));
   }
 
+  async getAccounts(companyId: number, query: any) {
+    const { skip, take, page, limit } = this.paginate(query);
+    const where: any = { companyId, isActive: true, ...(query.type && { type: query.type }) };
+    const [data, total] = await Promise.all([
+      this.prisma.account.findMany({ where, skip, take, orderBy: [{ type: 'asc' }, { code: 'asc' }] }),
+      this.prisma.account.count({ where }),
+    ]);
+    return this.ser(await this.paginatedResponse(data, total, page, limit));
+  }
+
+  async createAccount(companyId: number, dto: any) {
+    const account = await this.prisma.account.create({
+      data: {
+        companyId,
+        code: dto.code,
+        name: dto.name,
+        nameFa: dto.nameFa,
+        type: dto.type,
+        parentId: dto.parentId ?? null,
+        balance: dto.balance ? BigInt(dto.balance) : BigInt(0),
+        isActive: dto.isActive !== false,
+      },
+    });
+    return this.ser(account);
+  }
+
+  async getJournalEntries(companyId: number, query: any) {
+    const { skip, take, page, limit } = this.paginate(query);
+    const where: any = { companyId, ...(query.status && { status: query.status }) };
+    const [data, total] = await Promise.all([
+      this.prisma.journalEntry.findMany({ where, skip, take, orderBy: { date: 'desc' }, include: { lines: true } }),
+      this.prisma.journalEntry.count({ where }),
+    ]);
+    return this.ser(await this.paginatedResponse(data, total, page, limit));
+  }
+
+  async createJournalEntry(companyId: number, userId: number, dto: any) {
+    const entry = await this.prisma.journalEntry.create({
+      data: {
+        companyId,
+        createdById: userId,
+        date: dto.date,
+        description: dto.description,
+        ref: dto.ref,
+        totalDebit: BigInt(dto.totalDebit ?? 0),
+        totalCredit: BigInt(dto.totalCredit ?? 0),
+        currency: dto.currency || 'IRR',
+        source: dto.source,
+        status: dto.status || 'DRAFT',
+        lines: dto.lines ? {
+          create: dto.lines.map((l: any) => ({
+            debitAccountId: l.debitAccountId ?? null,
+            creditAccountId: l.creditAccountId ?? null,
+            debit: BigInt(l.debit ?? 0),
+            credit: BigInt(l.credit ?? 0),
+            description: l.description ?? null,
+          })),
+        } : undefined,
+      },
+      include: { lines: true },
+    });
+    return this.ser(entry);
+  }
+
   async getBalanceSheet(companyId: number) {
     const accounts = await this.prisma.account.findMany({
       where: { companyId, isActive: true },
