@@ -18,5 +18,8 @@ export class AuthController {
   logout(@Req() req: any) { return this.authService.logout(req.token); }
 
   @Get('me')
-  me(@Req() req: any) { return req.user; }
+  me(@Req() req: any) {
+    const { password, twoFactorSecret, ...safe } = req.user;
+    return safe;
+  }
 }

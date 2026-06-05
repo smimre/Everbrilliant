@@ -72,10 +72,11 @@ export class AuthService {
     const company = await this.prisma.company.create({ data: { name: dto.companyName || dto.name } });
     const user = await this.prisma.user.create({
       data: { name: dto.name, phone: dto.phone, password: hashed, companyId: company.id, roleId: role.id, isCompanyAdmin: true },
-      include: { role: true },
+      include: { role: { include: { permissions: { include: { permission: true } } } } },
     });
 
-    const accessToken = this.jwt.sign({ sub: user.id, phone: user.phone, companyId: company.id, role: user.role.name, permissions: [] }, { expiresIn: '8h' });
+    const permissions = user.role.permissions.map((rp: any) => rp.permission.key);
+    const accessToken = this.jwt.sign({ sub: user.id, phone: user.phone, companyId: company.id, role: user.role.name, permissions }, { expiresIn: '8h' });
     await this.prisma.session.create({
       data: { userId: user.id, token: accessToken, expiresAt: new Date(Date.now() + 8 * 3600 * 1000) },
     });
