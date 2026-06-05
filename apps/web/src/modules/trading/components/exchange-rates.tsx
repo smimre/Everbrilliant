@@ -73,11 +73,13 @@ export function ExchangeRatesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {CURRENCIES.filter(c => ['USD','EUR','AED','GBP'].includes(c.code)).map(c => {
           const chg = MOCK_CHANGES[c.code] ?? 0;
+          const accentColor = chg >= 0 ? '#10b981' : '#ef4444';
           return (
-            <div key={c.code} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center">
-              <div className="text-xl mb-1">{c.flag}</div>
-              <div className="font-bold text-sm">{c.symbol} {(rates[c.code] ?? 1).toLocaleString('en')}</div>
-              <div className="text-[10px] text-[hsl(var(--muted-foreground))]">{c.code} / IRR</div>
+            <div key={c.code} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: accentColor }} />
+              <div className="text-2xl mb-2">{c.flag}</div>
+              <div className="font-bold text-base leading-none">{c.symbol} {(rates[c.code] ?? 1).toLocaleString('en')}</div>
+              <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">{c.code} / IRR</div>
               <div className={`text-[10px] mt-1 font-semibold ${chg >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {chg >= 0 ? '▲' : '▼'} {Math.abs(chg)}%
               </div>

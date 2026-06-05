@@ -99,10 +99,11 @@ export function InventoryPage() {
           { icon: '💰', val: totalValue > 0 ? `${(totalValue/1e9).toFixed(1)}B` : '0', label: fa ? 'ارزش کل' : 'Total Value', color: '#10b981' },
           { icon: '👥', val: partnerItems.length, label: fa ? 'موجودی شرکاء' : 'Partners Stock', color: '#06b6d4' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center">
-            <div className="text-xl mb-1">{s.icon}</div>
-            <div className="text-xl font-bold" style={{ color: s.color }}>{s.val}</div>
-            <div className="text-xs text-[hsl(var(--muted-foreground))]">{s.label}</div>
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: s.color }} />
+            <div className="text-2xl mb-2">{s.icon}</div>
+            <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>
           </div>
         ))}
       </div>

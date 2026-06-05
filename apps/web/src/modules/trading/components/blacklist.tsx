@@ -115,10 +115,11 @@ export function TenderBlacklist() {
           { icon: '⚖️', val: appealing, label: fa ? 'در اعتراض' : 'Under Appeal',    color: '#f59e0b' },
           { icon: '✅', val: expired,   label: fa ? 'منقضی شده' : 'Expired',         color: '#64748b' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center">
-            <div className="text-2xl mb-1">{s.icon}</div>
-            <div className="text-xl font-bold" style={{ color: s.color }}>{s.val}</div>
-            <div className="text-xs text-[hsl(var(--muted-foreground))]">{s.label}</div>
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center relative overflow-hidden">
+            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: s.color }} />
+            <div className="text-2xl mb-2">{s.icon}</div>
+            <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>
           </div>
         ))}
       </div>
