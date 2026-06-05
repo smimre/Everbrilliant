@@ -9,8 +9,10 @@ export const authService = {
   register: (dto: RegisterDto) => api.post<RegisterResponse>('/auth/register', dto),
   logout: () => api.post('/auth/logout'),
   me: () => api.get<User>('/auth/me'),
+  updateProfile: (dto: { name?: string; email?: string }) =>
+    api.patch<User>('/auth/me', dto),
   changePassword: (dto: { currentPassword: string; newPassword: string }) =>
-    api.patch('/auth/change-password', dto),
+    api.patch<{ message: string }>('/auth/change-password', dto),
   forgotPassword: (identifier: string) =>
     api.post<{ message: string }>('/auth/forgot-password', { identifier }),
   resetPassword: (token: string, password: string) =>

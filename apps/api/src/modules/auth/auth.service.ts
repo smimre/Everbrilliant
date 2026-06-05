@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, BadRequestException, ForbiddenExcept
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto } from './auth.dto';
+import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -110,6 +110,42 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const valid = await bcrypt.compare(dto.currentPassword, user.password);
+    if (!valid) throw new BadRequestException('Current password is incorrect');
+
+    const hashed = await bcrypt.hash(dto.newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashed, passwordChangedAt: new Date() },
+    });
+
+    return { message: 'Password changed successfully' };
+  }
+
+  async updateProfile(userId: number, dto: UpdateProfileDto) {
+    if (dto.email) {
+      const existing = await this.prisma.user.findFirst({
+        where: { email: dto.email, NOT: { id: userId } },
+      });
+      if (existing) throw new BadRequestException('Email already in use');
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.name  ? { name: dto.name }   : {}),
+        ...(dto.email !== undefined ? { email: dto.email } : {}),
+      },
+    });
+
+    const { password, twoFactorSecret, resetToken, resetTokenExpiry, ...safe } = user as any;
+    return safe;
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {

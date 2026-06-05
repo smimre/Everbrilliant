@@ -51,3 +51,19 @@ export class ResetPasswordDto {
   @IsString() @MinLength(6)
   password: string;
 }
+
+export class ChangePasswordDto {
+  @IsString() @IsNotEmpty()
+  currentPassword: string;
+
+  @IsString() @MinLength(6)
+  newPassword: string;
+}
+
+export class UpdateProfileDto {
+  @IsOptional() @IsString() @IsNotEmpty()
+  name?: string;
+
+  @IsOptional() @IsEmail()
+  email?: string;
+}

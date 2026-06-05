@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
+import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CountrySelector } from '@/components/ui/country-selector';
@@ -267,7 +268,7 @@ function CompanyInfoTab({ fa }: { fa: boolean }) {
 
 export default function SettingsPage() {
   const { lang, setLocale } = useLocaleStore();
-  const { user } = useAuthStore();
+  const { user, setAuth } = useAuthStore();
   const { theme, setTheme, toast } = useUIStore();
   const router = useRouter();
   const fa = lang === 'fa';
@@ -277,6 +278,51 @@ export default function SettingsPage() {
   const [showAddUser, setShowAddUser] = useState(false);
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [userFilter, setUserFilter] = useState('');
+
+  // Profile form state
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  const [profileSaving, setProfileSaving] = useState(false);
+
+  const handleProfileSave = async () => {
+    setProfileSaving(true);
+    try {
+      const updated = await authService.updateProfile({ name: profileName, email: profileEmail });
+      setAuth(updated as any, useAuthStore.getState().accessToken!);
+      toast('success', fa ? 'پروفایل ذخیره شد' : 'Profile saved');
+    } catch (err: any) {
+      toast('error', err.message || (fa ? 'خطا در ذخیره' : 'Save failed'));
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  // Security form state
+  const [secCurrent, setSecCurrent] = useState('');
+  const [secNew, setSecNew]         = useState('');
+  const [secConfirm, setSecConfirm] = useState('');
+  const [secSaving, setSecSaving]   = useState(false);
+
+  const handleChangePassword = async () => {
+    if (secNew !== secConfirm) {
+      toast('error', fa ? 'رمزهای جدید مطابقت ندارند' : 'New passwords do not match');
+      return;
+    }
+    if (secNew.length < 6) {
+      toast('error', fa ? 'رمز باید حداقل ۶ کاراکتر باشد' : 'Password must be at least 6 characters');
+      return;
+    }
+    setSecSaving(true);
+    try {
+      await authService.changePassword({ currentPassword: secCurrent, newPassword: secNew });
+      toast('success', fa ? 'رمز عبور تغییر کرد' : 'Password changed successfully');
+      setSecCurrent(''); setSecNew(''); setSecConfirm('');
+    } catch (err: any) {
+      toast('error', err.message || (fa ? 'خطا در تغییر رمز' : 'Failed to change password'));
+    } finally {
+      setSecSaving(false);
+    }
+  };
 
   const tabs = [
     {id:'profile',      icon:<User className="h-4 w-4"/>,      fa:'پروفایل',        en:'Profile'},
@@ -330,10 +376,10 @@ export default function SettingsPage() {
                   <span className="text-xs mt-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 inline-block">{fa?'ادمین کل':'System Admin'}</span>
                 </div>
               </div>
-              <Input label={fa?'نام':'Name'} defaultValue={user?.name}/>
-              <Input label={fa?'موبایل':'Phone'} defaultValue={user?.phone} disabled/>
-              <Input label={fa?'ایمیل':'Email'} type="email" placeholder="example@company.com"/>
-              <Button>{fa?'ذخیره':'Save'}</Button>
+              <Input label={fa?'نام':'Name'} value={profileName} onChange={e=>setProfileName(e.target.value)}/>
+              <Input label={fa?'موبایل':'Phone'} value={user?.phone||''} disabled/>
+              <Input label={fa?'ایمیل':'Email'} type="email" placeholder="example@company.com" value={profileEmail} onChange={e=>setProfileEmail(e.target.value)}/>
+              <Button onClick={handleProfileSave} loading={profileSaving}>{fa?'ذخیره':'Save'}</Button>
             </div>
           )}
 
@@ -370,10 +416,10 @@ export default function SettingsPage() {
           {tab==='security' && (
             <div className="space-y-4">
               <h2 className="font-semibold text-lg">{fa?'تنظیمات امنیتی':'Security'}</h2>
-              <Input label={fa?'رمز فعلی':'Current Password'} type="password"/>
-              <Input label={fa?'رمز جدید':'New Password'} type="password"/>
-              <Input label={fa?'تکرار رمز':'Confirm'} type="password"/>
-              <Button>{fa?'تغییر رمز':'Change Password'}</Button>
+              <Input label={fa?'رمز فعلی':'Current Password'} type="password" value={secCurrent} onChange={e=>setSecCurrent(e.target.value)}/>
+              <Input label={fa?'رمز جدید':'New Password'} type="password" value={secNew} onChange={e=>setSecNew(e.target.value)}/>
+              <Input label={fa?'تکرار رمز':'Confirm'} type="password" value={secConfirm} onChange={e=>setSecConfirm(e.target.value)}/>
+              <Button onClick={handleChangePassword} loading={secSaving}>{fa?'تغییر رمز':'Change Password'}</Button>
             </div>
           )}
 
