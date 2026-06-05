@@ -3,7 +3,8 @@
 // ══════════════════════════════════════════════════════════════
 import { io, Socket } from 'socket.io-client';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// Strip /api suffix — Socket.IO connects to server root, not /api path
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/api$/, '');
 
 // ── Event constants (mirror server) ──────────────────────────
 export const WS_EVENTS = {

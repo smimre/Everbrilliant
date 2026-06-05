@@ -10,7 +10,19 @@ export class AuthService {
 
   constructor(private prisma: PrismaService, private jwt: JwtService) {}
 
-  async login(dto: LoginDto) {
+  private async audit(params: {
+    userId?: number;
+    companyId?: number;
+    action: 'LOGIN' | 'LOGOUT' | 'CREATE' | 'UPDATE';
+    module: string;
+    description: string;
+    ipAddress?: string;
+    userAgent?: string;
+  }) {
+    await this.prisma.auditLog.create({ data: { ...params } }).catch(() => {});
+  }
+
+  async login(dto: LoginDto, meta?: { ip?: string; ua?: string }) {
     const key = dto.phone.toLowerCase();
     const attempt = this.loginAttempts.get(key) || { count: 0, lockedUntil: 0 };
 
@@ -36,6 +48,15 @@ export class AuthService {
         attempt.count = 0;
       }
       this.loginAttempts.set(key, attempt);
+      await this.audit({
+        userId: user?.id,
+        companyId: user?.companyId ?? undefined,
+        action: 'LOGIN',
+        module: 'auth',
+        description: `Failed login attempt for phone ${dto.phone}`,
+        ipAddress: meta?.ip,
+        userAgent: meta?.ua,
+      });
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -55,13 +76,23 @@ export class AuthService {
       data: { userId: user.id, token: accessToken, expiresAt: new Date(Date.now() + 8 * 3600 * 1000) },
     });
 
+    await this.audit({
+      userId: user.id,
+      companyId: user.companyId ?? undefined,
+      action: 'LOGIN',
+      module: 'auth',
+      description: `User ${user.name} logged in`,
+      ipAddress: meta?.ip,
+      userAgent: meta?.ua,
+    });
+
     return {
       accessToken, refreshToken,
       user: { id: user.id, name: user.name, phone: user.phone, email: user.email, role: user.role.name, companyId: user.companyId, company: user.company, permissions },
     };
   }
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto, meta?: { ip?: string; ua?: string }) {
     const exists = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
     if (exists) throw new BadRequestException('Phone already registered');
 
@@ -80,6 +111,17 @@ export class AuthService {
     await this.prisma.session.create({
       data: { userId: user.id, token: accessToken, expiresAt: new Date(Date.now() + 8 * 3600 * 1000) },
     });
+
+    await this.audit({
+      userId: user.id,
+      companyId: company.id,
+      action: 'CREATE',
+      module: 'auth',
+      description: `New account registered: ${user.name} (${user.phone})`,
+      ipAddress: meta?.ip,
+      userAgent: meta?.ua,
+    });
+
     return { accessToken, user: { id: user.id, name: user.name, phone: user.phone } };
   }
 
@@ -123,6 +165,14 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: userId },
       data: { password: hashed, passwordChangedAt: new Date() },
+    });
+
+    await this.audit({
+      userId,
+      companyId: user.companyId ?? undefined,
+      action: 'UPDATE',
+      module: 'auth',
+      description: `User ${user.name} changed their password`,
     });
 
     return { message: 'Password changed successfully' };
@@ -196,8 +246,17 @@ export class AuthService {
     return { message: 'Password reset successfully' };
   }
 
-  async logout(token: string) {
+  async logout(token: string, userId?: number, companyId?: number) {
     await this.prisma.session.deleteMany({ where: { token } }).catch(() => {});
+    if (userId) {
+      await this.audit({
+        userId,
+        companyId,
+        action: 'LOGOUT',
+        module: 'auth',
+        description: `User logged out`,
+      });
+    }
     return { success: true };
   }
 

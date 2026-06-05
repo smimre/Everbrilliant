@@ -8,7 +8,9 @@ import axios, {
 } from 'axios';
 import type { ApiError } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const _RAW_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// api-client appends /api; avoid doubling if env already includes it
+const API_URL = _RAW_URL.endsWith('/api') ? _RAW_URL : `${_RAW_URL}/api`;
 const REQUEST_TIMEOUT = 15_000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY = 1_000;
@@ -35,7 +37,7 @@ function clearAuth() {
 // ── Create instance ────────────────────────────
 function createApiClient(): AxiosInstance {
   const instance = axios.create({
-    baseURL: `${API_URL}/api`,
+    baseURL: API_URL,
     timeout: REQUEST_TIMEOUT,
     headers: {
       'Content-Type': 'application/json',

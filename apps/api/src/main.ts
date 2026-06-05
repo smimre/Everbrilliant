@@ -41,6 +41,9 @@ async function bootstrap() {
     },
   }));
 
+  // ── Trust proxy (nginx sets X-Forwarded-For) ─────────────────
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   // ── CORS ──────────────────────────────────────────────────────
   app.enableCors({
     origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001'],
@@ -71,7 +74,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = process.env.PORT || 3000;
-  await app.listen(port, '0.0.0.0');
+  await app.listen(port, '127.0.0.1');
   logger.log(`🚀 API running on http://0.0.0.0:${port}/api`);
   logger.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
 }
