@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
+import * as express from 'express';
 
 // BigInt cannot be serialized by JSON.stringify — convert to number for API responses.
 // Monetary values use BigInt in Prisma (IRR amounts fit in Number safely up to 2^53).
@@ -17,7 +18,12 @@ async function bootstrap() {
     logger: process.env.NODE_ENV === 'production'
       ? ['error', 'warn', 'log']
       : ['log', 'debug', 'error', 'warn'],
+    bodyParser: false,
   });
+
+  // Increase body size limit to 10MB to support base64-encoded logo/stamp uploads
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   // ── Security ──────────────────────────────────────────────────
   app.use(helmet({

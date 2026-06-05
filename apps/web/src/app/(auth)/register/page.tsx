@@ -310,18 +310,13 @@ export default function RegisterPage() {
               }`}>
                 {step > i + 1 ? <Check className="w-3.5 h-3.5"/> : i + 1}
               </div>
-              <div className="flex-1 mx-1">
-                <div className={`h-1 rounded-full transition-all ${step > i + 1 ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--muted))]'}`}/>
-              </div>
+              {i < STEPS.length - 1 && (
+                <div className="flex-1 mx-1">
+                  <div className={`h-1 rounded-full transition-all ${step > i + 1 ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--muted))]'}`}/>
+                </div>
+              )}
             </div>
           ))}
-          <div className={`w-7 h-7 flex items-center justify-center rounded-full text-xs font-bold shrink-0 ${
-            step > 3 ? 'bg-[hsl(var(--primary))] text-white' :
-            step === 3 ? 'bg-[hsl(var(--primary))] text-white' :
-            'bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]'
-          }`}>
-            {step > 3 ? <Check className="w-3.5 h-3.5"/> : 3}
-          </div>
         </div>
 
         <p className="text-sm font-semibold mb-4">{STEPS[step - 1]}</p>
