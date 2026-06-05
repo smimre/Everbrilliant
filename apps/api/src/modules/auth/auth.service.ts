@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, BadRequestException, ForbiddenExcept
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { LoginDto, RegisterDto } from './auth.dto';
+import { LoginDto, RegisterDto, RefreshDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -81,6 +81,35 @@ export class AuthService {
       data: { userId: user.id, token: accessToken, expiresAt: new Date(Date.now() + 8 * 3600 * 1000) },
     });
     return { accessToken, user: { id: user.id, name: user.name, phone: user.phone } };
+  }
+
+  async refresh(dto: RefreshDto) {
+    let payload: any;
+    try {
+      payload = this.jwt.verify(dto.refreshToken);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      include: { role: { include: { permissions: { include: { permission: true } } } } },
+    });
+    if (!user || !user.isActive) throw new UnauthorizedException('User not found or inactive');
+
+    const permissions = user.role.permissions.map((rp: any) => rp.permission.key);
+    const accessToken = this.jwt.sign(
+      { sub: user.id, phone: user.phone, companyId: user.companyId, role: user.role.name, permissions },
+      { expiresIn: '8h' },
+    );
+    const refreshToken = this.jwt.sign({ sub: user.id }, { expiresIn: '7d' });
+
+    await this.prisma.session.deleteMany({ where: { userId: user.id } });
+    await this.prisma.session.create({
+      data: { userId: user.id, token: accessToken, expiresAt: new Date(Date.now() + 8 * 3600 * 1000) },
+    });
+
+    return { accessToken, refreshToken };
   }
 
   async logout(token: string) {
