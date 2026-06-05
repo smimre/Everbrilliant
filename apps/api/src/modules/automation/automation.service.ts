@@ -130,12 +130,19 @@ export class AutomationService {
   }
 
   async createMeeting(companyId: number, userId: number, dto: any) {
+    const { time, agendaText, notes, ...rest } = dto;
     return this.prisma.meeting.create({
       data: {
-        ...dto, companyId, createdById: userId,
-        type: (dto.type || 'IN_PERSON').toUpperCase() as any,
+        ...rest,
+        companyId,
+        createdById: userId,
+        startTime: rest.startTime || time || '09:00',
+        agenda: rest.agenda || agendaText || notes || '',
+        type: (['ONLINE','IN_PERSON','HYBRID'].includes((rest.type || '').toUpperCase())
+          ? (rest.type as string).toUpperCase()
+          : 'IN_PERSON') as any,
         status: 'SCHEDULED' as any,
-        attendees: dto.attendees || [],
+        attendees: rest.attendees || [],
       },
     });
   }
