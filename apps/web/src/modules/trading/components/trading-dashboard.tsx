@@ -16,15 +16,15 @@ const STATUS_LABELS_FA: Record<string, string> = {
 export function TradingDashboard({ onNavigate }: Props) {
   const { lang } = useLocaleStore();
   const fa = lang === 'fa';
-  const { data: rawReqs = [] } = useRequests();
-  const { data: rawContracts = [] } = useContracts();
-  const { data: rawTenders = [] } = useTenders();
-  const { data: rawConns = [] } = useConnections();
+  const { data: rawReqs } = useRequests();
+  const { data: rawContracts } = useContracts();
+  const { data: rawTenders } = useTenders();
+  const { data: rawConns } = useConnections();
 
-  const requests = rawReqs as any[];
-  const contracts = rawContracts as any[];
-  const tenders = rawTenders as any[];
-  const connections = rawConns as any[];
+  const requests: any[] = Array.isArray(rawReqs) ? rawReqs : (rawReqs as any)?.data ?? [];
+  const contracts: any[] = Array.isArray(rawContracts) ? rawContracts : (rawContracts as any)?.data ?? [];
+  const tenders: any[] = Array.isArray(rawTenders) ? rawTenders : (rawTenders as any)?.data ?? [];
+  const connections: any[] = Array.isArray(rawConns) ? rawConns : (rawConns as any)?.data ?? [];
 
   const pending = requests.filter((r) => r.status === 'pending');
   const quoted = requests.filter((r) => r.status === 'quoted');

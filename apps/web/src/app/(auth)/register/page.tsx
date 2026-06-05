@@ -254,7 +254,7 @@ export default function RegisterPage() {
     try {
       setLoading(true);
       setError('');
-      const name = [fname, lname].filter(Boolean).join(' ');
+      const name = [fname.trim(), lname.trim()].filter(Boolean).join(' ');
       const result = await authService.register({
         name,
         phone,
