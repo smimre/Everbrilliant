@@ -62,8 +62,9 @@ export function MyQuotes() {
           { icon: '🏆', val: won.length,     label: fa ? 'برنده شده'               : 'Won',             color: '#10b981' },
           { icon: '💰', val: fmt(totalQuoted), label: fa ? 'ارزش قیمت‌های داده‌شده' : 'Total Quoted Value', color: '#8b5cf6' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: s.color }} />
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center relative overflow-hidden group hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+            <div className="absolute top-0 inset-x-0 h-1 rounded-t-xl" style={{ background: s.color }} />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-200 pointer-events-none" style={{ background: s.color }} />
             <div className="text-2xl mb-2">{s.icon}</div>
             <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
             <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>

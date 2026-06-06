@@ -75,8 +75,9 @@ export function ExchangeRatesPage() {
           const chg = MOCK_CHANGES[c.code] ?? 0;
           const accentColor = chg >= 0 ? '#10b981' : '#ef4444';
           return (
-            <div key={c.code} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden">
-              <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: accentColor }} />
+            <div key={c.code} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden group hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+              <div className="absolute top-0 inset-x-0 h-1 rounded-t-xl" style={{ background: accentColor }} />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-200 pointer-events-none" style={{ background: accentColor }} />
               <div className="text-2xl mb-2">{c.flag}</div>
               <div className="font-bold text-base leading-none">{c.symbol} {(rates[c.code] ?? 1).toLocaleString('en')}</div>
               <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">{c.code} / IRR</div>

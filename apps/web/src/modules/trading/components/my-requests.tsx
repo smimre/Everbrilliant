@@ -79,7 +79,7 @@ export function MyRequests() {
         </div>
         <button
           onClick={() => setShowNew(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-all active:scale-95"
         >
           ➕ {fa ? 'درخواست جدید' : 'New Request'}
         </button>
@@ -126,7 +126,7 @@ export function MyRequests() {
           <p className="font-medium">{fa ? 'درخواستی ثبت نشده' : 'No requests yet'}</p>
           <button
             onClick={() => setShowNew(true)}
-            className="mt-3 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+            className="mt-3 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-all active:scale-95"
           >
             + {fa ? 'درخواست جدید' : 'New Request'}
           </button>
@@ -181,7 +181,7 @@ function RequestCard({
 
   return (
     <div
-      className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 hover:border-[hsl(var(--primary)/0.3)] transition-colors cursor-pointer border-l-2"
+      className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 hover:border-[hsl(var(--primary)/0.4)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border-l-2"
       style={{ borderRight: `4px solid ${isQuoted ? '#3b82f6' : st === 'APPROVED' ? '#10b981' : st === 'REJECTED' || st === 'CANCELLED' ? '#ef4444' : color}`, borderLeftColor: isQuoted ? '#3b82f6' : st === 'APPROVED' ? '#10b981' : st === 'REJECTED' || st === 'CANCELLED' ? '#ef4444' : color }}
       onClick={onSelect}
     >
@@ -425,7 +425,7 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
             <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
               {fa ? 'بستن' : 'Close'}
             </button>
-            <a href="/connections" onClick={onClose} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+            <a href="/connections" onClick={onClose} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-all active:scale-95">
               🔗 {fa ? 'کد دعوت' : 'Invite Code'}
             </a>
           </div>
@@ -531,7 +531,7 @@ function NewRequestModal({ lang, onClose }: { lang: string; onClose: () => void 
           <button
             disabled={createRequest.isPending}
             onClick={handleSubmit}
-            className="px-6 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="px-6 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
           >
             {createRequest.isPending
               ? (fa ? 'در حال ثبت...' : 'Submitting...')

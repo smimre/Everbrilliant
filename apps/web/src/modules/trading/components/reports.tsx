@@ -83,8 +83,9 @@ export function ReportsPage({ showSales }: ReportsProps = {}) {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {kpis.map((k, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: k.color }} />
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 relative overflow-hidden group hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+            <div className="absolute top-0 inset-x-0 h-1 rounded-t-xl" style={{ background: k.color }} />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-200 pointer-events-none" style={{ background: k.color }} />
             <div className="text-2xl mb-2">{k.icon}</div>
             <div className="text-xl font-bold leading-none" style={{ color: k.color }}>{k.val}</div>
             <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{k.label}</div>

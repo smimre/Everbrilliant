@@ -465,7 +465,7 @@ export function MyManaqeseh() {
         </div>
         <button
           onClick={() => setShowNew(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-all active:scale-95"
         >
           ➕ {fa ? 'مناقصه جدید' : 'New Tender'}
         </button>
@@ -473,10 +473,12 @@ export function MyManaqeseh() {
 
       <div className="grid grid-cols-4 gap-3">
         {statuses.map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center">
-            <div className="text-xl mb-1">{s.icon}</div>
-            <div className="text-xl font-bold" style={{ color: s.color }}>{s.val}</div>
-            <div className="text-xs text-[hsl(var(--muted-foreground))]">{s.label}</div>
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden group hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+            <div className="absolute top-0 inset-x-0 h-1 rounded-t-xl" style={{ background: s.color }} />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-200 pointer-events-none" style={{ background: s.color }} />
+            <div className="text-2xl mb-2">{s.icon}</div>
+            <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>
           </div>
         ))}
       </div>

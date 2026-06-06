@@ -99,8 +99,9 @@ export function InventoryPage() {
           { icon: '💰', val: totalValue > 0 ? `${(totalValue/1e9).toFixed(1)}B` : '0', label: fa ? 'ارزش کل' : 'Total Value', color: '#10b981' },
           { icon: '👥', val: partnerItems.length, label: fa ? 'موجودی شرکاء' : 'Partners Stock', color: '#06b6d4' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: s.color }} />
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden group hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+            <div className="absolute top-0 inset-x-0 h-1 rounded-t-xl" style={{ background: s.color }} />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-200 pointer-events-none" style={{ background: s.color }} />
             <div className="text-2xl mb-2">{s.icon}</div>
             <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
             <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>
@@ -110,7 +111,7 @@ export function InventoryPage() {
 
       {/* Low stock alert */}
       {lowStock.length > 0 && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500">
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-500 border-l-[3px] border-l-red-500/60">
           ⚠️ {fa ? 'موجودی کم: ' : 'Low stock: '}
           <span className="font-semibold">{lowStock.map(i => i.name).join('، ')}</span>
         </div>

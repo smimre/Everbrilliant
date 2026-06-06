@@ -122,8 +122,9 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
           { icon: '💬', val: quoted.length,   label: fa ? 'قیمت‌دهی شده'    : 'Quoted',         color: '#8b5cf6' },
           { icon: '🏆', val: won.length,      label: fa ? 'برنده شده'        : 'Won',            color: '#10b981' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: s.color }} />
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center relative overflow-hidden group hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+            <div className="absolute top-0 inset-x-0 h-1 rounded-t-xl" style={{ background: s.color }} />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-200 pointer-events-none" style={{ background: s.color }} />
             <div className="text-2xl mb-2">{s.icon}</div>
             <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
             <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>
@@ -175,7 +176,7 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
               <div
                 key={r.id}
                 onClick={() => setSelected(r)}
-                className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 cursor-pointer hover:border-[hsl(var(--primary)/0.3)] transition-colors border-l-2"
+                className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 cursor-pointer hover:border-[hsl(var(--primary)/0.4)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-l-2"
                 style={{ borderRight: `4px solid ${borderColor}`, borderLeftColor: borderColor }}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -203,7 +204,7 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
                     {isPending && (
                       <button
                         onClick={e => { e.stopPropagation(); setSelected(r); setQuoteAmount(''); setQuoteNote(''); }}
-                        className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium hover:opacity-90 transition-opacity"
+                        className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium hover:opacity-90 transition-all active:scale-95"
                       >
                         💬 {fa ? 'قیمت‌دهی' : 'Quote'}
                       </button>
@@ -305,7 +306,7 @@ export function IncomingRequests({ showQuotes }: Props = {}) {
                   <button
                     onClick={handleQuote}
                     disabled={createQuote.isPending}
-                    className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+                    className="flex-1 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
                   >
                     {createQuote.isPending
                       ? (fa ? 'در حال ارسال...' : 'Sending...')

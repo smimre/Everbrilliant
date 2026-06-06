@@ -91,8 +91,9 @@ export function Connections() {
           { icon: '🟢', val: activeCount,       label: fa ? 'فعال' : 'Active',          color: '#10b981' },
           { icon: '⏸️', val: inactiveCount,    label: fa ? 'غیرفعال' : 'Inactive',     color: '#94a3b8' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: s.color }} />
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-3 text-center relative overflow-hidden group hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+            <div className="absolute top-0 inset-x-0 h-1 rounded-t-xl" style={{ background: s.color }} />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-200 pointer-events-none" style={{ background: s.color }} />
             <div className="text-2xl mb-2">{s.icon}</div>
             <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
             <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>
@@ -167,7 +168,7 @@ export function Connections() {
               const typeIcon  = TYPE_ICON[p.type]  ?? '🤝';
               const typeLabel = TYPE_LABEL[p.type]  ?? { fa: p.type, en: p.type };
               return (
-                <div key={p.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
+                <div key={p.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 hover:border-[hsl(var(--primary)/0.3)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm" style={{ background: p.color }}>
                       {p.initials}

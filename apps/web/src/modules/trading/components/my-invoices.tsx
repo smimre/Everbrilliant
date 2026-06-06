@@ -95,8 +95,9 @@ export function MyInvoices() {
           { icon: '📥', val: fmt(totalReceived), label: fa ? 'دریافتی'       : 'Received',       color: '#06b6d4' },
           { icon: '⏳', val: unpaid.length,      label: fa ? 'پرداخت نشده'  : 'Unpaid',         color: '#ef4444' },
         ].map((s, i) => (
-          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-0.5 rounded-t-xl" style={{ background: s.color }} />
+          <div key={i} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4 text-center relative overflow-hidden group hover:scale-[1.03] hover:shadow-md transition-all duration-200">
+            <div className="absolute top-0 inset-x-0 h-1 rounded-t-xl" style={{ background: s.color }} />
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity duration-200 pointer-events-none" style={{ background: s.color }} />
             <div className="text-2xl mb-2">{s.icon}</div>
             <div className="text-xl font-bold leading-none" style={{ color: s.color }}>{s.val}</div>
             <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{s.label}</div>
@@ -121,7 +122,7 @@ export function MyInvoices() {
           <h2 className="font-bold">🧾 {fa ? 'فاکتورهای تجاری' : 'Trade Invoices'}</h2>
           <button
             onClick={() => setShowCreate(true)}
-            className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium hover:opacity-90 transition-opacity"
+            className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium hover:opacity-90 transition-all active:scale-95"
           >
             + {fa ? 'فاکتور جدید' : 'New Invoice'}
           </button>
@@ -218,7 +219,7 @@ export function MyInvoices() {
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => setViewingId(inv.id)}
-                      className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium hover:opacity-90 transition-opacity"
+                      className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium hover:opacity-90 transition-all active:scale-95"
                     >
                       🧾 {fa ? 'مشاهده' : 'View'}
                     </button>
