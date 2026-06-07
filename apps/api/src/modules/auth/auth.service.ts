@@ -3,12 +3,13 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto, UpdateCompanyDto } from './auth.dto';
+import { EmailService } from '../notifications/email.service';
 
 @Injectable()
 export class AuthService {
   private loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
 
-  constructor(private prisma: PrismaService, private jwt: JwtService) {}
+  constructor(private prisma: PrismaService, private jwt: JwtService, private email: EmailService) {}
 
   private async audit(params: {
     userId?: number;
@@ -121,6 +122,12 @@ export class AuthService {
       ipAddress: meta?.ip,
       userAgent: meta?.ua,
     });
+
+    // Fire-and-forget — do not block registration on email delivery
+    this.email.sendWelcomeEmail(
+      { name: user.name, email: user.email, phone: user.phone },
+      { name: company.name, country: company.country },
+    ).catch(() => {});
 
     return { accessToken, user: { id: user.id, name: user.name, phone: user.phone } };
   }
@@ -240,8 +247,10 @@ export class AuthService {
       data: { resetToken: code, resetTokenExpiry: expiry },
     });
 
-    // TODO: replace with SMS/email delivery when provider is configured
-    console.log(`[PASSWORD RESET] Code for ${dto.identifier}: ${code}`);
+    this.email.sendPasswordResetEmail(
+      { name: user.name, email: user.email, phone: user.phone },
+      code,
+    ).catch(() => {});
 
     return { message: 'If an account exists, a reset code has been sent.' };
   }

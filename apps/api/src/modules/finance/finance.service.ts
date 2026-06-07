@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { EmailService } from '../notifications/email.service';
 
 @Injectable()
 export class FinanceService {
-  constructor(protected prisma: PrismaService) {}
+  constructor(protected prisma: PrismaService, protected email?: EmailService) {}
 
   private paginate(query: any) {
     const page = Math.max(1, Number(query.page) || 1);
@@ -83,7 +84,7 @@ export class FinanceService {
     const date = new Date();
     const id = `TINV-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}-${Math.random().toString(36).slice(2,7).toUpperCase()}`;
 
-    return this.prisma.invoice.create({
+    const invoice = await this.prisma.invoice.create({
       data: {
         id,
         invoiceType: (dto.invoiceType || 'type1').toUpperCase() as any,
@@ -99,8 +100,29 @@ export class FinanceService {
         note: dto.note,
         items: { create: items },
       },
-      include: { items: true },
+      include: {
+        items: true,
+        sellerCompany: { select: { name: true } },
+        buyerCompany: { select: { name: true, country: true } },
+      },
     });
+
+    // Send notification email to buyer — fire-and-forget
+    if (this.email) {
+      this.email.sendInvoiceEmail({
+        id: invoice.id,
+        total: invoice.total,
+        currency: invoice.currency,
+        status: invoice.status,
+        issuedAt: invoice.issuedAt ?? undefined,
+        dueAt: invoice.dueAt ?? undefined,
+        sellerCompany: invoice.sellerCompany,
+        buyerCompany: invoice.buyerCompany,
+        buyerContactEmail: dto.buyerEmail ?? null,
+      }).catch(() => {});
+    }
+
+    return invoice;
   }
 
   async payInvoice(companyId: number, id: string, dto: any) {

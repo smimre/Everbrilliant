@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { EmailService } from '../notifications/email.service';
 
 @Injectable()
 export class TradingService {
-  constructor(protected prisma: PrismaService) {}
+  constructor(protected prisma: PrismaService, protected email?: EmailService) {}
 
   private paginate(q: any) {
     const page = Math.max(1, Number(q.page) || 1);
@@ -44,7 +45,7 @@ export class TradingService {
   }
 
   async createRequest(companyId: number, userId: number, dto: any) {
-    return this.prisma.tradeRequest.create({
+    const request = await this.prisma.tradeRequest.create({
       data: {
         buyerCompanyId: companyId,
         sellerCompanyId: dto.sellerCompanyId ? Number(dto.sellerCompanyId) : undefined,
@@ -58,7 +59,30 @@ export class TradingService {
         note: dto.note, hsCode: dto.hsCode,
         createdById: userId,
       },
+      include: {
+        buyerCompany: { select: { name: true, country: true } },
+        sellerCompany: {
+          select: { name: true, country: true, users: { select: { email: true } } },
+        },
+      },
     });
+
+    // Notify seller company users — fire-and-forget
+    if (this.email && request.sellerCompany) {
+      this.email.sendTradeRequestEmail({
+        id: request.id,
+        product: request.product,
+        qty: Number(request.qty),
+        unit: request.unit,
+        currency: request.currency,
+        deadline: request.deadline,
+        note: request.note,
+        buyerCompany: request.buyerCompany,
+        sellerCompany: request.sellerCompany as any,
+      }).catch(() => {});
+    }
+
+    return request;
   }
 
   async createContractDirect(companyId: number, userId: number, dto: any) {
