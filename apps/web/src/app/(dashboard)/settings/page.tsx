@@ -1,6 +1,6 @@
 'use client';
 export const dynamic = 'force-dynamic';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useAuthStore } from '@/store/auth.store';
 import { useUIStore } from '@/store/ui.store';
@@ -186,20 +186,69 @@ function AddCompanyModal({fa,onClose,onSave}: {fa:boolean;onClose:()=>void;onSav
 }
 
 function CompanyInfoTab({ fa }: { fa: boolean }) {
+  const { toast } = useUIStore();
   const logoRef = useRef<HTMLInputElement>(null);
   const stampRef = useRef<HTMLInputElement>(null);
-  const [logo, setLogo] = useState('');
-  const [stamp, setStamp] = useState('');
-  const [country, setCountry] = useState('IR');
-  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: '', legalName: '', nationalId: '', economicCode: '',
+    regNo: '', phone: '', email: '', address: '', city: '',
+    province: '', postalCode: '', website: '', country: 'IR',
+    logo: '', stamp: '',
+  });
 
-  const handleImg = (setter: (v:string)=>void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    authService.getCompany().then(c => {
+      setForm(f => ({
+        ...f,
+        name:         c.name         ?? '',
+        legalName:    c.legalName    ?? c.legal_name   ?? '',
+        nationalId:   c.nationalId   ?? c.national_id  ?? '',
+        economicCode: c.economicCode ?? c.economic_code ?? '',
+        regNo:        c.regNo        ?? c.reg_no       ?? '',
+        phone:        c.phone        ?? '',
+        email:        c.email        ?? '',
+        address:      c.address      ?? '',
+        city:         c.city         ?? '',
+        province:     c.province     ?? '',
+        postalCode:   c.postalCode   ?? c.postal_code  ?? '',
+        website:      c.website      ?? '',
+        country:      c.country      ?? 'IR',
+        logo:         c.logo         ?? '',
+      }));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const handleImg = (key: 'logo' | 'stamp') => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setter(reader.result as string);
+    reader.onload = () => setForm(f => ({ ...f, [key]: reader.result as string }));
     reader.readAsDataURL(file);
   };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Strip empty strings so optional-validated fields (email, etc.) are omitted
+      const payload = Object.fromEntries(
+        Object.entries(form).filter(([, v]) => v !== '')
+      );
+      await authService.updateCompany(payload);
+      toast('success', fa ? 'اطلاعات شرکت ذخیره شد' : 'Company info saved');
+    } catch {
+      toast('error', fa ? 'خطا در ذخیره‌سازی' : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-center text-[hsl(var(--muted-foreground))]">Loading…</div>;
 
   return (
     <div className="space-y-4">
@@ -211,56 +260,51 @@ function CompanyInfoTab({ fa }: { fa: boolean }) {
           <label className="text-xs text-[hsl(var(--muted-foreground))] block mb-1">{fa?'لوگوی شرکت':'Company Logo'}</label>
           <div onClick={() => logoRef.current?.click()}
             className="border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-4 text-center cursor-pointer hover:border-[hsl(var(--primary)/0.5)] transition-colors">
-            {logo ? (
-              <img src={logo} alt="logo" className="h-14 object-contain mx-auto rounded-lg"/>
+            {form.logo ? (
+              <img src={form.logo} alt="logo" className="h-14 object-contain mx-auto rounded-lg"/>
             ) : (
               <div className="py-3 flex flex-col items-center gap-2">
                 <ImagePlus className="w-8 h-8 text-[hsl(var(--muted-foreground))]"/>
                 <span className="text-xs text-[hsl(var(--muted-foreground))]">{fa?'آپلود لوگو':'Upload logo'}</span>
               </div>
             )}
-            <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={handleImg(setLogo)}/>
+            <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={handleImg('logo')}/>
           </div>
         </div>
         <div>
           <label className="text-xs text-[hsl(var(--muted-foreground))] block mb-1">{fa?'مهر / تمبر':'Company Stamp'}</label>
           <div onClick={() => stampRef.current?.click()}
             className="border-2 border-dashed border-[hsl(var(--border))] rounded-xl p-4 text-center cursor-pointer hover:border-[hsl(var(--primary)/0.5)] transition-colors">
-            {stamp ? (
-              <img src={stamp} alt="stamp" className="h-14 object-contain mx-auto rounded-lg"/>
+            {form.stamp ? (
+              <img src={form.stamp} alt="stamp" className="h-14 object-contain mx-auto rounded-lg"/>
             ) : (
               <div className="py-3 flex flex-col items-center gap-2">
                 <ImagePlus className="w-8 h-8 text-[hsl(var(--muted-foreground))]"/>
                 <span className="text-xs text-[hsl(var(--muted-foreground))]">{fa?'آپلود مهر (PNG شفاف)':'Upload stamp (PNG transparent)'}</span>
               </div>
             )}
-            <input ref={stampRef} type="file" accept="image/*" className="hidden" onChange={handleImg(setStamp)}/>
+            <input ref={stampRef} type="file" accept="image/*" className="hidden" onChange={handleImg('stamp')}/>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label={fa?'نام شرکت':'Company Name'} defaultValue="شرکت ایورتریدینگ"/>
-        <Input label={fa?'شناسه ملی':'National ID'} defaultValue="14005678901"/>
-        <Input label={fa?'کد اقتصادی':'Economic Code'} defaultValue="411234567890"/>
-        <Input label={fa?'شماره ثبت':'Reg No'} defaultValue="12345"/>
-        <Input label={fa?'تلفن':'Phone'} defaultValue="02112345678"/>
-        <Input label={fa?'ایمیل':'Email'} defaultValue="info@everbrilliant.com"/>
+        <Input id="ci-name"         label={fa?'نام شرکت':'Company Name'}   value={form.name}         onChange={set('name')}/>
+        <Input id="ci-nationalId"   label={fa?'شناسه ملی':'National ID'}   value={form.nationalId}   onChange={set('nationalId')}/>
+        <Input id="ci-economicCode" label={fa?'کد اقتصادی':'Economic Code'} value={form.economicCode} onChange={set('economicCode')}/>
+        <Input id="ci-regNo"        label={fa?'شماره ثبت':'Reg No'}        value={form.regNo}        onChange={set('regNo')}/>
+        <Input id="ci-phone"        label={fa?'تلفن':'Phone'}              value={form.phone}        onChange={set('phone')}/>
+        <Input id="ci-email"        label={fa?'ایمیل':'Email'} type="email" value={form.email}        onChange={set('email')}/>
       </div>
 
-      <CountrySelector
-        label={fa?'کشور':'Country'}
-        value={country}
-        onChange={setCountry}
-      />
+      <CountrySelector label={fa?'کشور':'Country'} value={form.country} onChange={v => setForm(f => ({ ...f, country: v }))}/>
 
-      <Input label={fa?'آدرس':'Address'} defaultValue="تهران، خیابان ولیعصر"/>
+      <Input id="ci-address" label={fa?'آدرس':'Address'} value={form.address} onChange={set('address')}/>
 
       <div className="flex items-center gap-3">
-        <Button onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2500); }}>
-          {saved ? '✅ ' : ''}{fa?'ذخیره':'Save'}
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? (fa?'در حال ذخیره…':'Saving…') : (fa?'ذخیره':'Save')}
         </Button>
-        {saved && <span className="text-sm text-[hsl(var(--primary))]">{fa?'اطلاعات ذخیره شد':'Saved successfully'}</span>}
       </div>
     </div>
   );

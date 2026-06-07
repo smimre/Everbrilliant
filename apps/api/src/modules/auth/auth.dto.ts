@@ -67,3 +67,21 @@ export class UpdateProfileDto {
   @IsOptional() @IsEmail()
   email?: string;
 }
+
+export class UpdateCompanyDto {
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() legalName?: string;
+  @IsOptional() @IsString() nationalId?: string;
+  @IsOptional() @IsString() economicCode?: string;
+  @IsOptional() @IsString() regNo?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsEmail() email?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsString() city?: string;
+  @IsOptional() @IsString() province?: string;
+  @IsOptional() @IsString() country?: string;
+  @IsOptional() @IsString() postalCode?: string;
+  @IsOptional() @IsString() website?: string;
+  @IsOptional() @IsString() logo?: string;
+  @IsOptional() @IsString() stamp?: string;
+}

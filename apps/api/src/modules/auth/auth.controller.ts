@@ -1,7 +1,7 @@
 import { Controller, Post, Patch, Body, Get, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto } from './auth.dto';
+import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto, UpdateCompanyDto } from './auth.dto';
 import { JwtAuthGuard, Public } from './auth.guard';
 
 @Controller('auth')
@@ -56,5 +56,15 @@ export class AuthController {
   me(@Req() req: any) {
     const { password, twoFactorSecret, ...safe } = req.user;
     return safe;
+  }
+
+  @Get('company') @SkipThrottle()
+  getCompany(@Req() req: any) {
+    return this.authService.getCompany(req.user.companyId);
+  }
+
+  @Patch('company')
+  updateCompany(@Req() req: any, @Body() dto: UpdateCompanyDto) {
+    return this.authService.updateCompany(req.user.companyId, dto);
   }
 }

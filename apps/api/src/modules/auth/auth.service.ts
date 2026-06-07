@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, BadRequestException, ForbiddenExcept
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto } from './auth.dto';
+import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto, UpdateCompanyDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -196,6 +196,31 @@ export class AuthService {
 
     const { password, twoFactorSecret, resetToken, resetTokenExpiry, ...safe } = user as any;
     return safe;
+  }
+
+  async getCompany(companyId: number) {
+    const company = await this.prisma.company.findUnique({ where: { id: companyId } });
+    if (!company) throw new BadRequestException('Company not found');
+    return company;
+  }
+
+  async updateCompany(companyId: number, dto: UpdateCompanyDto) {
+    const data: any = {};
+    if (dto.name !== undefined)         data.name = dto.name;
+    if (dto.legalName !== undefined)    data.legalName = dto.legalName;
+    if (dto.nationalId !== undefined)   data.nationalId = dto.nationalId;
+    if (dto.economicCode !== undefined) data.economicCode = dto.economicCode;
+    if (dto.regNo !== undefined)        data.regNo = dto.regNo;
+    if (dto.phone !== undefined)        data.phone = dto.phone;
+    if (dto.email !== undefined)        data.email = dto.email;
+    if (dto.address !== undefined)      data.address = dto.address;
+    if (dto.city !== undefined)         data.city = dto.city;
+    if (dto.province !== undefined)     data.province = dto.province;
+    if (dto.country !== undefined)      data.country = dto.country;
+    if (dto.postalCode !== undefined)   data.postalCode = dto.postalCode;
+    if (dto.website !== undefined)      data.website = dto.website;
+    if (dto.logo !== undefined)         data.logo = dto.logo;
+    return this.prisma.company.update({ where: { id: companyId }, data });
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {

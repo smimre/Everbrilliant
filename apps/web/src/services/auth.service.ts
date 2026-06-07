@@ -17,4 +17,6 @@ export const authService = {
     api.post<{ message: string }>('/auth/forgot-password', { identifier }),
   resetPassword: (token: string, password: string) =>
     api.post<{ message: string }>('/auth/reset-password', { token, password }),
+  getCompany: () => api.get<any>('/auth/company'),
+  updateCompany: (dto: Record<string, any>) => api.patch<any>('/auth/company', dto),
 };
