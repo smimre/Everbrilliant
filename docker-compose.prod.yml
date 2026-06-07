@@ -82,10 +82,11 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis:    { condition: service_healthy }
-    networks: [eb_internal]
-    expose: ["3000"]
+    networks: [eb_internal, eb_external]
+    ports:
+      - "3000:3000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -108,38 +109,19 @@ services:
       NEXT_PUBLIC_API_URL: ${API_URL}
     depends_on:
       api: { condition: service_healthy }
-    networks: [eb_internal]
-    expose: ["3001"]
+    networks: [eb_internal, eb_external]
+    ports:
+      - "3001:3001"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3001 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # ── Nginx ─────────────────────────────────────────────────────
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: eb_nginx
-    <<: [*restart, *logging]
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./infrastructure/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./infrastructure/ssl:/etc/nginx/ssl:ro
-      - nginx_cache:/var/cache/nginx
-      - nginx_logs:/var/log/nginx
-    depends_on:
-      - api
-      - web
-    networks:
-      - eb_internal
-      - eb_external
-    healthcheck:
-      test: ["CMD", "nginx", "-t"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+  # ── Nginx (disabled — host nginx handles SSL/routing) ────────────────
+  # nginx:
+  #   image: nginx:1.25-alpine
+  #   (Port 80/443 already used by host nginx which proxies to Docker ports)
 
 volumes:
   postgres_data:

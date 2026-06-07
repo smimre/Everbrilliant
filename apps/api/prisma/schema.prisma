@@ -236,11 +236,11 @@ enum QCResult {
 model Company {
   id              Int       @id @default(autoincrement())
   name            String
-  legalName       String?
-  nationalId      String?   @unique
-  economicCode    String?   @unique
-  regNo           String?
-  postalCode      String?
+  legalName       String?  @map("legal_name")
+  nationalId      String?   @unique  @map("national_id")
+  economicCode    String?   @unique  @map("economic_code")
+  regNo           String?  @map("reg_no")
+  postalCode      String?  @map("postal_code")
   address         String?
   city            String?
   province        String?
@@ -250,15 +250,15 @@ model Company {
   email           String?
   website         String?
   logo            String?
-  vatRegistered   Boolean   @default(true)
-  vatRate         Int       @default(10)
+  vatRegistered   Boolean   @default(true)  @map("vat_registered")
+  vatRate         Int       @default(10)  @map("vat_rate")
   plan            Plan      @default(FREE)
   planExpiresAt   DateTime?
-  maxUsers        Int       @default(5)
-  isActive        Boolean   @default(true)
-  isVerified      Boolean   @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  maxUsers        Int       @default(5)  @map("max_users")
+  isActive        Boolean   @default(true)  @map("is_active")
+  isVerified      Boolean   @default(false)  @map("is_verified")
+  createdAt       DateTime  @default(now())  @map("created_at")
+  updatedAt       DateTime  @updatedAt  @map("updated_at")
 
   // Relations
   users            User[]
@@ -316,19 +316,19 @@ model User {
   staffCode       String?
   jobTitle        String?
   department      String?
-  companyId       Int
-  roleId          Int
-  isActive        Boolean   @default(true)
-  isCompanyAdmin  Boolean   @default(false)
+  companyId       Int  @map("company_id")
+  roleId          Int  @map("role_id")
+  isActive        Boolean   @default(true)  @map("is_active")
+  isCompanyAdmin  Boolean   @default(false)  @map("is_company_admin")
   twoFactorEnabled Boolean  @default(false)
   twoFactorSecret  String?
-  lastLoginAt     DateTime?
+  lastLoginAt     DateTime?  @map("last_login_at")
   lastLoginIp     String?
   passwordChangedAt DateTime?
   resetToken      String?
   resetTokenExpiry DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime  @default(now())  @map("created_at")
+  updatedAt       DateTime  @updatedAt  @map("updated_at")
 
   // Relations
   company         Company          @relation(fields: [companyId], references: [id])
@@ -357,14 +357,14 @@ model User {
 
 model Session {
   id          Int       @id @default(autoincrement())
-  userId      Int
+  userId      Int  @map("user_id")
   token       String    @unique
-  refreshToken String?  @unique
-  expiresAt   DateTime
-  ipAddress   String?
+  refreshToken String?  @unique  @map("refresh_token")
+  expiresAt   DateTime  @map("expires_at")
+  ipAddress   String?  @map("ip_address")
   userAgent   String?
-  isRevoked   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  isRevoked   Boolean   @default(false)  @map("is_revoked")
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -381,12 +381,12 @@ model Role {
   id          Int       @id @default(autoincrement())
   name        String
   label       String
-  labelFa     String?
+  labelFa     String?  @map("label_fa")
   labelAr     String?
-  companyId   Int?
-  isSystem    Boolean   @default(false)
-  isDefault   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  companyId   Int?  @map("company_id")
+  isSystem    Boolean   @default(false)  @map("is_system")
+  isDefault   Boolean   @default(false)  @map("is_default")
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   company     Company?  @relation("CompanyRoles", fields: [companyId], references: [id])
   users       User[]
@@ -400,10 +400,10 @@ model Permission {
   id          Int       @id @default(autoincrement())
   key         String    @unique
   label       String
-  labelFa     String?
+  labelFa     String?  @map("label_fa")
   module      String
   description String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   roles       RolePermission[]
 
@@ -412,9 +412,9 @@ model Permission {
 }
 
 model RolePermission {
-  roleId       Int
-  permissionId Int
-  grantedAt    DateTime  @default(now())
+  roleId       Int  @map("role_id")
+  permissionId Int  @map("permission_id")
+  grantedAt    DateTime  @default(now())  @map("granted_at")
   grantedBy    Int?
 
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -430,14 +430,14 @@ model RolePermission {
 
 model Product {
   id              String    @id @default(cuid())
-  companyId       Int
+  companyId       Int  @map("company_id")
   name            String
   nameEn          String?
   nameAr          String?
   description     String?
   category        String?
   subCategory     String?
-  hsCode          String?
+  hsCode          String?  @map("hs_code")
   unit            String    @default("ton")
   defaultCurrency String    @default("IRR")
   defaultPrice    Decimal?  @db.Decimal(20, 2)
@@ -446,9 +446,9 @@ model Product {
   leadTimeDays    Int?
   origin          String?
   specs           Json?
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  isActive        Boolean   @default(true)  @map("is_active")
+  createdAt       DateTime  @default(now())  @map("created_at")
+  updatedAt       DateTime  @updatedAt  @map("updated_at")
 
   company         Company   @relation(fields: [companyId], references: [id])
   priceLists      PriceListItem[]
@@ -462,13 +462,13 @@ model Product {
 
 model PriceList {
   id          String    @id @default(cuid())
-  companyId   Int
+  companyId   Int  @map("company_id")
   name        String
   currency    String    @default("IRR")
   validFrom   DateTime
   validUntil  DateTime?
-  isDefault   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  isDefault   Boolean   @default(false)  @map("is_default")
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   company     Company   @relation(fields: [companyId], references: [id])
   items       PriceListItem[]
@@ -498,8 +498,8 @@ model PriceListItem {
 
 model TradeRequest {
   id              String        @id @default(cuid())
-  buyerCompanyId  Int
-  sellerCompanyId Int?
+  buyerCompanyId  Int  @map("buyer_company_id")
+  sellerCompanyId Int?  @map("seller_company_id")
   product         String
   qty             Decimal       @db.Decimal(15, 3)
   unit            String
@@ -510,18 +510,18 @@ model TradeRequest {
   priority        Priority      @default(NORMAL)
   deadline        DateTime?
   note            String?
-  hsCode          String?
+  hsCode          String?  @map("hs_code")
   deliveryAddress String?
   incoterm        String?
   paymentTerms    String?
   qualitySpec     String?
   sampleRequired  Boolean       @default(false)
   havNo           String?
-  issuedAt        DateTime?
-  createdById     Int
+  issuedAt        DateTime?  @map("issued_at")
+  createdById     Int  @map("created_by_id")
   assignedToId    Int?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime      @default(now())  @map("created_at")
+  updatedAt       DateTime      @updatedAt  @map("updated_at")
 
   buyerCompany    Company       @relation("BuyerCompany", fields: [buyerCompanyId], references: [id])
   sellerCompany   Company?      @relation("SellerCompany", fields: [sellerCompanyId], references: [id])
@@ -544,12 +544,12 @@ model TradeRequest {
 
 model Quote {
   id              String    @id @default(cuid())
-  requestId       String
-  sellerCompanyId Int
+  requestId       String  @map("request_id")
+  sellerCompanyId Int  @map("seller_company_id")
   unitPrice       Decimal   @db.Decimal(20, 2)
   currency        String    @default("IRR")
   totalPrice      Decimal   @db.Decimal(20, 2)
-  vatAmount       Decimal?  @db.Decimal(20, 2)
+  vatAmount       Decimal?  @db.Decimal(20, 2)  @map("vat_amount")
   validUntil      DateTime?
   deliveryDays    Int?
   deliveryAddress String?
@@ -558,9 +558,9 @@ model Quote {
   note            String?
   status          BidStatus @default(PENDING)
   rejectionReason String?
-  createdById     Int?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdById     Int?  @map("created_by_id")
+  createdAt       DateTime  @default(now())  @map("created_at")
+  updatedAt       DateTime  @updatedAt  @map("updated_at")
 
   request         TradeRequest @relation(fields: [requestId], references: [id])
 
@@ -571,10 +571,10 @@ model Quote {
 
 model Contract {
   id              String         @id @default(cuid())
-  requestId       String         @unique
+  requestId       String         @unique  @map("request_id")
   contractNo      String?        @unique
-  buyerCompanyId  Int
-  sellerCompanyId Int
+  buyerCompanyId  Int  @map("buyer_company_id")
+  sellerCompanyId Int  @map("seller_company_id")
   title           String
   amountIRR       BigInt
   currency        String         @default("IRR")
@@ -589,8 +589,8 @@ model Contract {
   terms           String?
   penaltyClause   String?
   warrantyMonths  Int?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime       @default(now())  @map("created_at")
+  updatedAt       DateTime       @updatedAt  @map("updated_at")
 
   request         TradeRequest   @relation(fields: [requestId], references: [id])
   buyerCompany    Company        @relation("BuyerContract", fields: [buyerCompanyId], references: [id])
@@ -607,7 +607,7 @@ model Tender {
   type            TenderType
   title           String
   description     String?
-  companyId       Int
+  companyId       Int  @map("company_id")
   startDate       DateTime
   endDate         DateTime
   awardDate       DateTime?
@@ -616,9 +616,9 @@ model Tender {
   requireBond     Boolean      @default(false)
   bondAmount      Decimal?     @db.Decimal(20, 2)
   currency        String       @default("IRR")
-  createdById     Int
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdById     Int  @map("created_by_id")
+  createdAt       DateTime     @default(now())  @map("created_at")
+  updatedAt       DateTime     @updatedAt  @map("updated_at")
 
   company         Company      @relation(fields: [companyId], references: [id])
   products        TenderProduct[]
@@ -651,13 +651,13 @@ model Bid {
   id          String    @id @default(cuid())
   tenderId    String
   bidderId    Int
-  companyId   Int
+  companyId   Int  @map("company_id")
   totalPrice  Decimal   @db.Decimal(20, 2)
   currency    String    @default("IRR")
   note        String?
   status      BidStatus @default(PENDING)
   submittedAt DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @updatedAt  @map("updated_at")
 
   tender      Tender    @relation(fields: [tenderId], references: [id])
 
@@ -669,9 +669,9 @@ model Bid {
 model TenderBlacklist {
   id            Int       @id @default(autoincrement())
   tenderId      String
-  companyId     Int
+  companyId     Int  @map("company_id")
   reason        String?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now())  @map("created_at")
 
   tender        Tender    @relation(fields: [tenderId], references: [id])
 
@@ -688,7 +688,7 @@ model CompanyConnection {
   rating       Int?
   notes        String?
   connectedAt  DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  updatedAt    DateTime  @updatedAt  @map("updated_at")
 
   companyA     Company   @relation("CompanyA", fields: [companyAId], references: [id])
   companyB     Company   @relation("CompanyB", fields: [companyBId], references: [id])
@@ -701,14 +701,14 @@ model CompanyConnection {
 
 model InviteCode {
   id          Int       @id @default(autoincrement())
-  companyId   Int
+  companyId   Int  @map("company_id")
   code        String    @unique
   maxUses     Int       @default(1)
   usedCount   Int       @default(0)
-  expiresAt   DateTime?
+  expiresAt   DateTime?  @map("expires_at")
   note        String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
+  isActive    Boolean   @default(true)  @map("is_active")
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   company     Company   @relation(fields: [companyId], references: [id])
 
@@ -717,12 +717,12 @@ model InviteCode {
 
 model FollowUp {
   id          String    @id @default(cuid())
-  requestId   String
-  userId      Int
+  requestId   String  @map("request_id")
+  userId      Int  @map("user_id")
   note        String
   nextDate    DateTime?
   isDone      Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   request     TradeRequest @relation(fields: [requestId], references: [id])
 
@@ -731,14 +731,14 @@ model FollowUp {
 
 model QualityCheck {
   id           String    @id @default(cuid())
-  requestId    String
+  requestId    String  @map("request_id")
   inspectorId  Int?
   inspectorName String?
   result       String
   score        Decimal?  @db.Decimal(5, 2)
   note         String?
   checkedAt    DateTime  @default(now())
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime  @default(now())  @map("created_at")
 
   request      TradeRequest @relation(fields: [requestId], references: [id])
 
@@ -747,14 +747,14 @@ model QualityCheck {
 
 model Dispute {
   id          String    @id @default(cuid())
-  requestId   String
+  requestId   String  @map("request_id")
   raisedById  Int
   subject     String
   description String
   status      String    @default("open")
   resolution  String?
   resolvedAt  DateTime?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   request     TradeRequest @relation(fields: [requestId], references: [id])
   messages    DisputeMessage[]
@@ -767,7 +767,7 @@ model DisputeMessage {
   disputeId   String
   senderId    Int
   message     String
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   dispute     Dispute   @relation(fields: [disputeId], references: [id])
 
@@ -776,7 +776,7 @@ model DisputeMessage {
 
 model Shipment {
   id              String         @id @default(cuid())
-  requestId       String         @unique
+  requestId       String         @unique  @map("request_id")
   trackingNo      String?
   carrier         String?
   origin          String?
@@ -792,8 +792,8 @@ model Shipment {
   customsRef      String?
   insuranceRef    String?
   notes           String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime       @default(now())  @map("created_at")
+  updatedAt       DateTime       @updatedAt  @map("updated_at")
 
   request         TradeRequest   @relation(fields: [requestId], references: [id])
   stages          ShipmentStage[]
@@ -822,30 +822,30 @@ model ShipmentStage {
 
 model Invoice {
   id              String        @id
-  invoiceType     InvoiceType   @default(TYPE1)
-  sellerCompanyId Int
-  buyerCompanyId  Int
-  requestId       String?       @unique
+  invoiceType     InvoiceType   @default(TYPE1)  @map("invoice_type")
+  sellerCompanyId Int  @map("seller_company_id")
+  buyerCompanyId  Int  @map("buyer_company_id")
+  requestId       String?       @unique  @map("request_id")
   invoiceNo       String?       @unique
   subtotal        BigInt
-  discountTotal   BigInt        @default(0)
-  vatAmount       BigInt
-  tolAmount       BigInt
-  taxAmount       BigInt
+  discountTotal   BigInt        @default(0)  @map("discount_total")
+  vatAmount       BigInt  @map("vat_amount")
+  tolAmount       BigInt  @map("tol_amount")
+  taxAmount       BigInt  @map("tax_amount")
   total           BigInt
   paid            BigInt        @default(0)
   remaining       BigInt        @default(0)
   status          InvoiceStatus @default(DRAFT)
   currency        String        @default("IRR")
   exchangeRate    Decimal?      @db.Decimal(15, 4)
-  issuedAt        String
-  dueAt           String?
+  issuedAt        String  @map("issued_at")
+  dueAt           String?  @map("due_at")
   paidAt          DateTime?
   note            String?
-  taxSerial       String?
-  taxSystemRef    String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  taxSerial       String?  @map("tax_serial")
+  taxSystemRef    String?  @map("tax_system_ref")
+  createdAt       DateTime      @default(now())  @map("created_at")
+  updatedAt       DateTime      @updatedAt  @map("updated_at")
 
   sellerCompany   Company       @relation("SellerInvoice", fields: [sellerCompanyId], references: [id])
   buyerCompany    Company       @relation("BuyerInvoice", fields: [buyerCompanyId], references: [id])
@@ -875,11 +875,11 @@ model InvoiceItem {
   taxPct        Decimal   @db.Decimal(5, 2) @default(10)
   vatPct        Decimal   @db.Decimal(5, 2) @default(9)
   tolPct        Decimal   @db.Decimal(5, 2) @default(1)
-  vatAmount     BigInt
-  tolAmount     BigInt
-  taxAmount     BigInt
+  vatAmount     BigInt  @map("vat_amount")
+  tolAmount     BigInt  @map("tol_amount")
+  taxAmount     BigInt  @map("tax_amount")
   totalRow      BigInt
-  hsCode        String?
+  hsCode        String?  @map("hs_code")
   productId     String?
 
   invoice       Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
@@ -891,19 +891,19 @@ model InvoiceItem {
 model Quotation {
   id              String    @id @default(cuid())
   quotationNo     String?   @unique
-  sellerCompanyId Int
-  buyerCompanyId  Int
-  requestId       String?
+  sellerCompanyId Int  @map("seller_company_id")
+  buyerCompanyId  Int  @map("buyer_company_id")
+  requestId       String?  @map("request_id")
   items           Json
   subtotal        BigInt
-  vatAmount       BigInt
-  taxAmount       BigInt
+  vatAmount       BigInt  @map("vat_amount")
+  taxAmount       BigInt  @map("tax_amount")
   total           BigInt
   currency        String    @default("IRR")
   validUntil      DateTime?
   note            String?
   status          String    @default("draft")
-  createdAt       DateTime  @default(now())
+  createdAt       DateTime  @default(now())  @map("created_at")
 
   @@index([sellerCompanyId])
   @@index([buyerCompanyId])
@@ -924,7 +924,7 @@ model Payment {
   note            String?
   confirmedById   Int?
   confirmedAt     DateTime?
-  createdAt       DateTime      @default(now())
+  createdAt       DateTime      @default(now())  @map("created_at")
 
   invoice         Invoice       @relation(fields: [invoiceId], references: [id])
 
@@ -940,10 +940,10 @@ model Account {
   nameFa      String?
   type        AccountType
   parentId    Int?
-  companyId   Int
+  companyId   Int  @map("company_id")
   balance     BigInt      @default(0)
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
+  isActive    Boolean     @default(true)  @map("is_active")
+  createdAt   DateTime    @default(now())  @map("created_at")
 
   parent      Account?    @relation("AccountTree", fields: [parentId], references: [id])
   children    Account[]   @relation("AccountTree")
@@ -962,15 +962,15 @@ model JournalEntry {
   date          String
   ref           String?
   description   String
-  companyId     Int
+  companyId     Int  @map("company_id")
   status        JournalStatus @default(DRAFT)
   totalDebit    BigInt
   totalCredit   BigInt
   currency      String        @default("IRR")
   source        String?
-  createdById   Int
+  createdById   Int  @map("created_by_id")
   postedAt      DateTime?
-  createdAt     DateTime      @default(now())
+  createdAt     DateTime      @default(now())  @map("created_at")
 
   lines         JournalLine[]
   company       Company       @relation(fields: [companyId], references: [id])
@@ -1002,7 +1002,7 @@ model Employee {
   id            String    @id @default(cuid())
   staffCode     String
   name          String
-  nationalId    String?
+  nationalId    String?  @map("national_id")
   department    String
   jobTitle      String    @default("")
   baseSalary    BigInt
@@ -1012,12 +1012,12 @@ model Employee {
   address       String?
   bankAccount   String?
   bankName      String?
-  isActive      Boolean   @default(true)
+  isActive      Boolean   @default(true)  @map("is_active")
   hireDate      String
   terminateDate String?
-  companyId     Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  companyId     Int  @map("company_id")
+  createdAt     DateTime  @default(now())  @map("created_at")
+  updatedAt     DateTime  @updatedAt  @map("updated_at")
 
   company       Company   @relation(fields: [companyId], references: [id])
   payrolls      Payroll[]
@@ -1042,7 +1042,7 @@ model Payroll {
   status        String    @default("pending")
   paidAt        DateTime?
   note          String?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now())  @map("created_at")
 
   employee      Employee  @relation(fields: [employeeId], references: [id])
 
@@ -1053,7 +1053,7 @@ model Payroll {
 // ── Inventory ─────────────────────────────────
 model InventoryItem {
   id          String    @id @default(cuid())
-  companyId   Int
+  companyId   Int  @map("company_id")
   productId   String?
   product     String
   qty         Decimal   @db.Decimal(15, 3)
@@ -1063,8 +1063,8 @@ model InventoryItem {
   category    String?
   location    String?
   priceIRR    BigInt?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())  @map("created_at")
+  updatedAt   DateTime  @updatedAt  @map("updated_at")
 
   company     Company   @relation(fields: [companyId], references: [id])
   productRef  Product?  @relation(fields: [productId], references: [id])
@@ -1082,8 +1082,8 @@ model InventoryMovement {
   balanceAfter  Decimal   @db.Decimal(15, 3)
   ref           String?
   note          String?
-  createdById   Int
-  createdAt     DateTime  @default(now())
+  createdById   Int  @map("created_by_id")
+  createdAt     DateTime  @default(now())  @map("created_at")
 
   item          InventoryItem @relation(fields: [itemId], references: [id])
 
@@ -1094,14 +1094,14 @@ model InventoryMovement {
 // ── Treasury ──────────────────────────────────
 model BankAccount {
   id          String    @id @default(cuid())
-  companyId   Int
+  companyId   Int  @map("company_id")
   bankName    String
   accountNo   String
   iban        String?
   currency    String    @default("IRR")
   balance     BigInt    @default(0)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
+  isActive    Boolean   @default(true)  @map("is_active")
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   checks      Check[]
   transactions BankTransaction[]
@@ -1119,7 +1119,7 @@ model BankTransaction {
   description   String?
   ref           String?
   date          DateTime
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now())  @map("created_at")
 
   account       BankAccount @relation(fields: [accountId], references: [id])
 
@@ -1129,7 +1129,7 @@ model BankTransaction {
 model Check {
   id            String    @id @default(cuid())
   accountId     String
-  companyId     Int
+  companyId     Int  @map("company_id")
   checkNo       String
   amount        BigInt
   currency      String    @default("IRR")
@@ -1140,7 +1140,7 @@ model Check {
   clearedAt     DateTime?
   bouncedAt     DateTime?
   note          String?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now())  @map("created_at")
 
   account       BankAccount @relation(fields: [accountId], references: [id])
 
@@ -1151,7 +1151,7 @@ model Check {
 // ── Budget ────────────────────────────────────
 model Budget {
   id          String    @id @default(cuid())
-  companyId   Int
+  companyId   Int  @map("company_id")
   title       String
   year        Int
   currency    String    @default("IRR")
@@ -1159,7 +1159,7 @@ model Budget {
   spent       BigInt    @default(0)
   remaining   BigInt
   status      String    @default("draft")
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   company     Company   @relation(fields: [companyId], references: [id])
   lines       BudgetLine[]
@@ -1198,11 +1198,11 @@ model Letter {
   body          String
   priority      LetterPriority @default(NORMAL)
   status        LetterStatus   @default(DRAFT)
-  companyId     Int
-  createdById   Int
+  companyId     Int  @map("company_id")
+  createdById   Int  @map("created_by_id")
   archivedAt    DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime       @default(now())  @map("created_at")
+  updatedAt     DateTime       @updatedAt  @map("updated_at")
 
   company       Company        @relation(fields: [companyId], references: [id])
   createdBy     User           @relation(fields: [createdById], references: [id])
@@ -1219,7 +1219,7 @@ model WorkflowRequest {
   title         String
   description   String
   requesterId   Int
-  companyId     Int
+  companyId     Int  @map("company_id")
   amount        BigInt?
   currency      String?
   startDate     String?
@@ -1229,8 +1229,8 @@ model WorkflowRequest {
   totalSteps    Int            @default(1)
   rejectedAt    DateTime?
   approvedAt    DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime       @default(now())  @map("created_at")
+  updatedAt     DateTime       @updatedAt  @map("updated_at")
 
   requester     User           @relation(fields: [requesterId], references: [id])
   approvals     Approval[]
@@ -1244,14 +1244,14 @@ model WorkflowRequest {
 
 model Approval {
   id            String         @id @default(cuid())
-  requestId     String
+  requestId     String  @map("request_id")
   approverId    Int
   step          Int            @default(1)
   action        ApprovalAction @default(PENDING)
   comment       String?
   delegatedToId Int?
   decidedAt     DateTime?
-  createdAt     DateTime       @default(now())
+  createdAt     DateTime       @default(now())  @map("created_at")
 
   request       WorkflowRequest @relation(fields: [requestId], references: [id])
   approver      User            @relation(fields: [approverId], references: [id])
@@ -1274,10 +1274,10 @@ model Meeting {
   minutes       String?
   attendees     String[]
   onlineLink    String?
-  companyId     Int
-  createdById   Int
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  companyId     Int  @map("company_id")
+  createdById   Int  @map("created_by_id")
+  createdAt     DateTime      @default(now())  @map("created_at")
+  updatedAt     DateTime      @updatedAt  @map("updated_at")
 
   company       Company       @relation(fields: [companyId], references: [id])
   createdBy     User          @relation("MeetingCreator", fields: [createdById], references: [id])
@@ -1292,7 +1292,7 @@ model Task {
   description   String?
   assigneeId    Int?
   assigneeName  String?
-  companyId     Int
+  companyId     Int  @map("company_id")
   priority      String    @default("normal")
   status        String    @default("pending")
   progress      Int       @default(0)
@@ -1300,9 +1300,9 @@ model Task {
   dueStr        String?
   dueDate       DateTime?
   completedAt   DateTime?
-  createdById   Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdById   Int  @map("created_by_id")
+  createdAt     DateTime  @default(now())  @map("created_at")
+  updatedAt     DateTime  @updatedAt  @map("updated_at")
 
   @@index([assigneeId])
   @@index([companyId])
@@ -1315,9 +1315,9 @@ model Document {
   type          String
   content       String?
   fileUrl       String?
-  companyId     Int
+  companyId     Int  @map("company_id")
   folderId      Int?
-  createdById   Int
+  createdById   Int  @map("created_by_id")
   tags          String[]
   category      String    @default("سایر")
   version       String    @default("1.0")
@@ -1325,8 +1325,8 @@ model Document {
   fileSize      String?
   uploaderName  String?
   isArchived    Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())  @map("created_at")
+  updatedAt     DateTime  @updatedAt  @map("updated_at")
 
   folder        DocumentFolder? @relation(fields: [folderId], references: [id])
 
@@ -1340,13 +1340,13 @@ model Document {
 
 model WorkflowTemplate {
   id          String    @id @default(cuid())
-  companyId   Int
+  companyId   Int  @map("company_id")
   title       String
   icon        String    @default("⚙️")
   mode        String    @default("sequential")
   active      Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())  @map("created_at")
+  updatedAt   DateTime  @updatedAt  @map("updated_at")
 
   steps       WorkflowTemplateStep[]
   instances   WorkflowInstance[]
@@ -1370,13 +1370,13 @@ model WorkflowTemplateStep {
 model WorkflowInstance {
   id          String   @id @default(cuid())
   templateId  String
-  companyId   Int
+  companyId   Int  @map("company_id")
   title       String
   status      String   @default("inprog")
   currentStep Int      @default(0)
   startDate   String?
   completedAt DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now())  @map("created_at")
 
   template    WorkflowTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -1389,8 +1389,8 @@ model DocumentFolder {
   id          Int       @id @default(autoincrement())
   name        String
   parentId    Int?
-  companyId   Int
-  createdAt   DateTime  @default(now())
+  companyId   Int  @map("company_id")
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   parent      DocumentFolder?  @relation("FolderTree", fields: [parentId], references: [id])
   children    DocumentFolder[] @relation("FolderTree")
@@ -1405,19 +1405,19 @@ model DocumentFolder {
 
 model Notification {
   id          String           @id @default(cuid())
-  userId      Int
-  companyId   Int
+  userId      Int  @map("user_id")
+  companyId   Int  @map("company_id")
   type        NotificationType @default(INFO)
   title       String
   titleFa     String?
   message     String
   messageFa   String?
   link        String?
-  entityType  String?
-  entityId    String?
-  isRead      Boolean          @default(false)
-  readAt      DateTime?
-  createdAt   DateTime         @default(now())
+  entityType  String?  @map("entity_type")
+  entityId    String?  @map("entity_id")
+  isRead      Boolean          @default(false)  @map("is_read")
+  readAt      DateTime?  @map("read_at")
+  createdAt   DateTime         @default(now())  @map("created_at")
 
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   company     Company          @relation(fields: [companyId], references: [id])
@@ -1430,18 +1430,18 @@ model Notification {
 
 model AuditLog {
   id          Int         @id @default(autoincrement())
-  userId      Int?
-  companyId   Int?
+  userId      Int?  @map("user_id")
+  companyId   Int?  @map("company_id")
   action      AuditAction
   module      String
-  entityType  String?
-  entityId    String?
-  oldValues   Json?
-  newValues   Json?
-  ipAddress   String?
+  entityType  String?  @map("entity_type")
+  entityId    String?  @map("entity_id")
+  oldValues   Json?  @map("old_values")
+  newValues   Json?  @map("new_values")
+  ipAddress   String?  @map("ip_address")
   userAgent   String?
   description String?
-  createdAt   DateTime    @default(now())
+  createdAt   DateTime    @default(now())  @map("created_at")
 
   user        User?       @relation(fields: [userId], references: [id])
   company     Company?    @relation(fields: [companyId], references: [id])
@@ -1470,7 +1470,7 @@ model Attachment {
   invoiceAttachId     String?
   letterAttachId      String?
   workflowAttachId    String?
-  createdAt           DateTime  @default(now())
+  createdAt           DateTime  @default(now())  @map("created_at")
 
   requestAttach       TradeRequest?     @relation("RequestAttachments", fields: [requestAttachId], references: [id])
   contractAttach      Contract?         @relation("ContractAttachments", fields: [contractAttachId], references: [id])
@@ -1483,13 +1483,13 @@ model Attachment {
 
 model ApiKey {
   id          Int       @id @default(autoincrement())
-  companyId   Int
+  companyId   Int  @map("company_id")
   name        String
   key         String    @unique
   lastUsedAt  DateTime?
-  expiresAt   DateTime?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?  @map("expires_at")
+  isActive    Boolean   @default(true)  @map("is_active")
+  createdAt   DateTime  @default(now())  @map("created_at")
 
   company     Company   @relation(fields: [companyId], references: [id])
 
@@ -1552,20 +1552,20 @@ enum UsageMetric {
 model SubscriptionPlan {
   id            String         @id @default(cuid())
   name          String         @unique
-  nameFa        String?
+  nameFa        String?        @map("name_fa")
   tier          PlanTier       @default(FREE)
-  priceMonthly  BigInt         @default(0)
-  priceAnnual   BigInt         @default(0)
+  priceMonthly  BigInt         @default(0)  @map("price_monthly")
+  priceAnnual   BigInt         @default(0)  @map("price_annual")
   currency      String         @default("IRR")
-  isPublic      Boolean        @default(true)
-  isDefault     Boolean        @default(false)
-  trialDays     Int            @default(14)
+  isPublic      Boolean        @default(true)  @map("is_public")
+  isDefault     Boolean        @default(false) @map("is_default")
+  trialDays     Int            @default(14)    @map("trial_days")
   features      Json
   limits        Json
-  sortOrder     Int            @default(0)
-  isActive      Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  sortOrder     Int            @default(0)     @map("sort_order")
+  isActive      Boolean        @default(true)  @map("is_active")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt      @map("updated_at")
 
   subscriptions Subscription[]
 
@@ -1575,20 +1575,20 @@ model SubscriptionPlan {
 // ── Company Subscriptions ─────────────────────────────────────
 model Subscription {
   id              String             @id @default(cuid())
-  companyId       Int                @unique
-  planId          String
+  companyId       Int                @unique  @map("company_id")
+  planId          String             @map("plan_id")
   status          SubscriptionStatus @default(TRIALING)
-  billingCycle    BillingCycle       @default(MONTHLY)
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  trialEndsAt     DateTime?
-  cancelledAt     DateTime?
-  cancelReason    String?
-  autoRenew       Boolean            @default(true)
-  customLimits    Json?
+  billingCycle    BillingCycle       @default(MONTHLY)  @map("billing_cycle")
+  currentPeriodStart DateTime        @map("current_period_start")
+  currentPeriodEnd   DateTime        @map("current_period_end")
+  trialEndsAt     DateTime?          @map("trial_ends_at")
+  cancelledAt     DateTime?          @map("cancelled_at")
+  cancelReason    String?            @map("cancel_reason")
+  autoRenew       Boolean            @default(true)  @map("auto_renew")
+  customLimits    Json?              @map("custom_limits")
   metadata        Json?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt      @map("updated_at")
 
   company         Company            @relation(fields: [companyId], references: [id])
   plan            SubscriptionPlan   @relation(fields: [planId], references: [id])
@@ -1603,16 +1603,16 @@ model Subscription {
 // ── Subscription Payments ─────────────────────────────────────
 model SubscriptionPayment {
   id              String    @id @default(cuid())
-  subscriptionId  String
+  subscriptionId  String    @map("subscription_id")
   amount          BigInt
   currency        String    @default("IRR")
   period          String
   status          String    @default("pending")
-  paidAt          DateTime?
+  paidAt          DateTime? @map("paid_at")
   method          String?
-  referenceNo     String?
-  invoiceUrl      String?
-  createdAt       DateTime  @default(now())
+  referenceNo     String?   @map("reference_no")
+  invoiceUrl      String?   @map("invoice_url")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
   subscription    Subscription @relation(fields: [subscriptionId], references: [id])
 
@@ -1623,12 +1623,12 @@ model SubscriptionPayment {
 // ── Usage Tracking ────────────────────────────────────────────
 model UsageRecord {
   id              Int         @id @default(autoincrement())
-  subscriptionId  String
-  companyId       Int
+  subscriptionId  String      @map("subscription_id")
+  companyId       Int         @map("company_id")
   metric          UsageMetric
   value           Int
   period          String
-  recordedAt      DateTime    @default(now())
+  recordedAt      DateTime    @default(now()) @map("recorded_at")
 
   subscription    Subscription @relation(fields: [subscriptionId], references: [id])
 
@@ -1640,21 +1640,21 @@ model UsageRecord {
 // ── White-label Config ────────────────────────────────────────
 model WhiteLabelConfig {
   id              Int      @id @default(autoincrement())
-  companyId       Int      @unique
-  appName         String   @default("Everbrilliant")
-  appNameFa       String?
-  logoUrl         String?
-  faviconUrl      String?
-  primaryColor    String   @default("#3b82f6")
-  secondaryColor  String   @default("#8b5cf6")
+  companyId       Int      @unique       @map("company_id")
+  appName         String   @default("Everbrilliant") @map("app_name")
+  appNameFa       String?  @map("app_name_fa")
+  logoUrl         String?  @map("logo_url")
+  faviconUrl      String?  @map("favicon_url")
+  primaryColor    String   @default("#3b82f6") @map("primary_color")
+  secondaryColor  String   @default("#8b5cf6") @map("secondary_color")
   domain          String?  @unique
-  supportEmail    String?
-  supportPhone    String?
-  footerText      String?
-  customCss       String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  supportEmail    String?  @map("support_email")
+  supportPhone    String?  @map("support_phone")
+  footerText      String?  @map("footer_text")
+  customCss       String?  @map("custom_css")
+  isActive        Boolean  @default(true)  @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt      @map("updated_at")
 
   company         Company  @relation(fields: [companyId], references: [id])
 
@@ -1667,7 +1667,7 @@ model WhiteLabelConfig {
 
 model BOMTemplate {
   id            String    @id @default(cuid())
-  companyId     Int
+  companyId     Int  @map("company_id")
   code          String
   product       String
   productFa     String?
@@ -1675,10 +1675,10 @@ model BOMTemplate {
   description   String?
   laborMinutes  Int?
   overheadRate  Decimal?  @db.Decimal(10, 4)
-  isActive      Boolean   @default(true)
-  createdById   Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isActive      Boolean   @default(true)  @map("is_active")
+  createdById   Int  @map("created_by_id")
+  createdAt     DateTime  @default(now())  @map("created_at")
+  updatedAt     DateTime  @updatedAt  @map("updated_at")
 
   company       Company      @relation(fields: [companyId], references: [id])
   createdBy     User         @relation("BOMCreator", fields: [createdById], references: [id])
@@ -1710,7 +1710,7 @@ model BOMItem {
 
 model WorkOrder {
   id            String            @id @default(cuid())
-  companyId     Int
+  companyId     Int  @map("company_id")
   orderNo       String
   bomId         String?
   productName   String
@@ -1727,9 +1727,9 @@ model WorkOrder {
   actualCostIRR    BigInt?
   notes         String?
   completedAt   DateTime?
-  createdById   Int
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdById   Int  @map("created_by_id")
+  createdAt     DateTime          @default(now())  @map("created_at")
+  updatedAt     DateTime          @updatedAt  @map("updated_at")
 
   company       Company           @relation(fields: [companyId], references: [id])
   bom           BOMTemplate?      @relation(fields: [bomId], references: [id])
@@ -1746,7 +1746,7 @@ model WorkOrder {
 
 model RawMaterial {
   id              String    @id @default(cuid())
-  companyId       Int
+  companyId       Int  @map("company_id")
   code            String
   material        String
   materialFa      String?
@@ -1758,8 +1758,8 @@ model RawMaterial {
   supplier        String?
   dueDate         DateTime?
   notes           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime  @default(now())  @map("created_at")
+  updatedAt       DateTime  @updatedAt  @map("updated_at")
 
   company         Company   @relation(fields: [companyId], references: [id])
 
@@ -1788,7 +1788,7 @@ model WIPEntry {
 model QCInspection {
   id              Int       @id @default(autoincrement())
   workOrderId     String
-  companyId       Int
+  companyId       Int  @map("company_id")
   inspectedQty    Decimal   @db.Decimal(15, 3)
   passedQty       Decimal   @db.Decimal(15, 3)
   failedQty       Decimal   @db.Decimal(15, 3) @default(0)
@@ -1821,7 +1821,7 @@ enum DealStage {
 
 model Deal {
   id               String    @id @default(cuid())
-  companyId        Int
+  companyId        Int  @map("company_id")
   partnerCompanyId Int?
   partnerName      String
   title            String
@@ -1833,9 +1833,9 @@ model Deal {
   ownerName        String?
   notes            String?
   lostReason       String?
-  createdById      Int
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdById      Int  @map("created_by_id")
+  createdAt        DateTime  @default(now())  @map("created_at")
+  updatedAt        DateTime  @updatedAt  @map("updated_at")
 
   ownerCompany     Company   @relation("CompanyDeals", fields: [companyId], references: [id])
   createdBy        User      @relation("DealCreator", fields: [createdById], references: [id])
@@ -1873,8 +1873,8 @@ model CompanyBlacklist {
   tenderId         String?
   tenderTitle      String?
   addedById        Int
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime          @default(now())  @map("created_at")
+  updatedAt        DateTime          @updatedAt  @map("updated_at")
 
   addedBy          User              @relation("BlacklistCreator", fields: [addedById], references: [id])
 
@@ -1888,7 +1888,7 @@ model CompanyBlacklist {
 
 model LogisticsShipment {
   id            String   @id @default(cuid())
-  companyId     Int
+  companyId     Int  @map("company_id")
   trackingCode  String   @unique
   cargo         String
   shipType      String   @default("domestic")
@@ -1903,15 +1903,15 @@ model LogisticsShipment {
   sellerName    String?
   buyerName     String?
   waybillNo     String?
-  hsCode        String?
+  hsCode        String?  @map("hs_code")
   customsStatus String?
   customsNotes  String?
   insurer       String?
   insuranceAmt  BigInt?
   policyNo      String?
   notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())  @map("created_at")
+  updatedAt     DateTime @updatedAt  @map("updated_at")
 
   company  Company          @relation(fields: [companyId], references: [id])
   stages   LogisticsStage[]
@@ -1925,7 +1925,7 @@ model LogisticsStage {
   shipmentId String
   key        String
   label      String
-  labelFa    String
+  labelFa    String  @map("label_fa")
   isDone     Boolean           @default(false)
   date       String?
   stageOrder Int               @default(0)
@@ -1937,14 +1937,14 @@ model LogisticsStage {
 
 model LogisticsRateQuote {
   id        String   @id @default(cuid())
-  companyId Int
+  companyId Int  @map("company_id")
   fromLoc   String
   toLoc     String
   mode      String   @default("Truck")
   rate      BigInt   @default(0)
   unit      String   @default("per load")
   active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now())  @map("created_at")
 
   company   Company  @relation(fields: [companyId], references: [id])
 
@@ -1962,9 +1962,9 @@ model Message {
   type          String   @default("message")
   refId         String?
   refType       String?
-  isRead        Boolean  @default(false)
+  isRead        Boolean  @default(false)  @map("is_read")
   isStarred     Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  createdAt     DateTime @default(now())  @map("created_at")
 
   fromCompany   Company  @relation("SentMessages",     fields: [fromCompanyId], references: [id])
   toCompany     Company  @relation("ReceivedMessages", fields: [toCompanyId],   references: [id])

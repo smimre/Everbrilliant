@@ -1,5 +1,56 @@
 -- Automation: extend Task, Document; add WorkflowTemplate, WorkflowTemplateStep, WorkflowInstance
 
+-- Create base tables if they don't exist yet
+CREATE TABLE IF NOT EXISTS "document_folders" (
+  "id"        SERIAL NOT NULL,
+  "name"      TEXT NOT NULL,
+  "parentId"  INTEGER,
+  "companyId" INTEGER NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "document_folders_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "document_folders_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "document_folders"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT "document_folders_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "tasks" (
+  "id"          TEXT NOT NULL,
+  "title"       TEXT NOT NULL,
+  "description" TEXT,
+  "assigneeId"  INTEGER,
+  "companyId"   INTEGER NOT NULL,
+  "priority"    TEXT NOT NULL DEFAULT 'normal',
+  "status"      TEXT NOT NULL DEFAULT 'pending',
+  "dueDate"     TIMESTAMP(3),
+  "completedAt" TIMESTAMP(3),
+  "createdById" INTEGER NOT NULL,
+  "createdAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "tasks_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "tasks_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "documents" (
+  "id"          TEXT NOT NULL,
+  "title"       TEXT NOT NULL,
+  "type"        TEXT NOT NULL,
+  "content"     TEXT,
+  "fileUrl"     TEXT,
+  "companyId"   INTEGER NOT NULL,
+  "folderId"    INTEGER,
+  "createdById" INTEGER NOT NULL,
+  "tags"        TEXT[] NOT NULL DEFAULT '{}',
+  "isArchived"  BOOLEAN NOT NULL DEFAULT false,
+  "createdAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "documents_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "documents_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT "documents_folderId_fkey" FOREIGN KEY ("folderId") REFERENCES "document_folders"("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "tasks_assigneeId_idx" ON "tasks"("assigneeId");
+CREATE INDEX IF NOT EXISTS "tasks_companyId_idx" ON "tasks"("companyId");
+CREATE INDEX IF NOT EXISTS "documents_companyId_idx" ON "documents"("companyId");
+
 ALTER TABLE "tasks"
   ADD COLUMN IF NOT EXISTS "assigneeName" TEXT,
   ADD COLUMN IF NOT EXISTS "progress"     INTEGER NOT NULL DEFAULT 0,

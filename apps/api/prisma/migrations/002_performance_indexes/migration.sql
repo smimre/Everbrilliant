@@ -1,45 +1,51 @@
 -- EVERBRILLIANT — Performance Indexes Migration
 
 -- Composite indexes for common queries
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_req_buyer_status
+CREATE INDEX IF NOT EXISTS idx_req_buyer_status
   ON trade_requests(buyer_company_id, status, created_at DESC);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_req_seller_status
+CREATE INDEX IF NOT EXISTS idx_req_seller_status
   ON trade_requests(seller_company_id, status, created_at DESC);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inv_seller_status
+CREATE INDEX IF NOT EXISTS idx_inv_seller_status
   ON invoices(seller_company_id, status, created_at DESC);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_inv_buyer_status
+CREATE INDEX IF NOT EXISTS idx_inv_buyer_status
   ON invoices(buyer_company_id, status, created_at DESC);
 
 -- Partial index: unread notifications only
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notif_user_unread
+CREATE INDEX IF NOT EXISTS idx_notif_user_unread
   ON notifications(user_id, created_at DESC)
   WHERE is_read = false;
 
 -- Partial index: active sessions only
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_sessions_active
+CREATE INDEX IF NOT EXISTS idx_sessions_active
   ON sessions(user_id, expires_at)
   WHERE is_revoked = false;
 
 -- Partial indexes for active records
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_active
+CREATE INDEX IF NOT EXISTS idx_users_active
   ON users(company_id) WHERE is_active = true;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_employees_active
-  ON employees(company_id) WHERE is_active = true;
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'employees') THEN
+    CREATE INDEX IF NOT EXISTS idx_employees_active ON employees(company_id) WHERE is_active = true;
+  END IF;
+END $$;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_tenders_open
-  ON tenders(end_date) WHERE status = 'OPEN';
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'tenders') THEN
+    CREATE INDEX IF NOT EXISTS idx_tenders_open ON tenders(end_date) WHERE status = 'OPEN';
+  END IF;
+END $$;
 
 -- Full text search
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_req_product_trgm
+CREATE INDEX IF NOT EXISTS idx_req_product_trgm
   ON trade_requests USING GIN(product gin_trgm_ops);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_company_name_trgm
+CREATE INDEX IF NOT EXISTS idx_company_name_trgm
   ON companies USING GIN(name gin_trgm_ops);
 
 -- Statistics

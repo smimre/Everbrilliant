@@ -74,7 +74,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = process.env.PORT || 3000;
-  await app.listen(port, '127.0.0.1');
+  await app.listen(port, '0.0.0.0');
   logger.log(`🚀 API running on http://0.0.0.0:${port}/api`);
   logger.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
 }
