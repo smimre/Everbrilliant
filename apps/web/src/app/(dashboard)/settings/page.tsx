@@ -288,7 +288,8 @@ export default function SettingsPage() {
     setProfileSaving(true);
     try {
       const updated = await authService.updateProfile({ name: profileName, email: profileEmail });
-      setAuth(updated as any, useAuthStore.getState().accessToken!);
+      const currentUser = useAuthStore.getState().user;
+      setAuth({ ...currentUser, ...updated } as any, useAuthStore.getState().accessToken!);
       toast('success', fa ? 'پروفایل ذخیره شد' : 'Profile saved');
     } catch (err: any) {
       toast('error', err.message || (fa ? 'خطا در ذخیره' : 'Save failed'));

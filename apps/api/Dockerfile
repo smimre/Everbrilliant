@@ -9,7 +9,7 @@ WORKDIR /app
 # ── Dependencies ────────────────────────────────────────────
 FROM base AS deps
 COPY package*.json ./
-RUN npm ci --frozen-lockfile
+RUN npm install
 
 # ── Builder ──────────────────────────────────────────────────
 FROM base AS builder

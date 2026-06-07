@@ -1,5 +1,4 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ES2017",
     "lib": [
@@ -11,6 +10,11 @@
     "moduleResolution": "bundler",
     "jsx": "preserve",
     "incremental": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
     "plugins": [
       {
         "name": "next"
@@ -19,15 +23,6 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "@everbrilliant/types": [
-        "../../packages/types/src"
-      ],
-      "@everbrilliant/ui": [
-        "../../packages/ui/src"
-      ],
-      "@everbrilliant/utils": [
-        "../../packages/utils/src"
       ]
     },
     "allowJs": true,
