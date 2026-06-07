@@ -7,7 +7,7 @@ export class WhiteLabelController {
   constructor(private wl: WhiteLabelService) {}
 
   @Get('config')
-  @Public()
+  @UseGuards(JwtAuthGuard)
   async getConfig(@Query('domain') domain?: string, @Req() req?: any) {
     const config = await this.wl.getConfig(req?.user?.companyId, domain);
     if (config === null) throw new NotFoundException('No white-label config found');
