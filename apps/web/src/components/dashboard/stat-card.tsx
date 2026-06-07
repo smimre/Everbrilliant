@@ -43,37 +43,38 @@ export function StatCard({
         'relative overflow-hidden rounded-xl p-4',
         'border border-[hsl(var(--border))] bg-[hsl(var(--secondary))]',
         'transition-all duration-200',
-        onClick && 'cursor-pointer hover:border-[hsl(var(--primary)/0.4)] hover:shadow-lg hover:shadow-[hsl(var(--primary)/0.1)] hover:-translate-y-0.5'
+        onClick && 'cursor-pointer hover:shadow-lg hover:-translate-y-0.5'
       )}
+      style={{ borderTopColor: color, borderTopWidth: 2 }}
     >
       {/* Glow */}
       <div
-        className="absolute -top-6 -end-6 h-20 w-20 rounded-full opacity-15 blur-2xl"
+        className="absolute -top-8 -end-8 h-24 w-24 rounded-full opacity-10 blur-2xl pointer-events-none"
         style={{ background: color }}
       />
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-1.5 truncate">{label}</p>
-          <p className="text-2xl font-bold text-[hsl(var(--foreground))] tabular-nums truncate">
-            {value}{suffix && <span className="text-sm font-normal text-[hsl(var(--muted-foreground))] ms-1">{suffix}</span>}
+          <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2 truncate">{label}</p>
+          <p className="text-2xl font-bold text-[hsl(var(--foreground))] tabular-nums truncate leading-none">
+            {value}{suffix && <span className="text-xs font-normal text-[hsl(var(--muted-foreground))] ms-1">{suffix}</span>}
           </p>
           {change && (
             <div className={cn(
-              'flex items-center gap-1 text-xs font-medium mt-1.5',
-              changeType === 'up' ? 'text-[hsl(var(--success))]' :
+              'flex items-center gap-1 text-xs font-medium mt-2',
+              changeType === 'up' ? 'text-emerald-500' :
               changeType === 'down' ? 'text-[hsl(var(--destructive))]' :
               'text-[hsl(var(--muted-foreground))]'
             )}>
-              <ChangeIcon className="h-3 w-3" />
-              {change}
+              <ChangeIcon className="h-3 w-3 shrink-0" />
+              <span className="truncate">{change}</span>
             </div>
           )}
         </div>
 
         <div
-          className="rounded-xl p-2.5 shrink-0"
-          style={{ background: `${color}18`, color }}
+          className="rounded-xl p-2.5 shrink-0 ring-1"
+          style={{ background: `${color}15`, color, ringColor: `${color}30` }}
         >
           {icon}
         </div>

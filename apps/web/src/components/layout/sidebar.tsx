@@ -132,24 +132,28 @@ function NavItemComponent({ item, depth = 0 }: { item: NavItem; depth?: number }
           else if (item.href) router.push(item.href);
         }}
         className={cn(
-          'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
-          depth > 0 && 'ps-7 py-1.5',
+          'relative w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all duration-150',
+          depth > 0 && 'ps-7 py-1.5 text-xs',
           isActive
-            ? 'bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]'
-            : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]'
+            ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] font-semibold'
+            : 'font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.4)]'
         )}
       >
-        <span className={cn('shrink-0', isActive ? 'text-[hsl(var(--primary))]' : 'opacity-60')}>
+        {/* Active left indicator */}
+        {isActive && depth === 0 && (
+          <span className="absolute start-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-[hsl(var(--primary))]" />
+        )}
+        <span className={cn('shrink-0', isActive ? 'text-[hsl(var(--primary))]' : 'opacity-50')}>
           <Icon className="h-4 w-4" />
         </span>
         <span className="flex-1 truncate text-start">{label}</span>
         {item.badge !== undefined && item.badge > 0 && (
-          <span className="rounded-full bg-[hsl(var(--primary))] text-white text-[10px] px-1.5 py-px min-w-[18px] text-center leading-tight">
+          <span className="rounded-full bg-[hsl(var(--primary))] text-white text-[10px] px-1.5 py-px min-w-[18px] text-center leading-tight font-bold">
             {item.badge > 99 ? '99+' : item.badge}
           </span>
         )}
         {hasChildren && (
-          <ChevronDown className={cn('h-3.5 w-3.5 opacity-50 transition-transform shrink-0', expanded && 'rotate-180')} />
+          <ChevronDown className={cn('h-3.5 w-3.5 opacity-40 transition-transform shrink-0', expanded && 'rotate-180')} />
         )}
       </button>
       {hasChildren && expanded && (

@@ -11,8 +11,7 @@ import { useLocaleStore } from '@/store/locale.store';
 import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LanguageSelector } from '@/components/layout/language-selector';
-import { Eye, EyeOff, Loader2, Building2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
   phone: z.string().min(1, 'Required'),
@@ -97,46 +96,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-sm mx-4 animate-in">
-
-      {/* Language selector */}
-      <div className="flex justify-end mb-6">
-        <LanguageSelector />
+    <div className="w-full animate-in">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">{t.submit}</h1>
+        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{t.subtitle}</p>
       </div>
 
-      {/* Card */}
-      <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-8 shadow-[var(--shadow-xl)]">
-
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-[hsl(var(--primary))] flex items-center justify-center shadow-lg shadow-[hsl(var(--primary)/0.3)]">
-            <Building2 className="w-6 h-6 text-white" />
-          </div>
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">{t.title}</h1>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{t.subtitle}</p>
-          </div>
+      {/* Error */}
+      {error && (
+        <div className="mb-5 rounded-xl bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.25)] text-[hsl(var(--destructive))] px-4 py-3 text-sm flex items-center gap-2">
+          <span className="text-base">⚠️</span> {error}
         </div>
+      )}
 
-        {/* Error */}
-        {error && (
-          <div className="mb-4 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] px-3 py-2 text-sm">
-            {error}
-          </div>
-        )}
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+        <Input
+          id="mobile-or-username"
+          label={t.phone}
+          placeholder={t.phonePh}
+          error={errors.phone?.message}
+          autoComplete="username"
+          inputMode="tel"
+          {...register('phone')}
+        />
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <div>
           <Input
-            label={t.phone}
-            placeholder={t.phonePh}
-            error={errors.phone?.message}
-            autoComplete="username"
-            inputMode="tel"
-            {...register('phone')}
-          />
-
-          <Input
+            id="password"
             label={t.password}
             placeholder={t.passPh}
             type={showPass ? 'text' : 'password'}
@@ -149,27 +137,31 @@ export default function LoginPage() {
             }
             {...register('password')}
           />
-
-          <div className="flex justify-end -mt-1">
-            <a href="/forgot-password" className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:underline">
+          <div className="flex justify-end mt-1.5">
+            <a href="/forgot-password" className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors">
               {t.forgot}
             </a>
           </div>
+        </div>
 
-          <Button type="submit" className="w-full" loading={isSubmitting} size="lg">
-            {!isSubmitting && <span className="me-1">🔑</span>}
-            {t.submit}
-          </Button>
-        </form>
+        <Button type="submit" className="w-full h-11 text-sm font-semibold" loading={isSubmitting} size="lg">
+          {!isSubmitting && <span className="me-1.5">🔑</span>}
+          {t.submit}
+        </Button>
+      </form>
 
-        {/* Register link */}
-        <p className="text-center text-sm text-[hsl(var(--muted-foreground))] mt-6">
-          {t.noAcc}{' '}
-          <a href="/register" className="text-[hsl(var(--primary))] hover:underline font-medium">
-            {t.register}
-          </a>
-        </p>
+      {/* Divider */}
+      <div className="flex items-center gap-3 my-6">
+        <div className="flex-1 h-px bg-[hsl(var(--border))]" />
+        <span className="text-xs text-[hsl(var(--muted-foreground))]">{t.noAcc}</span>
+        <div className="flex-1 h-px bg-[hsl(var(--border))]" />
       </div>
+
+      {/* Register link */}
+      <a href="/register"
+        className="flex items-center justify-center w-full h-11 rounded-xl border border-[hsl(var(--border))] text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)] hover:border-[hsl(var(--primary)/0.4)] transition-all">
+        {t.register} →
+      </a>
     </div>
   );
 }
