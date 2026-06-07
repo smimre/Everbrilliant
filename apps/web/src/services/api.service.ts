@@ -16,7 +16,7 @@ class ApiClient {
     this.client.interceptors.request.use((config) => {
       if (typeof window !== 'undefined') {
         try {
-          const stored = localStorage.getItem('eb-auth');
+          const stored = localStorage.getItem('everbrilliant-auth');
           if (stored) {
             const { state } = JSON.parse(stored);
             if (state?.accessToken) {
@@ -40,7 +40,7 @@ class ApiClient {
 
         if (error.response?.status === 401) {
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('eb-auth');
+            localStorage.removeItem('everbrilliant-auth');
             window.location.href = '/login';
           }
         }

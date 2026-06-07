@@ -220,6 +220,7 @@ export class AuthService {
     if (dto.postalCode !== undefined)   data.postalCode = dto.postalCode;
     if (dto.website !== undefined)      data.website = dto.website;
     if (dto.logo !== undefined)         data.logo = dto.logo;
+    if (dto.stamp !== undefined)        data.stamp = dto.stamp;
     return this.prisma.company.update({ where: { id: companyId }, data });
   }
 

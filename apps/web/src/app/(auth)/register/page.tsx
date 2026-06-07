@@ -260,14 +260,17 @@ export default function RegisterPage() {
         password,
         companyName,
         inviteCode: inviteCode || undefined,
-        // Extra fields stored in user profile
         ...(email && { email }),
         ...(country && { country }),
-        ...(bizType && { businessType: bizType }),
-        ...(logo && { logoUrl: logo }),
-        ...(stamp && { stampUrl: stamp }),
-      } as any);
+      });
       setAuth(result.user as any, result.accessToken);
+      // Save logo/stamp to company profile if provided
+      if (logo || stamp) {
+        await authService.updateCompany({
+          ...(logo && { logo }),
+          ...(stamp && { stamp }),
+        }).catch(() => {});
+      }
       const fullUser = await authService.me();
       setAuth(fullUser, result.accessToken);
       router.replace('/dashboard');
