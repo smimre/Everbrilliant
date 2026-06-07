@@ -1,6 +1,7 @@
 'use client';
 import { useLocaleStore } from '@/store/locale.store';
 import { useBalanceSheet } from '@/hooks/use-finance';
+import { exportBalanceSheetPDF } from '@/lib/export-pdf';
 
 // Static fallback when no chart-of-accounts data exists yet
 const FALLBACK = {
@@ -75,8 +76,13 @@ export function BalanceSheet() {
             </span>
           )}
           {isLoading && <span className="text-xs text-[hsl(var(--muted-foreground))]">⏳ {fa ? 'در حال بارگذاری...' : 'Loading...'}</span>}
-          <button className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)]">
+          <button onClick={() => window.print()}
+            className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)]">
             🖨️ {fa ? 'چاپ' : 'Print'}
+          </button>
+          <button onClick={() => exportBalanceSheetPDF(d, fa)}
+            className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)]">
+            📄 PDF
           </button>
         </div>
       </div>

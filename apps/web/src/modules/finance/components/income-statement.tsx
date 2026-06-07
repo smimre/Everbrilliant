@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useIncomeStatement } from '@/hooks/use-finance';
+import { exportIncomeStatementPDF } from '@/lib/export-pdf';
 
 const FALLBACK_REVENUE  = [
   { code: '4100', name: 'Sales Revenue',   nameFa: 'درآمد فروش',    amount: '350000000' },
@@ -67,8 +68,13 @@ export function IncomeStatement() {
               {fa ? `${n(salesCount)} فاکتور فروش` : `${n(salesCount)} paid invoices`}
             </span>
           )}
-          <button className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)]">
+          <button onClick={() => window.print()}
+            className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)]">
             🖨️ {fa ? 'چاپ' : 'Print'}
+          </button>
+          <button onClick={() => exportIncomeStatementPDF({ revenue, expenses, totalRev, totalExp, grossProfit, tax, netProfit, from, to }, fa)}
+            className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)]">
+            📄 PDF
           </button>
         </div>
       </div>

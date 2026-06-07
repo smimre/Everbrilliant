@@ -4,6 +4,7 @@ import { useLocaleStore } from '@/store/locale.store';
 import { useContracts, useCreateContract, useSignContract, useConnections } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
 import { useAuthStore } from '@/store/auth.store';
+import { exportContractPDF } from '@/lib/export-pdf';
 
 const STATUS_MAP: Record<string, { label: string; labelFa: string; color: string; icon: string }> = {
   DRAFT:          { label: 'Draft',          labelFa: 'پیش‌نویس',      color: '#f59e0b', icon: '📝' },
@@ -212,7 +213,13 @@ function ContractDetailModal({ contract: c, lang, onClose, onSign }: { contract:
       <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-lg p-6 shadow-2xl my-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold">📄 {c.title}</h2>
-          <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
+          <div className="flex gap-2 items-center">
+            <button onClick={() => exportContractPDF(c, fa)}
+              className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.5)]">
+              📄 PDF
+            </button>
+            <button onClick={onClose} className="text-[hsl(var(--muted-foreground))] text-xl">✕</button>
+          </div>
         </div>
         <span className="text-xs px-2 py-1 rounded-full mb-4 inline-block" style={{ background: info.color + '20', color: info.color }}>
           {info.icon} {fa ? info.labelFa : info.label}

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
+import { exportInvoicePDF } from '@/lib/export-pdf';
 
 // ── Types ─────────────────────────────────────────────────────
 interface InvoiceItem {
@@ -156,10 +157,16 @@ export function Invoices({ isPurchase }: Props) {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={e => { e.stopPropagation(); setShowPrint(inv); }}
-                      className="text-xs px-2 py-1 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">
-                      🖨️
-                    </button>
+                    <div className="flex gap-1">
+                      <button onClick={e => { e.stopPropagation(); setShowPrint(inv); }}
+                        className="text-xs px-2 py-1 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">
+                        🖨️
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); exportInvoicePDF(generateInvoiceHTML(inv), inv.no); }}
+                        className="text-xs px-2 py-1 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.5)]">
+                        📄
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -453,6 +460,10 @@ function InvoiceDetailModal({ invoice: inv, lang, onClose, onPrint }: {
           <h2 className="font-bold">🧾 {inv.no}</h2>
           <div className="flex gap-2">
             <button onClick={onPrint} className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm">🖨️ {fa?'چاپ':'Print'}</button>
+            <button onClick={() => exportInvoicePDF(generateInvoiceHTML(inv), inv.no)}
+              className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm">
+              📄 PDF
+            </button>
             <button onClick={onClose} className="text-xl text-[hsl(var(--muted-foreground))]">✕</button>
           </div>
         </div>
@@ -533,6 +544,10 @@ function PrintInvoiceView({ invoice: inv, onClose }: { invoice: Invoice; onClose
         </div>
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm">انصراف</button>
+          <button onClick={() => exportInvoicePDF(generateInvoiceHTML(inv), inv.no)}
+            className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium">
+            📄 PDF
+          </button>
           <button onClick={printContent} className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium">
             🖨️ {isIran ? 'چاپ فاکتور رسمی' : 'Print Invoice'}
           </button>
