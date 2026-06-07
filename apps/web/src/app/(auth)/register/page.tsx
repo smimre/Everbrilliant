@@ -447,7 +447,7 @@ export default function RegisterPage() {
                   {t.skip}
                 </Button>
               )}
-              <Button type="button" onClick={onSubmit} loading={loading}>
+              <Button type="button" onClick={onSubmit} loading={loading} className="whitespace-nowrap">
                 🏢 {t.submit}
               </Button>
             </div>
