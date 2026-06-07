@@ -443,7 +443,7 @@ export default function RegisterPage() {
           ) : (
             <div className="flex gap-2 flex-1 justify-end">
               {(logo || stamp) ? null : (
-                <Button type="button" variant="outline" onClick={onSubmit} loading={loading}>
+                <Button type="button" variant="outline" onClick={onSubmit} loading={loading} className="whitespace-nowrap">
                   {t.skip}
                 </Button>
               )}
