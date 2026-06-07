@@ -253,7 +253,7 @@ model Company {
   vatRegistered   Boolean   @default(true)  @map("vat_registered")
   vatRate         Int       @default(10)  @map("vat_rate")
   plan            Plan      @default(FREE)
-  planExpiresAt   DateTime?
+  planExpiresAt   DateTime?  @map("plan_expires_at")
   maxUsers        Int       @default(5)  @map("max_users")
   isActive        Boolean   @default(true)  @map("is_active")
   isVerified      Boolean   @default(false)  @map("is_verified")
