@@ -108,10 +108,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <div className="w-full max-w-sm">
-          <div className="flex justify-end mb-6 lg:hidden">
-            <LanguageSelector />
-          </div>
-          <div className="hidden lg:flex justify-end mb-6">
+          <div className="flex justify-end mb-6">
             <LanguageSelector />
           </div>
           {children}

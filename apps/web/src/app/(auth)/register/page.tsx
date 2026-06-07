@@ -8,7 +8,6 @@ import { useLocaleStore } from '@/store/locale.store';
 import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LanguageSelector } from '@/components/layout/language-selector';
 import { CountrySelector } from '@/components/ui/country-selector';
 import { Eye, EyeOff, Building2, User, ChevronRight, ChevronLeft, ImagePlus, Check } from 'lucide-react';
 
@@ -283,10 +282,6 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full max-w-md mx-4 animate-in">
-      <div className="flex justify-end mb-4">
-        <LanguageSelector />
-      </div>
-
       <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-6 shadow-[var(--shadow-xl)]">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2 mb-5">
