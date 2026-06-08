@@ -2,10 +2,11 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { EmailService } from '../notifications/email.service';
+import { SmsService } from '../notifications/sms.service';
 
 @Injectable()
 export class TradingService {
-  constructor(protected prisma: PrismaService, protected email?: EmailService) {}
+  constructor(protected prisma: PrismaService, protected email?: EmailService, protected sms?: SmsService) {}
 
   private paginate(q: any) {
     const page = Math.max(1, Number(q.page) || 1);
@@ -62,12 +63,11 @@ export class TradingService {
       include: {
         buyerCompany: { select: { name: true, country: true } },
         sellerCompany: {
-          select: { name: true, country: true, users: { select: { email: true } } },
+          select: { name: true, country: true, users: { select: { email: true, phone: true } } },
         },
       },
     });
 
-    // Notify seller company users — fire-and-forget
     if (this.email && request.sellerCompany) {
       this.email.sendTradeRequestEmail({
         id: request.id,
@@ -80,6 +80,14 @@ export class TradingService {
         buyerCompany: request.buyerCompany,
         sellerCompany: request.sellerCompany as any,
       }).catch(() => {});
+    }
+
+    if (this.sms && request.sellerCompany?.users) {
+      for (const u of request.sellerCompany.users as Array<{ phone?: string | null }>) {
+        if (u.phone) {
+          this.sms.sendTradeRequestSMS(u.phone, request.product, request.buyerCompany.name).catch(() => {});
+        }
+      }
     }
 
     return request;

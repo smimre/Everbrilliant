@@ -2,10 +2,11 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { EmailService } from '../notifications/email.service';
+import { SmsService } from '../notifications/sms.service';
 
 @Injectable()
 export class FinanceService {
-  constructor(protected prisma: PrismaService, protected email?: EmailService) {}
+  constructor(protected prisma: PrismaService, protected email?: EmailService, protected sms?: SmsService) {}
 
   private paginate(query: any) {
     const page = Math.max(1, Number(query.page) || 1);
@@ -107,7 +108,6 @@ export class FinanceService {
       },
     });
 
-    // Send notification email to buyer — fire-and-forget
     if (this.email) {
       this.email.sendInvoiceEmail({
         id: invoice.id,
@@ -119,6 +119,17 @@ export class FinanceService {
         sellerCompany: invoice.sellerCompany,
         buyerCompany: invoice.buyerCompany,
         buyerContactEmail: dto.buyerEmail ?? null,
+      }).catch(() => {});
+    }
+
+    if (this.sms && dto.buyerCompanyId && dto.buyerCompanyId !== companyId) {
+      this.prisma.user.findFirst({
+        where: { companyId: Number(dto.buyerCompanyId), isCompanyAdmin: true },
+        select: { phone: true },
+      }).then((admin) => {
+        if (admin?.phone) {
+          this.sms!.sendInvoiceSMS(admin.phone, invoice.id, String(invoice.total), invoice.currency).catch(() => {});
+        }
       }).catch(() => {});
     }
 

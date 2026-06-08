@@ -17,7 +17,7 @@ export function roleLabel(role: string | Role | undefined | null): string {
 export interface Company { id: number; name: string; nationalId?: string; economicCode?: string; regNo?: string; postalCode?: string; address?: string; country: string; vatRegistered: boolean; vatRate: number; plan: string; isActive: boolean; createdAt: string; updatedAt: string; }
 export interface AuthTokens { accessToken: string; refreshToken: string; expiresIn?: number; }
 export interface LoginDto { phone: string; password: string; }
-export interface RegisterDto { name: string; phone: string; password: string; companyName?: string; inviteCode?: string; }
+export interface RegisterDto { name: string; phone: string; password: string; companyName?: string; email?: string; country?: string; inviteCode?: string; otpCode?: string; }
 export interface TradeRequest { id: string; buyerCompanyId: number; sellerCompanyId?: number; buyerCompany?: Company; sellerCompany?: Company; product: string; qty: number; unit: string; amountIRR?: number; currency: string; status: RequestStatus; priority: Priority; deadline?: string; note?: string; hsCode?: string; createdById: number; createdAt: string; updatedAt: string; }
 export interface Quote { id: string; requestId: string; sellerCompanyId: number; unitPrice: number; currency: string; totalPrice: number; validUntil?: string; deliveryDays?: number; note?: string; status: string; createdAt: string; }
 export interface Contract { id: string; requestId: string; buyerCompanyId: number; sellerCompanyId: number; title: string; amountIRR: number; currency: string; status: string; signedBuyer: boolean; signedSeller: boolean; startDate?: string; endDate?: string; terms?: string; createdAt: string; }

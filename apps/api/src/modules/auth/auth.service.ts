@@ -4,12 +4,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto, UpdateCompanyDto } from './auth.dto';
 import { EmailService } from '../notifications/email.service';
+import { SmsService } from '../notifications/sms.service';
 
 @Injectable()
 export class AuthService {
   private loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
 
-  constructor(private prisma: PrismaService, private jwt: JwtService, private email: EmailService) {}
+  constructor(private prisma: PrismaService, private jwt: JwtService, private email: EmailService, private sms: SmsService) {}
 
   private async audit(params: {
     userId?: number;
@@ -93,9 +94,22 @@ export class AuthService {
     };
   }
 
+  async sendOtp(phone: string) {
+    const code = this.sms.generateOTP(phone);
+    await this.sms.sendOTP(phone, code);
+    return { message: 'OTP sent' };
+  }
+
   async register(dto: RegisterDto, meta?: { ip?: string; ua?: string }) {
     const exists = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
     if (exists) throw new BadRequestException('Phone already registered');
+
+    // When SMS is configured, OTP verification is required
+    if (this.sms.isEnabled) {
+      if (!dto.otpCode) throw new BadRequestException('Phone verification code is required');
+      const valid = this.sms.verifyOTP(dto.phone, dto.otpCode);
+      if (!valid) throw new BadRequestException('Invalid or expired verification code');
+    }
 
     const role = await this.prisma.role.findFirst({ where: { name: 'company_admin' } });
     if (!role) throw new BadRequestException('System roles not initialized');
@@ -123,11 +137,11 @@ export class AuthService {
       userAgent: meta?.ua,
     });
 
-    // Fire-and-forget — do not block registration on email delivery
     this.email.sendWelcomeEmail(
       { name: user.name, email: user.email, phone: user.phone },
       { name: company.name, country: company.country },
     ).catch(() => {});
+    this.sms.sendWelcomeSMS(user.phone, user.name).catch(() => {});
 
     return { accessToken, user: { id: user.id, name: user.name, phone: user.phone } };
   }
@@ -251,6 +265,7 @@ export class AuthService {
       { name: user.name, email: user.email, phone: user.phone },
       code,
     ).catch(() => {});
+    this.sms.sendPasswordResetSMS(user.phone, code).catch(() => {});
 
     return { message: 'If an account exists, a reset code has been sent.' };
   }

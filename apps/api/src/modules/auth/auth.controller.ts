@@ -1,7 +1,7 @@
 import { Controller, Post, Patch, Body, Get, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto, UpdateCompanyDto } from './auth.dto';
+import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto, UpdateCompanyDto, SendOtpDto } from './auth.dto';
 import { JwtAuthGuard, Public } from './auth.guard';
 
 @Controller('auth')
@@ -16,6 +16,10 @@ export class AuthController {
     const ua = req.headers['user-agent'];
     return this.authService.login(dto, { ip, ua });
   }
+
+  @Post('send-otp') @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  sendOtp(@Body() dto: SendOtpDto) { return this.authService.sendOtp(dto.phone); }
 
   @Post('register') @Public()
   @Throttle({ default: { ttl: 60_000, limit: 3 } })

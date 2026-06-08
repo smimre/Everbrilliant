@@ -6,6 +6,7 @@ interface RegisterResponse extends AuthTokens { user: Pick<User, 'id' | 'name' |
 
 export const authService = {
   login: (dto: LoginDto) => api.post<LoginResponse>('/auth/login', dto),
+  sendOtp: (phone: string) => api.post<{ message: string }>('/auth/send-otp', { phone }),
   register: (dto: RegisterDto) => api.post<RegisterResponse>('/auth/register', dto),
   logout: () => api.post('/auth/logout'),
   me: () => api.get<User>('/auth/me'),

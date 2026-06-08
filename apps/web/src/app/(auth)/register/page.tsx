@@ -38,6 +38,11 @@ const T = {
     submit: 'Create Account',
     hasAcc: 'Already have an account?',
     login: 'Sign In',
+    otpTitle: 'Phone Verification',
+    otpDesc: 'Enter the 6-digit code sent to',
+    otpPh: '6-digit code',
+    otpVerify: 'Verify & Continue',
+    otpResend: 'Resend code',
     types: {
       trading: '📊 Trading',
       logistics: '🚛 Logistics',
@@ -71,6 +76,11 @@ const T = {
     submit: 'ایجاد حساب',
     hasAcc: 'حساب دارید؟',
     login: 'ورود',
+    otpTitle: 'تایید شماره موبایل',
+    otpDesc: 'کد ۶ رقمی ارسال‌شده به',
+    otpPh: 'کد ۶ رقمی',
+    otpVerify: 'تایید و ادامه',
+    otpResend: 'ارسال مجدد کد',
     types: {
       trading: '📊 بازرگانی',
       logistics: '🚛 حمل‌ونقل',
@@ -104,6 +114,11 @@ const T = {
     submit: 'إنشاء حساب',
     hasAcc: 'لديك حساب؟',
     login: 'تسجيل الدخول',
+    otpTitle: 'التحقق من الجوال',
+    otpDesc: 'أدخل الرمز المرسل إلى',
+    otpPh: 'الرمز المكون من 6 أرقام',
+    otpVerify: 'تحقق وتابع',
+    otpResend: 'إعادة إرسال الرمز',
     types: {
       trading: '📊 تجارة',
       logistics: '🚛 لوجستيك',
@@ -137,6 +152,11 @@ const T = {
     submit: 'खाता बनाएं',
     hasAcc: 'पहले से खाता है?',
     login: 'साइन इन',
+    otpTitle: 'फ़ोन सत्यापन',
+    otpDesc: 'इस नंबर पर भेजा गया 6-अंकीय कोड दर्ज करें',
+    otpPh: '6-अंकीय कोड',
+    otpVerify: 'सत्यापित करें और जारी रखें',
+    otpResend: 'कोड पुनः भेजें',
     types: {
       trading: '📊 ट्रेडिंग',
       logistics: '🚛 लॉजिस्टिक्स',
@@ -205,6 +225,11 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // OTP sub-step (inside step 1)
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpVerified, setOtpVerified] = useState(false);
+
   // Step 1
   const [fname, setFname] = useState('');
   const [lname, setLname] = useState('');
@@ -236,10 +261,41 @@ export default function RegisterPage() {
     return '';
   };
 
-  const onNext = () => {
+  const sendOtpCode = async () => {
+    const err = validateStep1();
+    if (err) { setError(err); return; }
+    try {
+      setLoading(true);
+      setError('');
+      await authService.sendOtp(phone);
+      setOtpSent(true);
+      setOtp('');
+    } catch (e: any) {
+      setError(e.message || (lang === 'fa' ? 'خطا در ارسال کد' : 'Failed to send OTP'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtpAndNext = async () => {
+    if (!otp || otp.length !== 6) {
+      setError(lang === 'fa' ? 'کد ۶ رقمی وارد کنید' : 'Enter the 6-digit code');
+      return;
+    }
+    // Optimistically proceed — the API will enforce OTP validity on submit
+    setOtpVerified(true);
+    setError('');
+    setStep(2);
+  };
+
+  const onNext = async () => {
     if (step === 1) {
-      const err = validateStep1();
-      if (err) { setError(err); return; }
+      if (!otpSent) {
+        await sendOtpCode();
+        return;
+      }
+      await verifyOtpAndNext();
+      return;
     }
     if (step === 2) {
       const err = validateStep2();
@@ -262,6 +318,7 @@ export default function RegisterPage() {
         inviteCode: inviteCode || undefined,
         ...(email && { email }),
         ...(country && { country }),
+        ...(otp && { otpCode: otp }),
       });
       setAuth(result.user as any, result.accessToken);
       // Save logo/stamp to company profile if provided
@@ -317,7 +374,9 @@ export default function RegisterPage() {
           ))}
         </div>
 
-        <p className="text-sm font-semibold mb-4">{STEPS[step - 1]}</p>
+        <p className="text-sm font-semibold mb-4">
+          {step === 1 && otpSent ? t.otpTitle : STEPS[step - 1]}
+        </p>
 
         {error && (
           <div className="mb-3 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] px-3 py-2 text-sm">
@@ -326,7 +385,7 @@ export default function RegisterPage() {
         )}
 
         {/* Step 1: Personal Info */}
-        {step === 1 && (
+        {step === 1 && !otpSent && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <Input label={t.fname} placeholder={t.fnamePh} value={fname} onChange={e => setFname(e.target.value)} autoComplete="given-name"/>
@@ -363,6 +422,35 @@ export default function RegisterPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Step 1 OTP sub-step */}
+        {step === 1 && otpSent && (
+          <div className="space-y-4">
+            <p className="text-sm text-[hsl(var(--muted-foreground))]">
+              {t.otpDesc} <span className="font-mono font-semibold text-[hsl(var(--foreground))]">{phone}</span>
+            </p>
+            <div>
+              <label className="text-xs text-[hsl(var(--muted-foreground))] block mb-1">{t.otpPh}</label>
+              <input
+                value={otp}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="○ ○ ○ ○ ○ ○"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                className="w-full text-center tracking-[0.5em] text-xl font-mono bg-[hsl(var(--background))] border border-[hsl(var(--border))] rounded-xl px-4 py-3 outline-none focus:border-[hsl(var(--primary))] transition-colors"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={sendOtpCode}
+              disabled={loading}
+              className="text-xs text-[hsl(var(--primary))] hover:underline disabled:opacity-50"
+            >
+              {t.otpResend}
+            </button>
           </div>
         )}
 
@@ -431,17 +519,21 @@ export default function RegisterPage() {
         )}
 
         {/* Navigation */}
-        <div className={`flex gap-2 mt-5 ${step > 1 ? 'justify-between' : 'justify-end'}`}>
-          {step > 1 && (
-            <Button type="button" variant="outline" onClick={() => { setError(''); setStep(s => s - 1); }}>
+        <div className={`flex gap-2 mt-5 ${(step > 1 || otpSent) ? 'justify-between' : 'justify-end'}`}>
+          {(step > 1 || otpSent) && (
+            <Button type="button" variant="outline" onClick={() => {
+              setError('');
+              if (otpSent && step === 1) { setOtpSent(false); setOtp(''); }
+              else setStep(s => s - 1);
+            }}>
               {lang === 'fa' || lang === 'ar' ? <ChevronLeft className="w-4 h-4 me-1"/> : <ChevronRight className="w-4 h-4 me-1"/>}
               {t.back}
             </Button>
           )}
           {step < 3 ? (
-            <Button type="button" onClick={onNext}>
-              {t.next}
-              {lang === 'fa' || lang === 'ar' ? <ChevronRight className="w-4 h-4 ms-1"/> : <ChevronLeft className="w-4 h-4 ms-1"/>}
+            <Button type="button" onClick={onNext} loading={loading}>
+              {step === 1 && otpSent ? t.otpVerify : t.next}
+              {!(step === 1 && otpSent) && (lang === 'fa' || lang === 'ar' ? <ChevronRight className="w-4 h-4 ms-1"/> : <ChevronLeft className="w-4 h-4 ms-1"/>)}
             </Button>
           ) : (
             <div className="flex gap-2 flex-1 justify-end">

@@ -1,4 +1,9 @@
-import { IsString, IsNotEmpty, MinLength, IsOptional, IsEmail } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, IsOptional, IsEmail, Length } from 'class-validator';
+
+export class SendOtpDto {
+  @IsString() @IsNotEmpty()
+  phone: string;
+}
 
 export class LoginDto {
   @IsString() @IsNotEmpty()
@@ -32,6 +37,9 @@ export class RegisterDto {
 
   @IsOptional() @IsString()
   inviteCode?: string;
+
+  @IsOptional() @IsString() @Length(6, 6)
+  otpCode?: string;
 }
 
 export class RefreshDto {
