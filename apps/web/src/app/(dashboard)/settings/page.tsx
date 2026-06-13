@@ -469,8 +469,11 @@ export default function SettingsPage() {
           )}
 
           {tab==='notifications' && (
-            <div className="space-y-4">
-              <h2 className="font-semibold text-lg">{fa?'اعلان‌ها':'Notifications'}</h2>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h2 className="font-semibold text-lg">{fa?'اعلان‌ها':'Notifications'}</h2>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{fa?'انتخاب کنید کدام رویدادها اعلان ارسال کنند':'Choose which events trigger notifications'}</p>
+              </div>
               {[{k:'req',l:fa?'درخواست جدید':'New Request'},{k:'quote',l:fa?'قیمت جدید':'New Quote'},{k:'pay',l:fa?'پرداخت':'Payment'},{k:'tender',l:fa?'مزایده':'Tender'}].map(n=>(
                 <div key={n.k} className="flex items-center justify-between py-2 border-b border-[hsl(var(--border))] last:border-0">
                   <span className="text-sm">{n.l}</span>
@@ -480,6 +483,31 @@ export default function SettingsPage() {
                   </label>
                 </div>
               ))}
+
+              <div className="pt-2 space-y-3">
+                <h3 className="text-sm font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{fa?'کانال ارسال':'Delivery Channels'}</h3>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{fa?'شماره‌های ایرانی (+۹۸) از SMS کاوه‌نگار استفاده می‌کنند. شماره‌های بین‌المللی از WhatsApp.':'Iranian numbers (+98) use Kavenegar SMS. International numbers use WhatsApp.'}</p>
+                {[
+                  {k:'ch-sms',    icon:'📱', l:fa?'پیامک (کاوه‌نگار)':'SMS (Kavenegar)',     sub:fa?'شماره‌های ایرانی +۹۸':'Iranian numbers +98',      def:true},
+                  {k:'ch-wa',     icon:'💬', l:fa?'واتساپ (بین‌الملل)':'WhatsApp (International)', sub:fa?'سایر کشورها: UAE، ترکیه، ...':'Other countries: UAE, Turkey, …', def:true},
+                  {k:'ch-email',  icon:'✉️', l:fa?'ایمیل':'Email',                            sub:fa?'اعلان‌های مفصل':'Detailed notifications',          def:true},
+                  {k:'ch-inapp',  icon:'🔔', l:fa?'داخل برنامه':'In-app',                    sub:fa?'نوتیفیکیشن داشبورد':'Dashboard bell',              def:true},
+                ].map(ch=>(
+                  <div key={ch.k} className="flex items-center justify-between p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{ch.icon}</span>
+                      <div>
+                        <div className="text-sm font-medium">{ch.l}</div>
+                        <div className="text-xs text-[hsl(var(--muted-foreground))]">{ch.sub}</div>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" defaultChecked={ch.def} className="sr-only peer"/>
+                      <div className="w-9 h-5 bg-[hsl(var(--muted))] rounded-full peer peer-checked:bg-[hsl(var(--primary))] after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

@@ -5,12 +5,19 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto, RegisterDto, RefreshDto, ForgotPasswordDto, ResetPasswordDto, ChangePasswordDto, UpdateProfileDto, UpdateCompanyDto } from './auth.dto';
 import { EmailService } from '../notifications/email.service';
 import { SmsService } from '../notifications/sms.service';
+import { WhatsAppService } from '../notifications/whatsapp.service';
 
 @Injectable()
 export class AuthService {
   private loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
 
-  constructor(private prisma: PrismaService, private jwt: JwtService, private email: EmailService, private sms: SmsService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwt: JwtService,
+    private email: EmailService,
+    private sms: SmsService,
+    private whatsapp: WhatsAppService,
+  ) {}
 
   private async audit(params: {
     userId?: number;
@@ -96,7 +103,16 @@ export class AuthService {
 
   async sendOtp(phone: string) {
     const code = this.sms.generateOTP(phone);
-    await this.sms.sendOTP(phone, code);
+    if (WhatsAppService.isIranian(phone)) {
+      await this.sms.sendOTP(phone, code);
+    } else {
+      // International: try WhatsApp first, fall back to SMS
+      if (this.whatsapp.isEnabled) {
+        await this.whatsapp.sendOTPMessage(phone, code);
+      } else {
+        await this.sms.sendOTP(phone, code);
+      }
+    }
     return { message: 'OTP sent' };
   }
 
@@ -141,7 +157,11 @@ export class AuthService {
       { name: user.name, email: user.email, phone: user.phone },
       { name: company.name, country: company.country },
     ).catch(() => {});
-    this.sms.sendWelcomeSMS(user.phone, user.name).catch(() => {});
+    if (WhatsAppService.isIranian(user.phone)) {
+      this.sms.sendWelcomeSMS(user.phone, user.name).catch(() => {});
+    } else {
+      this.whatsapp.sendWelcomeMessage(user.phone, user.name).catch(() => {});
+    }
 
     return { accessToken, user: { id: user.id, name: user.name, phone: user.phone } };
   }

@@ -3,10 +3,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { EmailService } from '../notifications/email.service';
 import { SmsService } from '../notifications/sms.service';
+import { WhatsAppService } from '../notifications/whatsapp.service';
 
 @Injectable()
 export class TradingService {
-  constructor(protected prisma: PrismaService, protected email?: EmailService, protected sms?: SmsService) {}
+  constructor(
+    protected prisma: PrismaService,
+    protected email?: EmailService,
+    protected sms?: SmsService,
+    protected whatsapp?: WhatsAppService,
+  ) {}
 
   private paginate(q: any) {
     const page = Math.max(1, Number(q.page) || 1);
@@ -82,10 +88,13 @@ export class TradingService {
       }).catch(() => {});
     }
 
-    if (this.sms && request.sellerCompany?.users) {
+    if (request.sellerCompany?.users) {
       for (const u of request.sellerCompany.users as Array<{ phone?: string | null }>) {
-        if (u.phone) {
-          this.sms.sendTradeRequestSMS(u.phone, request.product, request.buyerCompany.name).catch(() => {});
+        if (!u.phone) continue;
+        if (WhatsAppService.isIranian(u.phone)) {
+          this.sms?.sendTradeRequestSMS(u.phone, request.product, request.buyerCompany.name).catch(() => {});
+        } else {
+          this.whatsapp?.sendTradeRequestNotification(u.phone, request.buyerCompany.name, request.product).catch(() => {});
         }
       }
     }

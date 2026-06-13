@@ -3,10 +3,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { EmailService } from '../notifications/email.service';
 import { SmsService } from '../notifications/sms.service';
+import { WhatsAppService } from '../notifications/whatsapp.service';
 
 @Injectable()
 export class FinanceService {
-  constructor(protected prisma: PrismaService, protected email?: EmailService, protected sms?: SmsService) {}
+  constructor(
+    protected prisma: PrismaService,
+    protected email?: EmailService,
+    protected sms?: SmsService,
+    protected whatsapp?: WhatsAppService,
+  ) {}
 
   private paginate(query: any) {
     const page = Math.max(1, Number(query.page) || 1);
@@ -122,13 +128,17 @@ export class FinanceService {
       }).catch(() => {});
     }
 
-    if (this.sms && dto.buyerCompanyId && dto.buyerCompanyId !== companyId) {
+    if (dto.buyerCompanyId && dto.buyerCompanyId !== companyId) {
       this.prisma.user.findFirst({
         where: { companyId: Number(dto.buyerCompanyId), isCompanyAdmin: true },
         select: { phone: true },
       }).then((admin) => {
-        if (admin?.phone) {
-          this.sms!.sendInvoiceSMS(admin.phone, invoice.id, String(invoice.total), invoice.currency).catch(() => {});
+        if (!admin?.phone) return;
+        const phone = admin.phone;
+        if (WhatsAppService.isIranian(phone)) {
+          this.sms?.sendInvoiceSMS(phone, invoice.id, String(invoice.total), invoice.currency).catch(() => {});
+        } else {
+          this.whatsapp?.sendInvoiceNotification(phone, invoice.id, String(invoice.total), invoice.currency).catch(() => {});
         }
       }).catch(() => {});
     }
