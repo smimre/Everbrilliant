@@ -370,20 +370,20 @@ export default function SettingsPage() {
   };
 
   const tabs = [
-    {id:'profile',      icon:<User className="h-4 w-4"/>,      fa:'پروفایل',        en:'Profile'},
-    {id:'appearance',   icon:<Palette className="h-4 w-4"/>,   fa:'ظاهر',           en:'Appearance'},
-    {id:'language',     icon:<Globe className="h-4 w-4"/>,     fa:'زبان',           en:'Language'},
-    {id:'security',     icon:<Shield className="h-4 w-4"/>,    fa:'امنیت',          en:'Security'},
-    {id:'notifications',icon:<Bell className="h-4 w-4"/>,      fa:'اعلان‌ها',       en:'Notifications'},
-    {id:'users',        icon:<Users className="h-4 w-4"/>,     fa:'کاربران شرکت',   en:'Company Users'},
-    {id:'roles',        icon:<Key className="h-4 w-4"/>,       fa:'نقش‌ها',         en:'Roles'},
-    {id:'company',      icon:<Building2 className="h-4 w-4"/>, fa:'اطلاعات شرکت',  en:'Company Info'},
-    {id:'admin',        icon:<UserCog className="h-4 w-4"/>,   fa:'مدیریت سیستم',  en:'System Admin'},
-    {id:'audit-log',   icon:<BookOpen className="h-4 w-4"/>,  fa:'تاریخچه رویدادها', en:'Audit Log'},
-    {id:'api-keys',    icon:<Cpu className="h-4 w-4"/>,       fa:'API Keys',       en:'API Keys'},
-    {id:'super-admin', icon:<Shield className="h-4 w-4"/>,    fa:'سوپر ادمین',     en:'Super Admin'},
-    {id:'letterhead',  icon:<FileText className="h-4 w-4"/>,  fa:'سربرگ دیجیتال', en:'Letterhead'},
-    {id:'pricing',     icon:<CreditCard className="h-4 w-4"/>,fa:'پلن اشتراک',     en:'Subscription'},
+    {id:'profile',      icon:<User className="h-4 w-4"/>,      fa:'پروفایل',           hi:'प्रोफाइल',         en:'Profile'},
+    {id:'appearance',   icon:<Palette className="h-4 w-4"/>,   fa:'ظاهر',              hi:'रूप-रंग',          en:'Appearance'},
+    {id:'language',     icon:<Globe className="h-4 w-4"/>,     fa:'زبان',              hi:'भाषा',             en:'Language'},
+    {id:'security',     icon:<Shield className="h-4 w-4"/>,    fa:'امنیت',             hi:'सुरक्षा',          en:'Security'},
+    {id:'notifications',icon:<Bell className="h-4 w-4"/>,      fa:'اعلان‌ها',          hi:'सूचनाएं',          en:'Notifications'},
+    {id:'users',        icon:<Users className="h-4 w-4"/>,     fa:'کاربران شرکت',      hi:'कंपनी उपयोगकर्ता', en:'Company Users'},
+    {id:'roles',        icon:<Key className="h-4 w-4"/>,       fa:'نقش‌ها',            hi:'भूमिकाएं',         en:'Roles'},
+    {id:'company',      icon:<Building2 className="h-4 w-4"/>, fa:'اطلاعات شرکت',     hi:'कंपनी जानकारी',    en:'Company Info'},
+    {id:'admin',        icon:<UserCog className="h-4 w-4"/>,   fa:'مدیریت سیستم',     hi:'सिस्टम एडमिन',     en:'System Admin'},
+    {id:'audit-log',   icon:<BookOpen className="h-4 w-4"/>,  fa:'تاریخچه رویدادها',  hi:'ऑडिट लॉग',        en:'Audit Log'},
+    {id:'api-keys',    icon:<Cpu className="h-4 w-4"/>,       fa:'API Keys',          hi:'API कुंजियां',      en:'API Keys'},
+    {id:'super-admin', icon:<Shield className="h-4 w-4"/>,    fa:'سوپر ادمین',        hi:'सुपर एडमिन',       en:'Super Admin'},
+    {id:'letterhead',  icon:<FileText className="h-4 w-4"/>,  fa:'سربرگ دیجیتال',    hi:'लेटरहेड',          en:'Letterhead'},
+    {id:'pricing',     icon:<CreditCard className="h-4 w-4"/>,fa:'پلن اشتراک',        hi:'सदस्यता',          en:'Subscription'},
   ];
 
   const filteredUsers = users.filter(u => !userFilter || u.name.includes(userFilter) || u.phone.includes(userFilter));
@@ -392,7 +392,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold flex items-center gap-2">
         <Settings className="h-6 w-6 text-[hsl(var(--primary))]"/>
-        {fa ? 'تنظیمات' : 'Settings'}
+        {lang === 'fa' ? 'تنظیمات' : lang === 'hi' ? 'सेटिंग्स' : 'Settings'}
       </h1>
       <div className="flex gap-6 flex-col lg:flex-row">
         <div className="w-full lg:w-52 shrink-0">
@@ -401,7 +401,7 @@ export default function SettingsPage() {
               <button key={t.id} onClick={() => setTab(t.id as SettingsTab)}
                 className={cn('flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
                   tab===t.id ? 'bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted)/0.5)]')}>
-                {t.icon}{fa ? t.fa : t.en}
+                {t.icon}{lang === 'fa' ? t.fa : lang === 'hi' ? t.hi : t.en}
               </button>
             ))}
           </div>

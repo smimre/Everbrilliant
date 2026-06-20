@@ -30,44 +30,45 @@ interface NavItem {
   id: FinanceView;
   label: string;
   labelFa: string;
+  labelHi?: string;
   icon: string;
   section?: string;
 }
 
 const NAV: NavItem[] = [
-  { id: 'dashboard',         label: 'Dashboard',          labelFa: 'داشبورد',            icon: '📊' },
+  { id: 'dashboard',         label: 'Dashboard',          labelFa: 'داشبورد',            labelHi: 'डैशबोर्ड',             icon: '📊' },
   // حسابداری
-  { id: 'dual-books',        label: 'Dual-Book System',   labelFa: 'سیستم دفتر دوگانه', icon: '📚', section: 'accounting' },
-  { id: 'coa',               label: 'Chart of Accounts',  labelFa: 'سرفصل حساب‌ها',     icon: '📋', section: 'accounting' },
-  { id: 'journal',           label: 'Journal',            labelFa: 'دفتر روزنامه',       icon: '📒', section: 'accounting' },
-  { id: 'ledger',            label: 'Ledger',             labelFa: 'دفتر کل',            icon: '📔', section: 'accounting' },
-  { id: 'trial-balance',     label: 'Trial Balance',      labelFa: 'تراز آزمایشی',       icon: '⚖️', section: 'accounting' },
+  { id: 'dual-books',        label: 'Dual-Book System',   labelFa: 'سیستم دفتر دوگانه', labelHi: 'दोहरी बही प्रणाली',   icon: '📚', section: 'accounting' },
+  { id: 'coa',               label: 'Chart of Accounts',  labelFa: 'سرفصل حساب‌ها',     labelHi: 'खाता चार्ट',           icon: '📋', section: 'accounting' },
+  { id: 'journal',           label: 'Journal',            labelFa: 'دفتر روزنامه',       labelHi: 'जर्नल',                icon: '📒', section: 'accounting' },
+  { id: 'ledger',            label: 'Ledger',             labelFa: 'دفتر کل',            labelHi: 'खाता बही',             icon: '📔', section: 'accounting' },
+  { id: 'trial-balance',     label: 'Trial Balance',      labelFa: 'تراز آزمایشی',       labelHi: 'तलपट',                 icon: '⚖️', section: 'accounting' },
   // فاکتور
-  { id: 'invoices',          label: 'Invoices',           labelFa: 'فاکتور فروش',        icon: '🧾', section: 'billing' },
-  { id: 'purchase-invoices', label: 'Purchase Invoices',  labelFa: 'فاکتور خرید',        icon: '📥', section: 'billing' },
+  { id: 'invoices',          label: 'Invoices',           labelFa: 'فاکتور فروش',        labelHi: 'बिक्री चालान',         icon: '🧾', section: 'billing' },
+  { id: 'purchase-invoices', label: 'Purchase Invoices',  labelFa: 'فاکتور خرید',        labelHi: 'खरीद चालान',           icon: '📥', section: 'billing' },
   // نقد و بانک
-  { id: 'treasury',          label: 'Treasury & Bank',    labelFa: 'خزانه و بانک',       icon: '🏦', section: 'cash' },
-  { id: 'checks',            label: 'Checks',             labelFa: 'چک‌ها',              icon: '🗒️', section: 'cash' },
-  { id: 'cashflow',          label: 'Cash Flow',          labelFa: 'جریان نقدی',         icon: '💸', section: 'cash' },
+  { id: 'treasury',          label: 'Treasury & Bank',    labelFa: 'خزانه و بانک',       labelHi: 'कोषागार और बैंक',      icon: '🏦', section: 'cash' },
+  { id: 'checks',            label: 'Checks',             labelFa: 'چک‌ها',              labelHi: 'चेक',                  icon: '🗒️', section: 'cash' },
+  { id: 'cashflow',          label: 'Cash Flow',          labelFa: 'جریان نقدی',         labelHi: 'नकद प्रवाह',           icon: '💸', section: 'cash' },
   // منابع انسانی
-  { id: 'staff',             label: 'Staff',              labelFa: 'پرسنل',              icon: '👥', section: 'hr' },
-  { id: 'payroll',           label: 'Payroll',            labelFa: 'حقوق و دستمزد',      icon: '💰', section: 'hr' },
+  { id: 'staff',             label: 'Staff',              labelFa: 'پرسنل',              labelHi: 'कर्मचारी',             icon: '👥', section: 'hr' },
+  { id: 'payroll',           label: 'Payroll',            labelFa: 'حقوق و دستمزد',      labelHi: 'वेतन',                 icon: '💰', section: 'hr' },
   // انبار
-  { id: 'inventory',         label: 'Inventory',          labelFa: 'انبار',              icon: '📦', section: 'inventory' },
+  { id: 'inventory',         label: 'Inventory',          labelFa: 'انبار',              labelHi: 'इन्वेंटरी',            icon: '📦', section: 'inventory' },
   // گزارشات
-  { id: 'balance-sheet',     label: 'Balance Sheet',      labelFa: 'ترازنامه',           icon: '📊', section: 'reports' },
-  { id: 'income-stmt',       label: 'Income Statement',   labelFa: 'صورت سود و زیان',   icon: '📈', section: 'reports' },
-  { id: 'budget',            label: 'Budget',             labelFa: 'بودجه‌بندی',         icon: '🎯', section: 'reports' },
-  { id: 'reports',           label: 'Reports',            labelFa: 'گزارشات مالی',       icon: '📋', section: 'reports' },
+  { id: 'balance-sheet',     label: 'Balance Sheet',      labelFa: 'ترازنامه',           labelHi: 'तुलन पत्र',            icon: '📊', section: 'reports' },
+  { id: 'income-stmt',       label: 'Income Statement',   labelFa: 'صورت سود و زیان',   labelHi: 'आय विवरण',             icon: '📈', section: 'reports' },
+  { id: 'budget',            label: 'Budget',             labelFa: 'بودجه‌بندی',         labelHi: 'बजट',                  icon: '🎯', section: 'reports' },
+  { id: 'reports',           label: 'Reports',            labelFa: 'گزارشات مالی',       labelHi: 'वित्तीय रिपोर्ट',     icon: '📋', section: 'reports' },
 ];
 
-const SECTIONS: Record<string, { label: string; labelFa: string }> = {
-  accounting: { label: '📚 Accounting',     labelFa: '📚 حسابداری' },
-  billing:    { label: '🧾 Billing',        labelFa: '🧾 فاکتورها' },
-  cash:       { label: '💸 Cash & Bank',    labelFa: '💸 نقد و بانک' },
-  hr:         { label: '👥 HR',             labelFa: '👥 منابع انسانی' },
-  inventory:  { label: '📦 Inventory',      labelFa: '📦 انبارداری' },
-  reports:    { label: '📊 Reports',        labelFa: '📊 گزارشات' },
+const SECTIONS: Record<string, { label: string; labelFa: string; labelHi?: string }> = {
+  accounting: { label: '📚 Accounting',     labelFa: '📚 حسابداری',       labelHi: '📚 लेखांकन' },
+  billing:    { label: '🧾 Billing',        labelFa: '🧾 فاکتورها',        labelHi: '🧾 बिलिंग' },
+  cash:       { label: '💸 Cash & Bank',    labelFa: '💸 نقد و بانک',      labelHi: '💸 नकद और बैंक' },
+  hr:         { label: '👥 HR',             labelFa: '👥 منابع انسانی',    labelHi: '👥 एचआर' },
+  inventory:  { label: '📦 Inventory',      labelFa: '📦 انبارداری',        labelHi: '📦 इन्वेंटरी' },
+  reports:    { label: '📊 Reports',        labelFa: '📊 گزارشات',          labelHi: '📊 रिपोर्ट' },
 };
 
 export function FinanceModule({ initialView }: { initialView?: FinanceView } = {}) {
@@ -125,7 +126,7 @@ export function FinanceModule({ initialView }: { initialView?: FinanceView } = {
             grouped[secId]?.length ? (
               <div key={secId}>
                 <div className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] px-2 pt-3 pb-1 uppercase tracking-wider">
-                  {fa ? sec.labelFa : sec.label}
+                  {lang === 'fa' ? sec.labelFa : lang === 'hi' ? (sec.labelHi || sec.label) : sec.label}
                 </div>
                 {grouped[secId].map(item => (
                   <NavBtn key={item.id} item={item} active={view === item.id} lang={lang} onClick={() => setView(item.id)} />
@@ -151,7 +152,7 @@ function NavBtn({ item, active, lang, onClick }: {
           : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted)/0.5)] hover:text-[hsl(var(--foreground))]'
       }`}>
       <span>{item.icon}</span>
-      <span className="truncate">{lang === 'fa' ? item.labelFa : item.label}</span>
+      <span className="truncate">{lang === 'fa' ? item.labelFa : lang === 'hi' ? (item.labelHi || item.label) : item.label}</span>
     </button>
   );
 }

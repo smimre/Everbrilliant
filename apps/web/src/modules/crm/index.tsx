@@ -162,13 +162,13 @@ interface Deal {
   value: number; probability: number; closingDate: string; owner: string; notes?: string;
 }
 
-const DEAL_STAGES: { id: Deal['stage']; label: string; labelFa: string; color: string; icon: string }[] = [
-  { id: 'lead',        label: 'Lead',        labelFa: 'سرنخ',           color: '#64748b', icon: '🎯' },
-  { id: 'qualified',   label: 'Qualified',   labelFa: 'واجد شرایط',    color: '#3b82f6', icon: '✅' },
-  { id: 'proposal',    label: 'Proposal',    labelFa: 'پیشنهاد',        color: '#8b5cf6', icon: '📋' },
-  { id: 'negotiation', label: 'Negotiation', labelFa: 'مذاکره',         color: '#f59e0b', icon: '🤝' },
-  { id: 'won',         label: 'Won',         labelFa: 'برنده',          color: '#10b981', icon: '🏆' },
-  { id: 'lost',        label: 'Lost',        labelFa: 'از دست رفته',   color: '#ef4444', icon: '❌' },
+const DEAL_STAGES: { id: Deal['stage']; label: string; labelFa: string; labelHi?: string; color: string; icon: string }[] = [
+  { id: 'lead',        label: 'Lead',        labelFa: 'سرنخ',           labelHi: 'लीड',           color: '#64748b', icon: '🎯' },
+  { id: 'qualified',   label: 'Qualified',   labelFa: 'واجد شرایط',    labelHi: 'योग्य',          color: '#3b82f6', icon: '✅' },
+  { id: 'proposal',    label: 'Proposal',    labelFa: 'پیشنهاد',        labelHi: 'प्रस्ताव',      color: '#8b5cf6', icon: '📋' },
+  { id: 'negotiation', label: 'Negotiation', labelFa: 'مذاکره',         labelHi: 'वार्ता',         color: '#f59e0b', icon: '🤝' },
+  { id: 'won',         label: 'Won',         labelFa: 'برنده',          labelHi: 'जीता',           color: '#10b981', icon: '🏆' },
+  { id: 'lost',        label: 'Lost',        labelFa: 'از دست رفته',   labelHi: 'खो गया',         color: '#ef4444', icon: '❌' },
 ];
 
 function makeSampleDeals(companyName: string): Deal[] {
@@ -270,7 +270,7 @@ function DealPipeline({ company, fa }: { company: CRMCompany; fa: boolean }) {
                 onDrop={() => dragId && moveStage(dragId, stage.id)}>
                 <div className="rounded-t-xl px-3 py-2.5 font-semibold text-xs flex items-center justify-between"
                   style={{ background: stage.color + '18', color: stage.color, borderBottom: `2px solid ${stage.color}` }}>
-                  <span>{stage.icon} {fa ? stage.labelFa : stage.label}</span>
+                  <span>{stage.icon} {lang === 'fa' ? stage.labelFa : lang === 'hi' ? (stage.labelHi || stage.label) : stage.label}</span>
                   <span className="font-normal opacity-80">{stageDeals.length} · {fmt(stageVal)}</span>
                 </div>
                 <div className="rounded-b-xl border border-t-0 border-[hsl(var(--border))] bg-[hsl(var(--secondary)/0.5)] p-2 space-y-2 min-h-[120px]">
@@ -307,7 +307,7 @@ function DealPipeline({ company, fa }: { company: CRMCompany; fa: boolean }) {
           return (
             <div key={stage.id} className="rounded-xl border p-4" style={{ borderColor: stage.color + '40', background: stage.color + '08' }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-sm" style={{ color: stage.color }}>{stage.icon} {fa ? stage.labelFa : stage.label}</span>
+                <span className="font-semibold text-sm" style={{ color: stage.color }}>{stage.icon} {lang === 'fa' ? stage.labelFa : lang === 'hi' ? (stage.labelHi || stage.label) : stage.label}</span>
                 <span className="text-xs text-[hsl(var(--muted-foreground))]">{stageDeals.length} {fa ? 'معامله' : 'deals'}</span>
               </div>
               <p className="text-2xl font-bold" style={{ color: stage.color }}>{fmt(stageVal)}</p>
@@ -410,13 +410,13 @@ function CRMDetail({ company, onBack }: { company: CRMCompany; onBack: () => voi
       {/* Tab selector */}
       <div className="flex gap-1 bg-[hsl(var(--secondary))] rounded-xl p-1 border border-[hsl(var(--border))]">
         {([
-          { id:'overview',  labelFa:'📅 خلاصه',       labelEn:'📅 Overview'  },
-          { id:'pipeline',  labelFa:'🎯 پایپ‌لاین',    labelEn:'🎯 Pipeline'  },
-          { id:'contacts',  labelFa:'👥 مخاطبین',      labelEn:'👥 Contacts'  },
+          { id:'overview',  labelFa:'📅 خلاصه',       labelEn:'📅 Overview',  labelHi:'📅 अवलोकन'  },
+          { id:'pipeline',  labelFa:'🎯 پایپ‌لاین',    labelEn:'🎯 Pipeline',  labelHi:'🎯 पाइपलाइन' },
+          { id:'contacts',  labelFa:'👥 مخاطبین',      labelEn:'👥 Contacts',  labelHi:'👥 संपर्क'  },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setDetailTab(t.id)}
             className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${detailTab===t.id?'bg-[hsl(var(--primary))] text-white':'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]'}`}>
-            {fa ? t.labelFa : t.labelEn}
+            {lang === 'fa' ? t.labelFa : lang === 'hi' ? t.labelHi : t.labelEn}
           </button>
         ))}
       </div>

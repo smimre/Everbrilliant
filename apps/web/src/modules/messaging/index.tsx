@@ -12,12 +12,12 @@ import { useUIStore } from '@/store';
 type Tab = 'inbox' | 'sent' | 'starred';
 type MsgType = 'message' | 'notification' | 'contract' | 'logistics' | 'customs';
 
-const TYPE_CONFIG: Record<MsgType, { icon: string; color: string; label: string; labelFa: string }> = {
-  message:      { icon: '💬', color: '#3b82f6', label: 'Message',      labelFa: 'پیام' },
-  notification: { icon: '🔔', color: '#f59e0b', label: 'Notification',  labelFa: 'اعلان' },
-  contract:     { icon: '📄', color: '#8b5cf6', label: 'Contract',      labelFa: 'قرارداد' },
-  logistics:    { icon: '🚛', color: '#06b6d4', label: 'Logistics',     labelFa: 'لجستیک' },
-  customs:      { icon: '🛃', color: '#ef4444', label: 'Customs',       labelFa: 'گمرک' },
+const TYPE_CONFIG: Record<MsgType, { icon: string; color: string; label: string; labelFa: string; labelHi?: string }> = {
+  message:      { icon: '💬', color: '#3b82f6', label: 'Message',      labelFa: 'پیام',      labelHi: 'संदेश' },
+  notification: { icon: '🔔', color: '#f59e0b', label: 'Notification',  labelFa: 'اعلان',    labelHi: 'सूचना' },
+  contract:     { icon: '📄', color: '#8b5cf6', label: 'Contract',      labelFa: 'قرارداد',  labelHi: 'अनुबंध' },
+  logistics:    { icon: '🚛', color: '#06b6d4', label: 'Logistics',     labelFa: 'لجستیک',   labelHi: 'लॉजिस्टिक्स' },
+  customs:      { icon: '🛃', color: '#ef4444', label: 'Customs',       labelFa: 'گمرک',     labelHi: 'सीमाशुल्क' },
 };
 
 function fmtDate(iso: string, fa: boolean) {

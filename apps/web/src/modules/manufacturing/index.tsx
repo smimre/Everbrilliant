@@ -13,20 +13,20 @@ import { ManufacturingReports } from './components/manufacturing-reports';
 type MfgView = 'dashboard'|'work-orders'|'bom'|'materials'|'wip'|'costing'|'qc'|'reports';
 
 const NAV = [
-  { id:'dashboard',   label:'Dashboard',    labelFa:'داشبورد',          icon:'📊' },
-  { id:'work-orders', label:'Work Orders',  labelFa:'دستورات کار',      icon:'🏭', section:'production' },
-  { id:'bom',         label:'BOM',          labelFa:'فهرست مواد (BOM)', icon:'🧾', section:'production' },
-  { id:'materials',   label:'Materials MRP',labelFa:'برنامه‌ریزی مواد', icon:'📦', section:'production' },
-  { id:'wip',         label:'WIP',          labelFa:'در جریان ساخت',    icon:'🔄', section:'tracking' },
-  { id:'qc',          label:'Quality Control',labelFa:'کنترل کیفیت',   icon:'🔍', section:'tracking' },
-  { id:'costing',     label:'Product Costing',labelFa:'هزینه‌یابی',    icon:'💰', section:'finance' },
-  { id:'reports',     label:'Reports',      labelFa:'گزارشات',          icon:'📊', section:'finance' },
+  { id:'dashboard',   label:'Dashboard',    labelFa:'داشبورد',          labelHi:'डैशबोर्ड',            icon:'📊' },
+  { id:'work-orders', label:'Work Orders',  labelFa:'دستورات کار',      labelHi:'कार्य आदेश',          icon:'🏭', section:'production' },
+  { id:'bom',         label:'BOM',          labelFa:'فهرست مواد (BOM)', labelHi:'सामग्री सूची (BOM)',  icon:'🧾', section:'production' },
+  { id:'materials',   label:'Materials MRP',labelFa:'برنامه‌ریزی مواد', labelHi:'सामग्री योजना',       icon:'📦', section:'production' },
+  { id:'wip',         label:'WIP',          labelFa:'در جریان ساخت',    labelHi:'निर्माण प्रगति',       icon:'🔄', section:'tracking' },
+  { id:'qc',          label:'Quality Control',labelFa:'کنترل کیفیت',   labelHi:'गुणवत्ता नियंत्रण',  icon:'🔍', section:'tracking' },
+  { id:'costing',     label:'Product Costing',labelFa:'هزینه‌یابی',    labelHi:'उत्पाद लागत',         icon:'💰', section:'finance' },
+  { id:'reports',     label:'Reports',      labelFa:'گزارشات',          labelHi:'रिपोर्ट',             icon:'📊', section:'finance' },
 ];
 
-const SECTIONS: Record<string, { label: string; labelFa: string }> = {
-  production: { label: '🏭 Production',  labelFa: '🏭 تولید' },
-  tracking:   { label: '🔄 Tracking',    labelFa: '🔄 پیگیری' },
-  finance:    { label: '💰 Cost & Reports', labelFa: '💰 هزینه و گزارش' },
+const SECTIONS: Record<string, { label: string; labelFa: string; labelHi?: string }> = {
+  production: { label: '🏭 Production',     labelFa: '🏭 تولید',          labelHi: '🏭 उत्पादन' },
+  tracking:   { label: '🔄 Tracking',       labelFa: '🔄 پیگیری',         labelHi: '🔄 ट्रैकिंग' },
+  finance:    { label: '💰 Cost & Reports', labelFa: '💰 هزینه و گزارش', labelHi: '💰 लागत और रिपोर्ट' },
 };
 
 export function ManufacturingModule({ initialView }: { initialView?: MfgView } = {}) {
@@ -65,7 +65,7 @@ export function ManufacturingModule({ initialView }: { initialView?: MfgView } =
           {Object.entries(SECTIONS).map(([secId, sec]) => grouped[secId]?.length ? (
             <div key={secId}>
               <div className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] px-2 pt-3 pb-1 uppercase tracking-wider">
-                {fa ? sec.labelFa : sec.label}
+                {lang === 'fa' ? sec.labelFa : lang === 'hi' ? (sec.labelHi || sec.label) : sec.label}
               </div>
               {grouped[secId].map(item => (
                 <NavBtn key={item.id} item={item} active={view === item.id as MfgView} lang={lang} onClick={() => setView(item.id as MfgView)} />
@@ -87,7 +87,7 @@ function NavBtn({ item, active, lang, onClick }: { item: any; active: boolean; l
                : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted)/0.5)] hover:text-[hsl(var(--foreground))]'
       }`}>
       <span>{item.icon}</span>
-      <span className="truncate">{lang === 'fa' ? item.labelFa : item.label}</span>
+      <span className="truncate">{lang === 'fa' ? item.labelFa : lang === 'hi' ? (item.labelHi || item.label) : item.label}</span>
     </button>
   );
 }
