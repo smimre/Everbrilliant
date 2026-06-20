@@ -11,7 +11,7 @@ import {
   TrendingUp, Gavel, Link2, Settings, LogOut,
   BookOpen, Receipt, Package, Users, Landmark, BarChart3,
   Mail, CheckSquare, Calendar, Archive, GitBranch, ChevronDown,
-  Plus, Shield, LucideIcon, CreditCard, RefreshCw,
+  Plus, Shield, LucideIcon, CreditCard, RefreshCw, HelpCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -25,7 +25,6 @@ interface NavItem {
   children?: NavItem[];
 }
 
-// ── Nav definitions (NO JSX at module level) ─────────────────
 const TRADING_NAV: NavItem[] = [
   { label: 'Dashboard',         labelFa: 'داشبورد',           icon: LayoutDashboard, href: '/dashboard' },
   { label: 'Inbox',             labelFa: 'صندوق ورودی',       icon: Inbox,           href: '/inbox',       badge: 3 },
@@ -39,6 +38,7 @@ const TRADING_NAV: NavItem[] = [
   { label: 'Reports',           labelFa: 'گزارشات',            icon: TrendingUp,      href: '/reports' },
   { label: 'Connections',       labelFa: 'اتصالات',            icon: Link2,           href: '/connections' },
   { label: 'Letterhead',        labelFa: 'سربرگ دیجیتال',     icon: FileText,        href: '/trading/letterhead' },
+  { label: 'Help',              labelFa: 'راهنما',             icon: HelpCircle,      href: '/help' },
 ];
 
 const FINANCE_NAV: NavItem[] = [
@@ -56,6 +56,7 @@ const FINANCE_NAV: NavItem[] = [
   { label: 'HR / Payroll', labelFa: 'پرسنل',              icon: Users,           href: '/finance/hr' },
   { label: 'Treasury',     labelFa: 'خزانه',              icon: Landmark,        href: '/finance/treasury' },
   { label: 'Reports',      labelFa: 'گزارشات',            icon: BarChart3,       href: '/finance/reports' },
+  { label: 'Help',         labelFa: 'راهنما',             icon: HelpCircle,      href: '/help' },
 ];
 
 const AUTOMATION_NAV: NavItem[] = [
@@ -72,18 +73,19 @@ const AUTOMATION_NAV: NavItem[] = [
   { label: 'Tasks',        labelFa: 'وظایف',              icon: CheckSquare,     href: '/automation/tasks' },
   { label: 'Archive',      labelFa: 'آرشیو',              icon: Archive,         href: '/automation/archive' },
   { label: 'Workflows',    labelFa: 'گردش‌کار',           icon: GitBranch,       href: '/automation/workflows' },
+  { label: 'Help',         labelFa: 'راهنما',             icon: HelpCircle,      href: '/help' },
 ];
 
-
 const MANUFACTURING_NAV: NavItem[] = [
-  { label: 'Dashboard', labelFa: 'داشبورد', icon: LayoutDashboard, href: '/manufacturing' },
-  { label: 'Work Orders', labelFa: 'دستورات کار', icon: Package, href: '/manufacturing/work-orders' },
-  { label: 'BOM', labelFa: 'فهرست مواد', icon: GitBranch, href: '/manufacturing/bom' },
-  { label: 'Materials MRP', labelFa: 'برنامه ریزی مواد', icon: Archive, href: '/manufacturing/materials' },
-  { label: 'WIP', labelFa: 'در جریان ساخت', icon: Landmark, href: '/manufacturing/wip' },
-  { label: 'Quality Control', labelFa: 'کنترل کیفیت', icon: CheckSquare, href: '/manufacturing/qc' },
-  { label: 'Product Costing', labelFa: 'هزینه یابی', icon: Receipt, href: '/manufacturing/costing' },
-  { label: 'Reports', labelFa: 'گزارشات', icon: BarChart3, href: '/manufacturing/reports' },
+  { label: 'Dashboard',      labelFa: 'داشبورد',           icon: LayoutDashboard, href: '/manufacturing' },
+  { label: 'Work Orders',    labelFa: 'دستورات کار',       icon: Package,         href: '/manufacturing/work-orders' },
+  { label: 'BOM',            labelFa: 'فهرست مواد',        icon: GitBranch,       href: '/manufacturing/bom' },
+  { label: 'Materials MRP',  labelFa: 'برنامه ریزی مواد', icon: Archive,         href: '/manufacturing/materials' },
+  { label: 'WIP',            labelFa: 'در جریان ساخت',    icon: Landmark,        href: '/manufacturing/wip' },
+  { label: 'Quality Control',labelFa: 'کنترل کیفیت',      icon: CheckSquare,     href: '/manufacturing/qc' },
+  { label: 'Product Costing',labelFa: 'هزینه یابی',       icon: Receipt,         href: '/manufacturing/costing' },
+  { label: 'Reports',        labelFa: 'گزارشات',           icon: BarChart3,       href: '/manufacturing/reports' },
+  { label: 'Help',           labelFa: 'راهنما',            icon: HelpCircle,      href: '/help' },
 ];
 
 const LOGISTICS_NAV: NavItem[] = [
@@ -94,6 +96,7 @@ const LOGISTICS_NAV: NavItem[] = [
   { label: 'Insurance',    labelFa: 'بیمه',             icon: Shield,          href: '/logistics' },
   { label: 'Quotes',       labelFa: 'استعلام حمل',     icon: Receipt,         href: '/logistics' },
   { label: 'Finance',      labelFa: 'مالی لجستیک',     icon: BarChart3,       href: '/logistics' },
+  { label: 'Help',         labelFa: 'راهنما',           icon: HelpCircle,      href: '/help' },
 ];
 
 const MODULE_NAV: Record<string, NavItem[]> = {
@@ -104,7 +107,6 @@ const MODULE_NAV: Record<string, NavItem[]> = {
   logistics:     LOGISTICS_NAV,
 };
 
-// ── NavItem Component ─────────────────────────────────────────
 function NavItemComponent({ item, depth = 0 }: { item: NavItem; depth?: number }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -139,7 +141,6 @@ function NavItemComponent({ item, depth = 0 }: { item: NavItem; depth?: number }
             : 'font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.4)]'
         )}
       >
-        {/* Active left indicator */}
         {isActive && depth === 0 && (
           <span className="absolute start-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full bg-[hsl(var(--primary))]" />
         )}
@@ -167,7 +168,6 @@ function NavItemComponent({ item, depth = 0 }: { item: NavItem; depth?: number }
   );
 }
 
-// ── Sidebar ───────────────────────────────────────────────────
 export function Sidebar() {
   const { sidebarOpen, activeModule } = useUIStore();
   const { user, clearAuth } = useAuthStore();

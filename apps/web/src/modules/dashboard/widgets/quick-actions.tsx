@@ -36,7 +36,7 @@ export function QuickActionsWidget() {
   const title = lang === 'fa' ? '⚡ دسترسی سریع' : '⚡ Quick Actions';
 
   return (
-    <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4">
+    <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary))] p-4" data-tour="quick-actions">
       <h2 className="font-semibold mb-4">{title}</h2>
       <div className="grid grid-cols-2 gap-2">
         {actions.map((a, i) => {

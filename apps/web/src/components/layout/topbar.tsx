@@ -7,7 +7,7 @@ import { NotificationBell } from '@/components/realtime/notification-bell';
 import { LanguageSelector } from './language-selector';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { Menu, Sun, Moon } from 'lucide-react';
+import { Menu, Sun, Moon, HelpCircle } from 'lucide-react';
 import type { Module } from '@/types';
 
 const MODULE_ITEMS: { id: Module; label_fa: string; label_en: string; icon: string; href: string }[] = [
@@ -20,7 +20,7 @@ const MODULE_ITEMS: { id: Module; label_fa: string; label_en: string; icon: stri
 ];
 
 export function Topbar() {
-  const { toggleSidebar, sidebarOpen, activeModule, setActiveModule, theme, toggleTheme } = useUIStore();
+  const { toggleSidebar, activeModule, setActiveModule, theme, toggleTheme } = useUIStore();
   const { user } = useAuthStore();
   const { lang } = useLocaleStore();
   const router = useRouter();
@@ -45,7 +45,7 @@ export function Topbar() {
       </button>
 
       {/* Module Tabs */}
-      <div className="flex items-center gap-1 flex-1 overflow-x-auto">
+      <div className="flex items-center gap-1 flex-1 overflow-x-auto" data-tour="modules">
         {MODULE_ITEMS.map(mod => (
           <button key={mod.id}
             onClick={() => handleModuleSwitch(mod.id, mod.href)}
@@ -67,6 +67,13 @@ export function Topbar() {
         <button onClick={toggleTheme}
           className="p-2 rounded-lg text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors">
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
+
+        {/* Help link */}
+        <button onClick={() => router.push('/help')}
+          title={lang === 'fa' ? 'راهنما' : 'Help'}
+          className="p-2 rounded-lg text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--primary))] transition-colors">
+          <HelpCircle className="h-4 w-4" />
         </button>
 
         <LanguageSelector />
