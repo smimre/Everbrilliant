@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { TradingService } from './trading.service';
-import { JwtAuthGuard } from '../auth/auth.guard';
+import { JwtAuthGuard, Public } from '../auth/auth.guard';
 
 @Controller('trading')
 @UseGuards(JwtAuthGuard)
@@ -31,6 +31,9 @@ export class TradingController {
   @Get('tenders/:id/bids')    getTenderBids(@Req() r: any, @Param('id') id: string)               { return this.trading.getTenderBids(r.user.companyId, id); }
   @Patch('tenders/:id/close') closeTender(@Req() r: any, @Param('id') id: string)                 { return this.trading.closeTender(r.user.companyId, id); }
   @Patch('tenders/:id/award') awardTender(@Req() r: any, @Param('id') id: string)                 { return this.trading.awardTender(r.user.companyId, id); }
+  @Post('tenders/:id/invite') createInvite(@Req() r: any, @Param('id') id: string)               { return this.trading.createTenderInvite(r.user.companyId, id); }
+
+  @Get('invites/:token') @Public() getInvite(@Param('token') token: string)                      { return this.trading.getTenderInvite(token); }
 
   @Get('connections')        getConnections(@Req() r: any, @Query() q: any)                { return this.trading.getConnections(r.user.companyId, q); }
 

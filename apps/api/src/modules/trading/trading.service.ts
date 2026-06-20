@@ -349,6 +349,30 @@ export class TradingService {
     return this.prisma.tender.update({ where: { id }, data: { status: 'AWARDED', awardDate: new Date() } });
   }
 
+  async createTenderInvite(companyId: number, tenderId: string) {
+    const t = await this.prisma.tender.findFirst({ where: { id: tenderId, companyId } });
+    if (!t) throw new NotFoundException('Tender not found');
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const invite = await (this.prisma as any).tenderInvite.create({
+      data: { tenderId, inviterCompanyId: companyId, expiresAt },
+      include: { tender: { select: { title: true, endDate: true, type: true } } },
+    });
+    return { ...invite, inviteUrl: `/invite/${invite.token}` };
+  }
+
+  async getTenderInvite(token: string) {
+    const invite = await (this.prisma as any).tenderInvite.findUnique({
+      where: { token },
+      include: {
+        tender: { select: { id: true, title: true, description: true, endDate: true, type: true, status: true, products: true } },
+        inviterCompany: { select: { id: true, name: true, logo: true } },
+      },
+    });
+    if (!invite) throw new NotFoundException('Invite not found or expired');
+    if (invite.expiresAt < new Date()) throw new BadRequestException('Invite link has expired');
+    return invite;
+  }
+
   async getAllFollowUps(companyId: number, q: any) {
     const { skip, take, page, limit } = this.paginate(q);
     const where = {

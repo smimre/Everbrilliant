@@ -3,6 +3,105 @@ import { useState } from 'react';
 import { useLocaleStore } from '@/store/locale.store';
 import { useMyTenders, useCreateTender, useCloseTender, useAwardTender, useTenderBids } from '@/hooks/use-trading';
 import { useUIStore } from '@/store';
+import { Share2, Copy, MessageCircle, Mail, Check } from 'lucide-react';
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://187.127.88.138.nip.io/api';
+const SITE = typeof window !== 'undefined' ? window.location.origin : 'https://187.127.88.138.nip.io';
+
+function ShareModal({ tender, onClose, fa }: { tender: any; onClose: () => void; fa: boolean }) {
+  const [link, setLink] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const generateLink = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken') || '';
+      const res = await fetch(`${API}/trading/tenders/${tender.id}/invite`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setLink(`${SITE}/invite/${data.token}`);
+    } catch {
+      // fallback
+    } finally { setLoading(false); }
+  };
+
+  const copy = () => {
+    if (!link) return;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareWhatsApp = () => link && window.open(`https://wa.me/?text=${encodeURIComponent((fa ? `دعوت به شرکت در مناقصه «${tender.title}»:\n` : `Invitation to tender "${tender.title}":\n`) + link)}`);
+  const shareEmail = () => link && window.open(`mailto:?subject=${encodeURIComponent(fa ? `دعوت به مناقصه: ${tender.title}` : `Tender Invitation: ${tender.title}`)}&body=${encodeURIComponent(link)}`);
+  const shareSms = () => link && window.open(`sms:?body=${encodeURIComponent(link)}`);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-[hsl(var(--secondary))] rounded-2xl border border-[hsl(var(--border))] w-full max-w-md p-6 shadow-2xl" dir={fa ? 'rtl' : 'ltr'}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold flex items-center gap-2">
+            <Share2 className="w-4 h-4" />
+            {fa ? 'اشتراک‌گذاری لینک دعوت' : 'Share Invite Link'}
+          </h2>
+          <button onClick={onClose} className="text-xl leading-none text-[hsl(var(--muted-foreground))]">✕</button>
+        </div>
+
+        <div className="rounded-xl p-3 mb-4 text-sm" style={{ background: 'rgba(59,130,246,.08)', border: '1px solid rgba(59,130,246,.25)' }}>
+          <div className="font-semibold mb-0.5">📋 {tender.title}</div>
+          <div className="text-xs text-[hsl(var(--muted-foreground))]">
+            {fa ? 'شرکت‌های خارج از سیستم می‌توانند با این لینک ثبت‌نام کنند و در مناقصه شرکت کنند.' : 'External companies can register and join this tender via this link.'}
+          </div>
+        </div>
+
+        {!link ? (
+          <button onClick={generateLink} disabled={loading}
+            className="w-full py-3 rounded-xl bg-[hsl(var(--primary))] text-white font-bold text-sm disabled:opacity-50 hover:opacity-90 transition-opacity">
+            {loading ? (fa ? 'در حال ساخت لینک...' : 'Generating...') : (fa ? '🔗 ساختن لینک دعوت' : '🔗 Generate Invite Link')}
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] p-3">
+              <span className="flex-1 text-xs font-mono text-[hsl(var(--muted-foreground))] truncate">{link}</span>
+              <button onClick={copy} className="shrink-0 p-1.5 rounded-lg hover:bg-[hsl(var(--muted)/0.5)] transition-colors">
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={shareWhatsApp}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.4)] transition-colors text-xs font-medium">
+                <MessageCircle className="w-5 h-5 text-green-500" />
+                WhatsApp
+              </button>
+              <button onClick={shareSms}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.4)] transition-colors text-xs font-medium">
+                <span className="text-xl">💬</span>
+                SMS
+              </button>
+              <button onClick={shareEmail}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted)/0.4)] transition-colors text-xs font-medium">
+                <Mail className="w-5 h-5 text-blue-500" />
+                {fa ? 'ایمیل' : 'Email'}
+              </button>
+            </div>
+
+            <div className="rounded-xl p-3 text-xs text-[hsl(var(--muted-foreground))]" style={{ background: 'hsl(var(--muted)/0.3)' }}>
+              ⏱ {fa ? 'این لینک تا ۳۰ روز معتبر است.' : 'This link is valid for 30 days.'}
+            </div>
+          </div>
+        )}
+
+        <button onClick={onClose} className="w-full mt-3 py-2 rounded-xl border border-[hsl(var(--border))] text-sm hover:bg-[hsl(var(--muted)/0.4)] transition-colors">
+          {fa ? 'بستن' : 'Close'}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ─── KEY SYSTEM ─────────────────────────────────────────────────
 type KeyHolder = {
@@ -465,6 +564,7 @@ export function TenderManage() {
   const tenders: any[] = (raw as any)?.data ?? [];
   const [showNew, setShowNew]         = useState(false);
   const [resultsId, setResultsId]     = useState<string | null>(null);
+  const [shareId, setShareId]         = useState<string | null>(null);
 
   // ── Key system state ──
   const [keyConfigs, setKeyConfigs]                     = useState<Record<string, KeyConfig>>({});
@@ -602,6 +702,16 @@ export function TenderManage() {
                     )}
                   </div>
                   <div className="flex gap-2 flex-wrap justify-end">
+                    {/* Share invite link */}
+                    {isOpen && (
+                      <button
+                        onClick={() => setShareId(t.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
+                        style={{ borderColor: 'rgba(59,130,246,.35)', background: 'rgba(59,130,246,.08)', color: '#3b82f6' }}
+                      >
+                        🔗 {fa ? 'دعوت' : 'Invite'}
+                      </button>
+                    )}
                     {/* Key config button — available on open and closed tenders */}
                     {!isAwarded && (
                       <button
@@ -648,6 +758,7 @@ export function TenderManage() {
 
       {showNew && <NewAuctionModal lang={lang} onClose={() => setShowNew(false)} />}
       {resultsId && <ResultsModal tenderId={resultsId} lang={lang} onClose={() => setResultsId(null)} />}
+      {shareId && (() => { const t = tenders.find((x: any) => x.id === shareId); return t ? <ShareModal tender={t} onClose={() => setShareId(null)} fa={fa} /> : null; })()}
 
       {/* Key config modal */}
       {keyConfigTenderId && (() => {

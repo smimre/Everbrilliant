@@ -299,6 +299,7 @@ model Company {
   @@index([economicCode])
   subscription     Subscription?
   whiteLabelConfig WhiteLabelConfig?
+  tenderInvites    TenderInvite[]
 
   @@map("companies")
 }
@@ -625,6 +626,7 @@ model Tender {
   products        TenderProduct[]
   bids            Bid[]
   blacklist       TenderBlacklist[]
+  invites         TenderInvite[]
 
   @@index([companyId])
   @@index([status])
@@ -678,6 +680,23 @@ model TenderBlacklist {
 
   @@unique([tenderId, companyId])
   @@map("tender_blacklist")
+}
+
+model TenderInvite {
+  id              String    @id @default(cuid())
+  token           String    @unique @default(cuid())
+  tenderId        String
+  inviterCompanyId Int
+  expiresAt       DateTime
+  usedCount       Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  tender          Tender    @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+  inviterCompany  Company   @relation(fields: [inviterCompanyId], references: [id])
+
+  @@index([token])
+  @@index([tenderId])
+  @@map("tender_invites")
 }
 
 model CompanyConnection {
