@@ -27,77 +27,77 @@ interface NavItem {
 }
 
 const TRADING_NAV: NavItem[] = [
-  { label: 'Dashboard',         labelFa: 'داشبورد',           labelHi: 'डैशबोर्ड',          icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Inbox',             labelFa: 'صندوق ورودی',       labelHi: 'इनबॉक्स',           icon: Inbox,           href: '/inbox',       badge: 3 },
-  { label: 'My Requests',       labelFa: 'درخواست‌های من',    labelHi: 'मेरे अनुरोध',        icon: ClipboardList,   href: '/requests' },
-  { label: 'My Payments',       labelFa: 'پرداخت‌های من',     labelHi: 'मेरे भुगतान',        icon: CreditCard,      href: '/trading/my-payments' },
-  { label: 'My Invoices',       labelFa: 'فاکتورهای من',      labelHi: 'मेरे चालान',          icon: Receipt,         href: '/trading/my-invoices' },
-  { label: 'Order Templates',   labelFa: 'الگوهای سفارش',     labelHi: 'ऑर्डर टेम्पलेट',    icon: RefreshCw,       href: '/trading/request-templates' },
-  { label: 'Contracts',         labelFa: 'قراردادها',          labelHi: 'अनुबंध',             icon: FileText,        href: '/contracts' },
-  { label: 'CRM',               labelFa: 'مشتریان',            labelHi: 'सीआरएम',             icon: Building2,       href: '/crm' },
-  { label: 'Tenders',           labelFa: 'مناقصات',            labelHi: 'निविदाएं',           icon: Gavel,           href: '/tenders' },
-  { label: 'Reports',           labelFa: 'گزارشات',            labelHi: 'रिपोर्ट',            icon: TrendingUp,      href: '/reports' },
-  { label: 'Connections',       labelFa: 'اتصالات',            labelHi: 'कनेक्शन',            icon: Link2,           href: '/connections' },
-  { label: 'Letterhead',        labelFa: 'سربرگ دیجیتال',     labelHi: 'लेटरहेड',            icon: FileText,        href: '/trading/letterhead' },
-  { label: 'Help',              labelFa: 'راهنما',             labelHi: 'सहायता',             icon: HelpCircle,      href: '/help' },
+  { label: 'Dashboard',         labelFa: 'داشبورد',           labelAr: 'لوحة القيادة',     labelHi: 'डैशबोर्ड',          icon: LayoutDashboard, href: '/dashboard' },
+  { label: 'Inbox',             labelFa: 'صندوق ورودی',       labelAr: 'صندوق الوارد',     labelHi: 'इनबॉक्स',           icon: Inbox,           href: '/inbox',       badge: 3 },
+  { label: 'My Requests',       labelFa: 'درخواست‌های من',    labelAr: 'طلباتي',           labelHi: 'मेरे अनुरोध',        icon: ClipboardList,   href: '/requests' },
+  { label: 'My Payments',       labelFa: 'پرداخت‌های من',     labelAr: 'مدفوعاتي',         labelHi: 'मेरे भुगतान',        icon: CreditCard,      href: '/trading/my-payments' },
+  { label: 'My Invoices',       labelFa: 'فاکتورهای من',      labelAr: 'فواتيري',          labelHi: 'मेरे चालान',          icon: Receipt,         href: '/trading/my-invoices' },
+  { label: 'Order Templates',   labelFa: 'الگوهای سفارش',     labelAr: 'قوالب الطلبات',    labelHi: 'ऑर्डर टेम्पलेट',    icon: RefreshCw,       href: '/trading/request-templates' },
+  { label: 'Contracts',         labelFa: 'قراردادها',          labelAr: 'العقود',           labelHi: 'अनुबंध',             icon: FileText,        href: '/contracts' },
+  { label: 'CRM',               labelFa: 'مشتریان',            labelAr: 'إدارة العملاء',    labelHi: 'सीआरएम',             icon: Building2,       href: '/crm' },
+  { label: 'Tenders',           labelFa: 'مناقصات',            labelAr: 'المناقصات',        labelHi: 'निविदाएं',           icon: Gavel,           href: '/tenders' },
+  { label: 'Reports',           labelFa: 'گزارشات',            labelAr: 'التقارير',         labelHi: 'रिपोर्ट',            icon: TrendingUp,      href: '/reports' },
+  { label: 'Connections',       labelFa: 'اتصالات',            labelAr: 'الاتصالات',        labelHi: 'कनेक्शन',            icon: Link2,           href: '/connections' },
+  { label: 'Letterhead',        labelFa: 'سربرگ دیجیتال',     labelAr: 'الرأسية الرقمية',  labelHi: 'लेटरहेड',            icon: FileText,        href: '/trading/letterhead' },
+  { label: 'Help',              labelFa: 'راهنما',             labelAr: 'مساعدة',           labelHi: 'सहायता',             icon: HelpCircle,      href: '/help' },
 ];
 
 const FINANCE_NAV: NavItem[] = [
-  { label: 'Overview',     labelFa: 'خلاصه',              labelHi: 'अवलोकन',            icon: LayoutDashboard, href: '/finance' },
+  { label: 'Overview',     labelFa: 'خلاصه',              labelAr: 'نظرة عامة',        labelHi: 'अवलोकन',            icon: LayoutDashboard, href: '/finance' },
   {
-    label: 'Accounting', labelFa: 'حسابداری', labelHi: 'लेखांकन', icon: BookOpen,
+    label: 'Accounting', labelFa: 'حسابداری', labelAr: 'المحاسبة', labelHi: 'लेखांकन', icon: BookOpen,
     children: [
-      { label: 'Chart of Accounts', labelFa: 'سرفصل‌ها', labelHi: 'खाता चार्ट', icon: ChevronDown, href: '/finance/coa' },
-      { label: 'Journal',           labelFa: 'روزنامه',   labelHi: 'जर्नल',       icon: ChevronDown, href: '/finance/journal' },
-      { label: 'Ledger',            labelFa: 'دفتر کل',   labelHi: 'खाता बही',    icon: ChevronDown, href: '/finance/ledger' },
+      { label: 'Chart of Accounts', labelFa: 'سرفصل‌ها', labelAr: 'دليل الحسابات', labelHi: 'खाता चार्ट', icon: ChevronDown, href: '/finance/coa' },
+      { label: 'Journal',           labelFa: 'روزنامه',   labelAr: 'دفتر اليومية',  labelHi: 'जर्नल',       icon: ChevronDown, href: '/finance/journal' },
+      { label: 'Ledger',            labelFa: 'دفتر کل',   labelAr: 'دفتر الأستاذ',  labelHi: 'खाता बही',    icon: ChevronDown, href: '/finance/ledger' },
     ],
   },
-  { label: 'Invoices',     labelFa: 'فاکتورها',           labelHi: 'चालान',             icon: Receipt,         href: '/finance/invoices' },
-  { label: 'Inventory',    labelFa: 'انبارداری',           labelHi: 'इन्वेंटरी',         icon: Package,         href: '/finance/inventory' },
-  { label: 'HR / Payroll', labelFa: 'پرسنل',              labelHi: 'एचआर / वेतन',       icon: Users,           href: '/finance/hr' },
-  { label: 'Treasury',     labelFa: 'خزانه',              labelHi: 'कोषागार',           icon: Landmark,        href: '/finance/treasury' },
-  { label: 'Reports',      labelFa: 'گزارشات',            labelHi: 'रिपोर्ट',           icon: BarChart3,       href: '/finance/reports' },
-  { label: 'Help',         labelFa: 'راهنما',             labelHi: 'सहायता',            icon: HelpCircle,      href: '/help' },
+  { label: 'Invoices',     labelFa: 'فاکتورها',           labelAr: 'الفواتير',         labelHi: 'चालान',             icon: Receipt,         href: '/finance/invoices' },
+  { label: 'Inventory',    labelFa: 'انبارداری',           labelAr: 'المخزون',          labelHi: 'इन्वेंटरी',         icon: Package,         href: '/finance/inventory' },
+  { label: 'HR / Payroll', labelFa: 'پرسنل',              labelAr: 'الموارد البشرية',  labelHi: 'एचआर / वेतन',       icon: Users,           href: '/finance/hr' },
+  { label: 'Treasury',     labelFa: 'خزانه',              labelAr: 'الخزينة',          labelHi: 'कोषागार',           icon: Landmark,        href: '/finance/treasury' },
+  { label: 'Reports',      labelFa: 'گزارشات',            labelAr: 'التقارير',         labelHi: 'रिपोर्ट',           icon: BarChart3,       href: '/finance/reports' },
+  { label: 'Help',         labelFa: 'راهنما',             labelAr: 'مساعدة',           labelHi: 'सहायता',            icon: HelpCircle,      href: '/help' },
 ];
 
 const AUTOMATION_NAV: NavItem[] = [
-  { label: 'Dashboard',    labelFa: 'داشبورد',            labelHi: 'डैशबोर्ड',          icon: LayoutDashboard, href: '/automation' },
+  { label: 'Dashboard',    labelFa: 'داشبورد',            labelAr: 'لوحة القيادة',     labelHi: 'डैशबोर्ड',          icon: LayoutDashboard, href: '/automation' },
   {
-    label: 'Correspondence', labelFa: 'مکاتبات', labelHi: 'पत्राचार', icon: Mail,
+    label: 'Correspondence', labelFa: 'مکاتبات', labelAr: 'المراسلات', labelHi: 'पत्राचार', icon: Mail,
     children: [
-      { label: 'Inbox',  labelFa: 'ورودی',  labelHi: 'इनबॉक्स',  icon: ChevronDown, href: '/automation/inbox' },
-      { label: 'Outbox', labelFa: 'خروجی', labelHi: 'आउटबॉक्स', icon: ChevronDown, href: '/automation/outbox' },
+      { label: 'Inbox',  labelFa: 'ورودی',  labelAr: 'صندوق الوارد',  labelHi: 'इनबॉक्स',  icon: ChevronDown, href: '/automation/inbox' },
+      { label: 'Outbox', labelFa: 'خروجی', labelAr: 'صندوق الصادر', labelHi: 'आउटबॉक्स', icon: ChevronDown, href: '/automation/outbox' },
     ],
   },
-  { label: 'Requests',     labelFa: 'درخواست‌ها',         labelHi: 'अनुरोध',            icon: CheckSquare,     href: '/automation/requests' },
-  { label: 'Meetings',     labelFa: 'جلسات',              labelHi: 'बैठकें',             icon: Calendar,        href: '/automation/meetings' },
-  { label: 'Tasks',        labelFa: 'وظایف',              labelHi: 'कार्य',              icon: CheckSquare,     href: '/automation/tasks' },
-  { label: 'Archive',      labelFa: 'آرشیو',              labelHi: 'संग्रह',             icon: Archive,         href: '/automation/archive' },
-  { label: 'Workflows',    labelFa: 'گردش‌کار',           labelHi: 'कार्यप्रवाह',        icon: GitBranch,       href: '/automation/workflows' },
-  { label: 'Help',         labelFa: 'راهنما',             labelHi: 'सहायता',            icon: HelpCircle,      href: '/help' },
+  { label: 'Requests',     labelFa: 'درخواست‌ها',         labelAr: 'الطلبات',          labelHi: 'अनुरोध',            icon: CheckSquare,     href: '/automation/requests' },
+  { label: 'Meetings',     labelFa: 'جلسات',              labelAr: 'الاجتماعات',       labelHi: 'बैठकें',             icon: Calendar,        href: '/automation/meetings' },
+  { label: 'Tasks',        labelFa: 'وظایف',              labelAr: 'المهام',           labelHi: 'कार्य',              icon: CheckSquare,     href: '/automation/tasks' },
+  { label: 'Archive',      labelFa: 'آرشیو',              labelAr: 'الأرشيف',          labelHi: 'संग्रह',             icon: Archive,         href: '/automation/archive' },
+  { label: 'Workflows',    labelFa: 'گردش‌کار',           labelAr: 'سير العمل',        labelHi: 'कार्यप्रवाह',        icon: GitBranch,       href: '/automation/workflows' },
+  { label: 'Help',         labelFa: 'راهنما',             labelAr: 'مساعدة',           labelHi: 'सहायता',            icon: HelpCircle,      href: '/help' },
 ];
 
 const MANUFACTURING_NAV: NavItem[] = [
-  { label: 'Dashboard',      labelFa: 'داشبورد',           labelHi: 'डैशबोर्ड',           icon: LayoutDashboard, href: '/manufacturing' },
-  { label: 'Work Orders',    labelFa: 'دستورات کار',       labelHi: 'कार्य आदेश',          icon: Package,         href: '/manufacturing/work-orders' },
-  { label: 'BOM',            labelFa: 'فهرست مواد',        labelHi: 'सामग्री सूची',        icon: GitBranch,       href: '/manufacturing/bom' },
-  { label: 'Materials MRP',  labelFa: 'برنامه ریزی مواد', labelHi: 'सामग्री योजना',       icon: Archive,         href: '/manufacturing/materials' },
-  { label: 'WIP',            labelFa: 'در جریان ساخت',    labelHi: 'निर्माण प्रगति',       icon: Landmark,        href: '/manufacturing/wip' },
-  { label: 'Quality Control',labelFa: 'کنترل کیفیت',      labelHi: 'गुणवत्ता नियंत्रण',   icon: CheckSquare,     href: '/manufacturing/qc' },
-  { label: 'Product Costing',labelFa: 'هزینه یابی',       labelHi: 'उत्पाद लागत',         icon: Receipt,         href: '/manufacturing/costing' },
-  { label: 'Reports',        labelFa: 'گزارشات',           labelHi: 'रिपोर्ट',             icon: BarChart3,       href: '/manufacturing/reports' },
-  { label: 'Help',           labelFa: 'راهنما',            labelHi: 'सहायता',             icon: HelpCircle,      href: '/help' },
+  { label: 'Dashboard',      labelFa: 'داشبورد',           labelAr: 'لوحة القيادة',     labelHi: 'डैशबोर्ड',           icon: LayoutDashboard, href: '/manufacturing' },
+  { label: 'Work Orders',    labelFa: 'دستورات کار',       labelAr: 'أوامر العمل',      labelHi: 'कार्य आदेश',          icon: Package,         href: '/manufacturing/work-orders' },
+  { label: 'BOM',            labelFa: 'فهرست مواد',        labelAr: 'قائمة المواد',     labelHi: 'सामग्री सूची',        icon: GitBranch,       href: '/manufacturing/bom' },
+  { label: 'Materials MRP',  labelFa: 'برنامه ریزی مواد', labelAr: 'تخطيط المواد',     labelHi: 'सामग्री योजना',       icon: Archive,         href: '/manufacturing/materials' },
+  { label: 'WIP',            labelFa: 'در جریان ساخت',    labelAr: 'قيد التنفيذ',      labelHi: 'निर्माण प्रगति',       icon: Landmark,        href: '/manufacturing/wip' },
+  { label: 'Quality Control',labelFa: 'کنترل کیفیت',      labelAr: 'ضبط الجودة',       labelHi: 'गुणवत्ता नियंत्रण',   icon: CheckSquare,     href: '/manufacturing/qc' },
+  { label: 'Product Costing',labelFa: 'هزینه یابی',       labelAr: 'تكلفة المنتج',     labelHi: 'उत्पाद लागत',         icon: Receipt,         href: '/manufacturing/costing' },
+  { label: 'Reports',        labelFa: 'گزارشات',           labelAr: 'التقارير',         labelHi: 'रिपोर्ट',             icon: BarChart3,       href: '/manufacturing/reports' },
+  { label: 'Help',           labelFa: 'راهنما',            labelAr: 'مساعدة',           labelHi: 'सهायता',             icon: HelpCircle,      href: '/help' },
 ];
 
 const LOGISTICS_NAV: NavItem[] = [
-  { label: 'Dashboard',    labelFa: 'داشبورد',         labelHi: 'डैशबोर्ड',        icon: LayoutDashboard, href: '/logistics' },
-  { label: 'Shipments',    labelFa: 'محموله‌ها',        labelHi: 'शिपमेंट',          icon: Package,         href: '/logistics' },
-  { label: 'New Shipment', labelFa: 'محموله جدید',     labelHi: 'नई शिपमेंट',       icon: Plus,            href: '/logistics' },
-  { label: 'Customs',      labelFa: 'گمرک',             labelHi: 'सीमाशुल्क',        icon: Landmark,        href: '/logistics' },
-  { label: 'Insurance',    labelFa: 'بیمه',             labelHi: 'बीमा',             icon: Shield,          href: '/logistics' },
-  { label: 'Quotes',       labelFa: 'استعلام حمل',     labelHi: 'उद्धरण',           icon: Receipt,         href: '/logistics' },
-  { label: 'Finance',      labelFa: 'مالی لجستیک',     labelHi: 'वित्त',            icon: BarChart3,       href: '/logistics' },
-  { label: 'Help',         labelFa: 'راهنما',           labelHi: 'सहायता',          icon: HelpCircle,      href: '/help' },
+  { label: 'Dashboard',    labelFa: 'داشبورد',         labelAr: 'لوحة القيادة',    labelHi: 'डैशबोर्ड',        icon: LayoutDashboard, href: '/logistics' },
+  { label: 'Shipments',    labelFa: 'محموله‌ها',        labelAr: 'الشحنات',         labelHi: 'शिपमेंट',          icon: Package,         href: '/logistics' },
+  { label: 'New Shipment', labelFa: 'محموله جدید',     labelAr: 'شحنة جديدة',      labelHi: 'नई शिपमेंट',       icon: Plus,            href: '/logistics' },
+  { label: 'Customs',      labelFa: 'گمرک',             labelAr: 'الجمارك',         labelHi: 'सीमाशुल्क',        icon: Landmark,        href: '/logistics' },
+  { label: 'Insurance',    labelFa: 'بیمه',             labelAr: 'التأمين',         labelHi: 'बीमा',             icon: Shield,          href: '/logistics' },
+  { label: 'Quotes',       labelFa: 'استعلام حمل',     labelAr: 'عروض الأسعار',    labelHi: 'उद्धरण',           icon: Receipt,         href: '/logistics' },
+  { label: 'Finance',      labelFa: 'مالی لجستیک',     labelAr: 'المالية',         labelHi: 'वित्त',            icon: BarChart3,       href: '/logistics' },
+  { label: 'Help',         labelFa: 'راهنما',           labelAr: 'مساعدة',          labelHi: 'सहायता',          icon: HelpCircle,      href: '/help' },
 ];
 
 const MODULE_NAV: Record<string, NavItem[]> = {
@@ -209,14 +209,14 @@ export function Sidebar() {
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] rounded-lg hover:bg-[hsl(var(--muted)/0.5)] transition-colors"
             >
               <Settings className="h-3.5 w-3.5" />
-              {lang === 'fa' ? 'تنظیمات' : lang === 'hi' ? 'सेटिंग्स' : 'Settings'}
+              {lang === 'fa' ? 'تنظیمات' : lang === 'ar' ? 'الإعدادات' : lang === 'hi' ? 'सेटिंग्स' : 'Settings'}
             </button>
             <button
               onClick={handleLogout}
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg transition-colors"
             >
               <LogOut className="h-3.5 w-3.5" />
-              {lang === 'fa' ? 'خروج' : lang === 'hi' ? 'लॉगआउट' : 'Logout'}
+              {lang === 'fa' ? 'خروج' : lang === 'ar' ? 'تسجيل الخروج' : lang === 'hi' ? 'लॉगआउट' : 'Logout'}
             </button>
           </div>
         </div>

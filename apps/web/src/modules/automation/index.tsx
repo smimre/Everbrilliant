@@ -138,7 +138,7 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
     return (
       <div className="space-y-5">
         <button onClick={() => setView('dashboard')} className="flex items-center gap-1 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
-          ← {lang === 'fa' ? 'داشبورد اتوماسیون' : lang === 'hi' ? 'स्वचालन डैशबोर्ड' : 'Automation Dashboard'}
+          ← {lang === 'fa' ? 'داشبورد اتوماسیون' : lang === 'ar' ? 'لوحة الأتمتة' : lang === 'hi' ? 'स्वचालन डैशबोर्ड' : 'Automation Dashboard'}
         </button>
         {view === 'letters'   && <LettersPage defaultFilter={initialLetterFilter} letters={letters} lettersLoading={lettersLoading} createLetter={createLetter} archiveLetter={archiveLetter} toast={toast} />}
         {view === 'requests'  && <WorkflowPage wfRequests={wfRequests} wfLoading={wfLoading} approveMutation={approveMutation} rejectMutation={rejectMutation} toast={toast} />}
@@ -151,19 +151,19 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
   }
 
   const navItems = [
-    { icon:<Mail className="h-6 w-6"/>, label_fa:'مکاتبات', label_en:'Correspondence', label_hi:'पत्राचार', view:'letters' as AutoView, color:'#3b82f6', count:2 },
-    { icon:<CheckSquare className="h-6 w-6"/>, label_fa:'درخواست‌های اداری', label_en:'Admin Requests', label_hi:'प्रशासनिक अनुरोध', view:'requests' as AutoView, color:'#8b5cf6', count:2 },
-    { icon:<Calendar className="h-6 w-6"/>, label_fa:'جلسات', label_en:'Meetings', label_hi:'बैठकें', view:'meetings' as AutoView, color:'#10b981', count:todayMeetings },
-    { icon:<CheckSquare className="h-6 w-6"/>, label_fa:'وظایف', label_en:'Tasks', label_hi:'कार्य', view:'tasks' as AutoView, color:'#f59e0b', count:pendingTasks },
-    { icon:<Archive className="h-6 w-6"/>, label_fa:'آرشیو اسناد', label_en:'Document Archive', label_hi:'दस्तावेज़ संग्रह', view:'archive' as AutoView, color:'#06b6d4', count:MOCK_DOCUMENTS.length },
-    { icon:<GitBranch className="h-6 w-6"/>, label_fa:'گردش‌کارها', label_en:'Workflows', label_hi:'कार्यप्रवाह', view:'workflows' as AutoView, color:'#ec4899', count:dashWfs.filter((w:any)=>w.active).length },
+    { icon:<Mail className="h-6 w-6"/>, label_fa:'مکاتبات', label_ar:'المراسلات', label_en:'Correspondence', label_hi:'पत्राचार', view:'letters' as AutoView, color:'#3b82f6', count:2 },
+    { icon:<CheckSquare className="h-6 w-6"/>, label_fa:'درخواست‌های اداری', label_ar:'الطلبات الإدارية', label_en:'Admin Requests', label_hi:'प्रशासनिक अनुरोध', view:'requests' as AutoView, color:'#8b5cf6', count:2 },
+    { icon:<Calendar className="h-6 w-6"/>, label_fa:'جلسات', label_ar:'الاجتماعات', label_en:'Meetings', label_hi:'बैठकें', view:'meetings' as AutoView, color:'#10b981', count:todayMeetings },
+    { icon:<CheckSquare className="h-6 w-6"/>, label_fa:'وظایف', label_ar:'المهام', label_en:'Tasks', label_hi:'कार्य', view:'tasks' as AutoView, color:'#f59e0b', count:pendingTasks },
+    { icon:<Archive className="h-6 w-6"/>, label_fa:'آرشیو اسناد', label_ar:'أرشيف الوثائق', label_en:'Document Archive', label_hi:'दस्तावेज़ संग्रह', view:'archive' as AutoView, color:'#06b6d4', count:MOCK_DOCUMENTS.length },
+    { icon:<GitBranch className="h-6 w-6"/>, label_fa:'گردش‌کارها', label_ar:'سير العمل', label_en:'Workflows', label_hi:'कार्यप्रवाह', view:'workflows' as AutoView, color:'#ec4899', count:dashWfs.filter((w:any)=>w.active).length },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">⚙️ {lang === 'fa' ? 'اتوماسیون اداری' : lang === 'hi' ? 'कार्यालय स्वचालन' : 'Office Automation'}</h1>
-        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{lang === 'fa' ? 'مدیریت مکاتبات، جلسات، وظایف و گردش‌کار' : lang === 'hi' ? 'पत्राचार, बैठकें, कार्य और कार्यप्रवाह प्रबंधित करें' : 'Manage correspondence, meetings, tasks & workflows'}</p>
+        <h1 className="text-2xl font-bold">⚙️ {lang === 'fa' ? 'اتوماسیون اداری' : lang === 'ar' ? 'الأتمتة المكتبية' : lang === 'hi' ? 'कार्यालय स्वचालन' : 'Office Automation'}</h1>
+        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{lang === 'fa' ? 'مدیریت مکاتبات، جلسات، وظایف و گردش‌کار' : lang === 'ar' ? 'إدارة المراسلات والاجتماعات والمهام وسير العمل' : lang === 'hi' ? 'पत्राचार, बैठकें, कार्य और कार्यप्रवाह प्रबंधित करें' : 'Manage correspondence, meetings, tasks & workflows'}</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -192,7 +192,7 @@ export function AutomationModule({ initialView = 'dashboard', initialLetterFilte
             <div className="rounded-xl p-3 group-hover:scale-110 transition-transform" style={{ background:`${item.color}18`, color:item.color }}>
               {item.icon}
             </div>
-            <span className="font-semibold text-sm">{lang === 'fa' ? item.label_fa : lang === 'hi' ? (item.label_hi || item.label_en) : item.label_en}</span>
+            <span className="font-semibold text-sm">{lang === 'fa' ? item.label_fa : lang === 'ar' ? (item.label_ar || item.label_en) : lang === 'hi' ? (item.label_hi || item.label_en) : item.label_en}</span>
           </button>
         ))}
       </div>

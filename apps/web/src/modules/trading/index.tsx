@@ -42,6 +42,7 @@ interface NavItem {
   id: TradingView;
   label: string;
   labelFa: string;
+  labelAr?: string;
   labelHi?: string;
   icon: string;
   section?: string;
@@ -50,46 +51,46 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   // اصلی
-  { id: 'dashboard',     label: 'Dashboard',        labelFa: 'داشبورد',            labelHi: 'डैशबोर्ड',          icon: '📊' },
+  { id: 'dashboard',     label: 'Dashboard',        labelFa: 'داشبورد',            labelAr: 'لوحة القيادة',        labelHi: 'डैशबोर्ड',          icon: '📊' },
   // درخواست‌ها
-  { id: 'my-requests',   label: 'My Requests',       labelFa: 'درخواست‌های من',     labelHi: 'मेरे अनुरोध',        icon: '📋', section: 'requests' },
-  { id: 'incoming-req',  label: 'Incoming',          labelFa: 'درخواست‌های ورودی',  labelHi: 'आने वाले',           icon: '📥', section: 'requests' },
-  { id: 'my-quotes',     label: 'My Quotes',         labelFa: 'پیشنهادهای من',      labelHi: 'मेरे उद्धरण',        icon: '💬', section: 'requests' },
-  { id: 'my-payments',   label: 'My Payments',       labelFa: 'پرداخت‌های من',      labelHi: 'मेरे भुगतान',        icon: '💳', section: 'requests' },
-  { id: 'my-invoices',   label: 'My Invoices',       labelFa: 'فاکتورهای من',       labelHi: 'मेरे चालान',          icon: '🧾', section: 'requests' },
-  { id: 'req-templates', label: 'Order Templates',   labelFa: 'الگوهای سفارش',      labelHi: 'ऑर्डर टेम्पलेट',    icon: '🔁', section: 'requests' },
+  { id: 'my-requests',   label: 'My Requests',       labelFa: 'درخواست‌های من',     labelAr: 'طلباتي',              labelHi: 'मेरे अनुरोध',        icon: '📋', section: 'requests' },
+  { id: 'incoming-req',  label: 'Incoming',          labelFa: 'درخواست‌های ورودی',  labelAr: 'الطلبات الواردة',     labelHi: 'आने वाले',           icon: '📥', section: 'requests' },
+  { id: 'my-quotes',     label: 'My Quotes',         labelFa: 'پیشنهادهای من',      labelAr: 'عروضي',               labelHi: 'मेरे उद्धरण',        icon: '💬', section: 'requests' },
+  { id: 'my-payments',   label: 'My Payments',       labelFa: 'پرداخت‌های من',      labelAr: 'مدفوعاتي',            labelHi: 'मेरे भुगतान',        icon: '💳', section: 'requests' },
+  { id: 'my-invoices',   label: 'My Invoices',       labelFa: 'فاکتورهای من',       labelAr: 'فواتيري',             labelHi: 'मेरे चालान',          icon: '🧾', section: 'requests' },
+  { id: 'req-templates', label: 'Order Templates',   labelFa: 'الگوهای سفارش',      labelAr: 'قوالب الطلبات',       labelHi: 'ऑर्डर टेम्पलेट',    icon: '🔁', section: 'requests' },
   // قراردادها
-  { id: 'my-contracts',  label: 'Contracts',         labelFa: 'قراردادها',           labelHi: 'अनुबंध',             icon: '📄', section: 'contracts' },
-  { id: 'inventory',     label: 'Inventory',         labelFa: 'موجودی کالا',         labelHi: 'इन्वेंटरी',          icon: '📦', section: 'contracts' },
+  { id: 'my-contracts',  label: 'Contracts',         labelFa: 'قراردادها',           labelAr: 'العقود',              labelHi: 'अनुबंध',             icon: '📄', section: 'contracts' },
+  { id: 'inventory',     label: 'Inventory',         labelFa: 'موجودی کالا',         labelAr: 'المخزون',             labelHi: 'इन्वेंटरी',          icon: '📦', section: 'contracts' },
   // مناقصات
-  { id: 'tender-browse', label: 'Browse Tenders',    labelFa: 'مزایده‌های فعال',    labelHi: 'निविदाएं ब्राउज़ करें', icon: '🏷️', section: 'tenders' },
-  { id: 'tender-manage', label: 'My Tenders',        labelFa: 'مزایده‌های من',      labelHi: 'मेरी निविदाएं',       icon: '🏆', section: 'tenders' },
-  { id: 'my-tender-keys',label: 'My Tender Keys',    labelFa: 'کلیدهای مزایده‌ها',  labelHi: 'मेरी निविदा कुंजियां', icon: '🗝️', section: 'tenders' },
-  { id: 'manaqeseh',     label: 'Manaqeseh',         labelFa: 'مناقصه‌ها',          labelHi: 'मनाकसेह',            icon: '📋', section: 'tenders' },
-  { id: 'my-manaqeseh',  label: 'My Manaqeseh',      labelFa: 'مناقصه‌های من',      labelHi: 'मेरी मनाकसेह',       icon: '📝', section: 'tenders' },
+  { id: 'tender-browse', label: 'Browse Tenders',    labelFa: 'مزایده‌های فعال',    labelAr: 'تصفح المزايدات',      labelHi: 'निविदाएं ब्राउज़ करें', icon: '🏷️', section: 'tenders' },
+  { id: 'tender-manage', label: 'My Tenders',        labelFa: 'مزایده‌های من',      labelAr: 'مزايداتي',            labelHi: 'मेरी निविदाएं',       icon: '🏆', section: 'tenders' },
+  { id: 'my-tender-keys',label: 'My Tender Keys',    labelFa: 'کلیدهای مزایده‌ها',  labelAr: 'مفاتيح المزايدات',    labelHi: 'मेरी निविदा कुंजियां', icon: '🗝️', section: 'tenders' },
+  { id: 'manaqeseh',     label: 'Manaqeseh',         labelFa: 'مناقصه‌ها',          labelAr: 'المناقصات',           labelHi: 'मनाकसेह',            icon: '📋', section: 'tenders' },
+  { id: 'my-manaqeseh',  label: 'My Manaqeseh',      labelFa: 'مناقصه‌های من',      labelAr: 'مناقصاتي',            labelHi: 'मेरी मनाकसेह',       icon: '📝', section: 'tenders' },
   // ارتباطات
-  { id: 'connections',   label: 'Connections',       labelFa: 'اتصالات',             labelHi: 'कनेक्शन',            icon: '🔗', section: 'network' },
-  { id: 'crm',           label: 'CRM',               labelFa: 'مدیریت مشتریان',     labelHi: 'सीआरएम',             icon: '🎯', section: 'network' },
+  { id: 'connections',   label: 'Connections',       labelFa: 'اتصالات',             labelAr: 'الاتصالات',           labelHi: 'कनेक्शन',            icon: '🔗', section: 'network' },
+  { id: 'crm',           label: 'CRM',               labelFa: 'مدیریت مشتریان',     labelAr: 'إدارة العملاء',       labelHi: 'सीआरएम',             icon: '🎯', section: 'network' },
   // گزارشات
-  { id: 'reports',       label: 'Reports',           labelFa: 'گزارشات',             labelHi: 'रिपोर्ट',            icon: '📊', section: 'reports' },
-  { id: 'quality-checks',label: 'Quality Checks',    labelFa: 'کنترل کیفیت',        labelHi: 'गुणवत्ता जांच',      icon: '✅', section: 'reports' },
-  { id: 'disputes',      label: 'Disputes',          labelFa: 'اختلافات',            labelHi: 'विवाद',              icon: '⚖️', section: 'reports' },
-  { id: 'blacklist',     label: 'Blacklist',         labelFa: 'لیست سیاه',           labelHi: 'ब्लैकलिस्ट',         icon: '🚫', section: 'reports' },
+  { id: 'reports',       label: 'Reports',           labelFa: 'گزارشات',             labelAr: 'التقارير',            labelHi: 'रिपोर्ट',            icon: '📊', section: 'reports' },
+  { id: 'quality-checks',label: 'Quality Checks',    labelFa: 'کنترل کیفیت',        labelAr: 'فحص الجودة',          labelHi: 'गुणवत्ता जांच',      icon: '✅', section: 'reports' },
+  { id: 'disputes',      label: 'Disputes',          labelFa: 'اختلافات',            labelAr: 'النزاعات',            labelHi: 'विवाद',              icon: '⚖️', section: 'reports' },
+  { id: 'blacklist',     label: 'Blacklist',         labelFa: 'لیست سیاه',           labelAr: 'القائمة السوداء',     labelHi: 'ब्लैकलिस्ट',         icon: '🚫', section: 'reports' },
   // عملیات
-  { id: 'logistics',          label: 'Logistics',       labelFa: 'لجستیک و حمل',       labelHi: 'लॉजिस्टिक्स',       icon: '🚛', section: 'operations' },
-  { id: 'exchange-rates',     label: 'Exchange Rates',  labelFa: 'نرخ ارز',             labelHi: 'विनिमय दर',          icon: '💱', section: 'operations' },
-  { id: 'approval-workflows', label: 'Approvals',       labelFa: 'گردش‌کار تأیید',     labelHi: 'अनुमोदन',            icon: '⚙️', section: 'operations' },
-  { id: 'partner-profile',    label: 'Partner Profile', labelFa: 'پروفایل شرکاء',       labelHi: 'साझेदार प्रोफाइल',  icon: '🤝', section: 'network' },
-  { id: 'letterhead',         label: 'Letterhead',      labelFa: 'سربرگ دیجیتال',      labelHi: 'लेटरहेड',            icon: '📄', section: 'operations' },
+  { id: 'logistics',          label: 'Logistics',       labelFa: 'لجستیک و حمل',       labelAr: 'اللوجستية',          labelHi: 'लॉजिस्टिक्स',       icon: '🚛', section: 'operations' },
+  { id: 'exchange-rates',     label: 'Exchange Rates',  labelFa: 'نرخ ارز',             labelAr: 'أسعار الصرف',        labelHi: 'विनिमय दर',          icon: '💱', section: 'operations' },
+  { id: 'approval-workflows', label: 'Approvals',       labelFa: 'گردش‌کار تأیید',     labelAr: 'الموافقات',          labelHi: 'अनुमोदन',            icon: '⚙️', section: 'operations' },
+  { id: 'partner-profile',    label: 'Partner Profile', labelFa: 'پروفایل شرکاء',       labelAr: 'ملف الشريك',         labelHi: 'साझेदार प्रोफाइल',  icon: '🤝', section: 'network' },
+  { id: 'letterhead',         label: 'Letterhead',      labelFa: 'سربرگ دیجیتال',      labelAr: 'الرأسية الرقمية',    labelHi: 'लेटरहेड',            icon: '📄', section: 'operations' },
 ];
 
-const SECTIONS: Record<string, { label: string; labelFa: string; labelHi?: string }> = {
-  requests:  { label: 'Requests',     labelFa: '📋 درخواست‌ها',         labelHi: '📋 अनुरोध' },
-  contracts: { label: 'Contracts',    labelFa: '📄 قراردادها',           labelHi: '📄 अनुबंध' },
-  tenders:   { label: 'Tenders',      labelFa: '🏷️ مزایده و مناقصه',   labelHi: '🏷️ निविदाएं' },
-  network:   { label: 'Network',      labelFa: '🔗 شبکه تجاری',         labelHi: '🔗 नेटवर्क' },
-  reports:    { label: 'Reports',     labelFa: '📊 گزارش و کیفیت',      labelHi: '📊 रिपोर्ट' },
-  operations: { label: 'Operations', labelFa: '⚙️ عملیات',              labelHi: '⚙️ संचालन' },
+const SECTIONS: Record<string, { label: string; labelFa: string; labelAr?: string; labelHi?: string }> = {
+  requests:  { label: 'Requests',     labelFa: '📋 درخواست‌ها',         labelAr: '📋 الطلبات',              labelHi: '📋 अनुरोध' },
+  contracts: { label: 'Contracts',    labelFa: '📄 قراردادها',           labelAr: '📄 العقود',               labelHi: '📄 अनुबंध' },
+  tenders:   { label: 'Tenders',      labelFa: '🏷️ مزایده و مناقصه',   labelAr: '🏷️ المزايدات والمناقصات', labelHi: '🏷️ निविदाएं' },
+  network:   { label: 'Network',      labelFa: '🔗 شبکه تجاری',         labelAr: '🔗 شبكة الأعمال',         labelHi: '🔗 नेटवर्क' },
+  reports:    { label: 'Reports',     labelFa: '📊 گزارش و کیفیت',      labelAr: '📊 التقارير',             labelHi: '📊 रिपोर्ट' },
+  operations: { label: 'Operations', labelFa: '⚙️ عملیات',              labelAr: '⚙️ العمليات',             labelHi: '⚙️ संचालन' },
 };
 
 export function TradingModule({ initialView }: { initialView?: string } = {}) {
@@ -161,7 +162,7 @@ export function TradingModule({ initialView }: { initialView?: string } = {}) {
             grouped[secId]?.length ? (
               <div key={secId}>
                 <div className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] px-2 pt-3 pb-1 uppercase tracking-wider">
-                  {lang === 'fa' ? sec.labelFa : lang === 'hi' ? (sec.labelHi || sec.label) : sec.label}
+                  {lang === 'fa' ? sec.labelFa : lang === 'ar' ? (sec.labelAr || sec.label) : lang === 'hi' ? (sec.labelHi || sec.label) : sec.label}
                 </div>
                 {grouped[secId].map(item => (
                   <NavBtn key={item.id} item={item} active={view === item.id} lang={lang} onClick={() => setView(item.id)} />
@@ -193,7 +194,7 @@ function NavBtn({ item, active, lang, onClick }: {
       }`}
     >
       <span>{item.icon}</span>
-      <span className="truncate flex-1">{lang === 'fa' ? item.labelFa : lang === 'hi' ? (item.labelHi || item.label) : item.label}</span>
+      <span className="truncate flex-1">{lang === 'fa' ? item.labelFa : lang === 'ar' ? (item.labelAr || item.label) : lang === 'hi' ? (item.labelHi || item.label) : item.label}</span>
       {item.badge ? (
         <span className="text-[10px] font-bold bg-[hsl(var(--primary))] text-white rounded-full px-1.5 py-0.5 leading-none">
           {item.badge}

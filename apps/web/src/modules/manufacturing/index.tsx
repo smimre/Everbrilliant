@@ -13,20 +13,20 @@ import { ManufacturingReports } from './components/manufacturing-reports';
 type MfgView = 'dashboard'|'work-orders'|'bom'|'materials'|'wip'|'costing'|'qc'|'reports';
 
 const NAV = [
-  { id:'dashboard',   label:'Dashboard',    labelFa:'داشبورد',          labelHi:'डैशबोर्ड',            icon:'📊' },
-  { id:'work-orders', label:'Work Orders',  labelFa:'دستورات کار',      labelHi:'कार्य आदेश',          icon:'🏭', section:'production' },
-  { id:'bom',         label:'BOM',          labelFa:'فهرست مواد (BOM)', labelHi:'सामग्री सूची (BOM)',  icon:'🧾', section:'production' },
-  { id:'materials',   label:'Materials MRP',labelFa:'برنامه‌ریزی مواد', labelHi:'सामग्री योजना',       icon:'📦', section:'production' },
-  { id:'wip',         label:'WIP',          labelFa:'در جریان ساخت',    labelHi:'निर्माण प्रगति',       icon:'🔄', section:'tracking' },
-  { id:'qc',          label:'Quality Control',labelFa:'کنترل کیفیت',   labelHi:'गुणवत्ता नियंत्रण',  icon:'🔍', section:'tracking' },
-  { id:'costing',     label:'Product Costing',labelFa:'هزینه‌یابی',    labelHi:'उत्पाद लागत',         icon:'💰', section:'finance' },
-  { id:'reports',     label:'Reports',      labelFa:'گزارشات',          labelHi:'रिपोर्ट',             icon:'📊', section:'finance' },
+  { id:'dashboard',   label:'Dashboard',    labelFa:'داشبورد',          labelAr:'لوحة القيادة',          labelHi:'डैशबोर्ड',            icon:'📊' },
+  { id:'work-orders', label:'Work Orders',  labelFa:'دستورات کار',      labelAr:'أوامر العمل',           labelHi:'कार्य आदेश',          icon:'🏭', section:'production' },
+  { id:'bom',         label:'BOM',          labelFa:'فهرست مواد (BOM)', labelAr:'قائمة المواد (BOM)',    labelHi:'सामग्री सूची (BOM)',  icon:'🧾', section:'production' },
+  { id:'materials',   label:'Materials MRP',labelFa:'برنامه‌ریزی مواد', labelAr:'تخطيط المواد',          labelHi:'सामग्री योजना',       icon:'📦', section:'production' },
+  { id:'wip',         label:'WIP',          labelFa:'در جریان ساخت',    labelAr:'قيد التنفيذ',           labelHi:'निर्माण प्रगति',       icon:'🔄', section:'tracking' },
+  { id:'qc',          label:'Quality Control',labelFa:'کنترل کیفیت',   labelAr:'ضبط الجودة',            labelHi:'गुणवत्ता नियंत्रण',  icon:'🔍', section:'tracking' },
+  { id:'costing',     label:'Product Costing',labelFa:'هزینه‌یابی',    labelAr:'تكلفة المنتج',          labelHi:'उत्पाद लागत',         icon:'💰', section:'finance' },
+  { id:'reports',     label:'Reports',      labelFa:'گزارشات',          labelAr:'التقارير',              labelHi:'रिपोर्ट',             icon:'📊', section:'finance' },
 ];
 
-const SECTIONS: Record<string, { label: string; labelFa: string; labelHi?: string }> = {
-  production: { label: '🏭 Production',     labelFa: '🏭 تولید',          labelHi: '🏭 उत्पादन' },
-  tracking:   { label: '🔄 Tracking',       labelFa: '🔄 پیگیری',         labelHi: '🔄 ट्रैकिंग' },
-  finance:    { label: '💰 Cost & Reports', labelFa: '💰 هزینه و گزارش', labelHi: '💰 लागत और रिपोर्ट' },
+const SECTIONS: Record<string, { label: string; labelFa: string; labelAr?: string; labelHi?: string }> = {
+  production: { label: '🏭 Production',     labelFa: '🏭 تولید',          labelAr: '🏭 الإنتاج',           labelHi: '🏭 उत्पादन' },
+  tracking:   { label: '🔄 Tracking',       labelFa: '🔄 پیگیری',         labelAr: '🔄 التتبع',            labelHi: '🔄 ट्रैकिंग' },
+  finance:    { label: '💰 Cost & Reports', labelFa: '💰 هزینه و گزارش', labelAr: '💰 التكلفة والتقارير', labelHi: '💰 लागत और रिपोर्ट' },
 };
 
 export function ManufacturingModule({ initialView }: { initialView?: MfgView } = {}) {
@@ -65,7 +65,7 @@ export function ManufacturingModule({ initialView }: { initialView?: MfgView } =
           {Object.entries(SECTIONS).map(([secId, sec]) => grouped[secId]?.length ? (
             <div key={secId}>
               <div className="text-[10px] font-semibold text-[hsl(var(--muted-foreground))] px-2 pt-3 pb-1 uppercase tracking-wider">
-                {lang === 'fa' ? sec.labelFa : lang === 'hi' ? (sec.labelHi || sec.label) : sec.label}
+                {lang === 'fa' ? sec.labelFa : lang === 'ar' ? (sec.labelAr || sec.label) : lang === 'hi' ? (sec.labelHi || sec.label) : sec.label}
               </div>
               {grouped[secId].map(item => (
                 <NavBtn key={item.id} item={item} active={view === item.id as MfgView} lang={lang} onClick={() => setView(item.id as MfgView)} />
@@ -87,7 +87,7 @@ function NavBtn({ item, active, lang, onClick }: { item: any; active: boolean; l
                : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted)/0.5)] hover:text-[hsl(var(--foreground))]'
       }`}>
       <span>{item.icon}</span>
-      <span className="truncate">{lang === 'fa' ? item.labelFa : lang === 'hi' ? (item.labelHi || item.label) : item.label}</span>
+      <span className="truncate">{lang === 'fa' ? item.labelFa : lang === 'ar' ? (item.labelAr || item.label) : lang === 'hi' ? (item.labelHi || item.label) : item.label}</span>
     </button>
   );
 }
