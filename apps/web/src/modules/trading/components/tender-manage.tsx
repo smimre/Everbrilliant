@@ -16,7 +16,8 @@ function ShareModal({ tender, onClose, fa }: { tender: any; onClose: () => void;
   const generateLink = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('accessToken') || '';
+      const raw = localStorage.getItem('everbrilliant-auth') || '{}';
+      const token = JSON.parse(raw)?.state?.accessToken || '';
       const res = await fetch(`${API}/trading/tenders/${tender.id}/invite`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
