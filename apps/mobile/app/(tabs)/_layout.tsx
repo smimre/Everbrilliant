@@ -50,10 +50,27 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="manufacturing"
+        options={{
+          title: fa ? 'تولید' : 'Mfg',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏭" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
         name="more"
         options={{
           title: fa ? 'بیشتر' : 'More',
           tabBarIcon: ({ focused }) => <TabIcon emoji="⋯" focused={focused} />,
+        }}
+      />
+
+      {/* Logistics: hidden from tab bar, navigable via More screen */}
+      <Tabs.Screen
+        name="logistics"
+        options={{
+          title: fa ? 'لجستیک' : 'Logistics',
+          headerTitle: fa ? '🚢 لجستیک' : '🚢 Logistics',
+          tabBarButton: () => null,
         }}
       />
     </Tabs>

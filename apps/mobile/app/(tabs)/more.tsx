@@ -31,12 +31,11 @@ export default function MoreScreen() {
   }
 
   const MENU: MenuItem[] = [
-    { icon: '🏭', label: 'Manufacturing', labelFa: 'تولید',       onPress: () => Alert.alert('Manufacturing', 'Coming soon in next release') },
-    { icon: '🚚', label: 'Logistics',     labelFa: 'لجستیک',     onPress: () => Alert.alert('Logistics', 'Coming soon') },
-    { icon: '🤖', label: 'Automation',    labelFa: 'اتوماسیون',  onPress: () => Alert.alert('Automation', 'Coming soon') },
-    { icon: '🏢', label: 'CRM',           labelFa: 'مشتریان',    onPress: () => Alert.alert('CRM', 'Coming soon') },
-    { icon: '🔗', label: 'Connections',   labelFa: 'اتصالات',    onPress: () => Alert.alert('Connections', 'Coming soon') },
-    { icon: '⚙️', label: 'Settings',     labelFa: 'تنظیمات',    onPress: () => Alert.alert('Settings', 'Coming soon') },
+    { icon: '🚢', label: 'Logistics',     labelFa: 'لجستیک',     onPress: () => router.push('/(tabs)/logistics' as any) },
+    { icon: '🤖', label: 'Automation',    labelFa: 'اتوماسیون',  onPress: () => Alert.alert('Automation', 'Coming soon in Phase 3') },
+    { icon: '🏢', label: 'CRM',           labelFa: 'مشتریان',    onPress: () => Alert.alert('CRM', 'Coming soon in Phase 3') },
+    { icon: '🔗', label: 'Connections',   labelFa: 'اتصالات',    onPress: () => Alert.alert('Connections', 'Coming soon in Phase 3') },
+    { icon: '⚙️', label: 'Settings',     labelFa: 'تنظیمات',    onPress: () => Alert.alert('Settings', 'Coming soon in Phase 3') },
     { icon: '🔴', label: 'Sign out',      labelFa: 'خروج',        onPress: confirmLogout, danger: true },
   ];
 
