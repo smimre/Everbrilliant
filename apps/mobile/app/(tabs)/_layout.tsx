@@ -64,12 +64,28 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Logistics: hidden from tab bar, navigable via More screen */}
+      {/* Hidden tabs — navigable via More screen */}
       <Tabs.Screen
         name="logistics"
         options={{
           title: fa ? 'لجستیک' : 'Logistics',
           headerTitle: fa ? '🚢 لجستیک' : '🚢 Logistics',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="crm"
+        options={{
+          title: fa ? 'مشتریان' : 'CRM',
+          headerTitle: fa ? '🏢 مدیریت مشتریان' : '🏢 CRM',
+          tabBarButton: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="automation"
+        options={{
+          title: fa ? 'اتوماسیون' : 'Automation',
+          headerTitle: fa ? '🤖 اتوماسیون اداری' : '🤖 Automation',
           tabBarButton: () => null,
         }}
       />
