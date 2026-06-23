@@ -37,3 +37,6 @@ eb-fixed/
 
 # Prisma generated
 apps/api/src/prisma/client/
+
+# Turborepo cache
+.turbo/
