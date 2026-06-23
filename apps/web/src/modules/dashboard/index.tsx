@@ -53,7 +53,7 @@ export function DashboardModule() {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6 gap-4">
         <StatCard
           icon={<ClipboardList className="h-5 w-5"/>}
           label={t.pendingReqs} value={stats?.pendingRequests ?? 0}

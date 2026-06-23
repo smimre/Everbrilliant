@@ -36,11 +36,21 @@
       "expo-status-bar",
       [
         "expo-notifications",
-        { "icon": "./assets/icon.png", "color": "#3b82f6" }
+        {
+          "icon": "./assets/icon.png",
+          "color": "#3b82f6"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7f245ebe-6f4d-403c-b1d7-88ba1396a76b"
+      }
+    },
+    "owner": "everbrilliant"
   }
 }

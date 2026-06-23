@@ -55,7 +55,7 @@ export function StatCard({
 
       <div className="relative flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2 truncate">{label}</p>
+          <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2 leading-snug line-clamp-2">{label}</p>
           <p className="text-2xl font-bold text-[hsl(var(--foreground))] tabular-nums truncate leading-none">
             {value}{suffix && <span className="text-xs font-normal text-[hsl(var(--muted-foreground))] ms-1">{suffix}</span>}
           </p>
